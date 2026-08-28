@@ -6,3 +6,5 @@ __pycache__/
 ledger/artifacts/
 ledger/logs/
 ledger/state/
+
+.beryl/agent/session-state.md

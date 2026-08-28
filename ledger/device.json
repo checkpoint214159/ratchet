@@ -1,0 +1,26 @@
+{
+  "_key": "NVIDIA GeForce RTX 4070 Ti SUPER|12.8|2.8.0+cu128|3.4.0",
+  "backend": "cuda",
+  "clocks_locked": false,
+  "compute_capability": "sm_89",
+  "device_name": "NVIDIA GeForce RTX 4070 Ti SUPER",
+  "driver_version": "12.8",
+  "l2_cache_size": 50331648,
+  "launch_overhead_us": 2.2208271076596238,
+  "locked_sm_clock_mhz": null,
+  "measured_bandwidth_gbs": 613.662149685899,
+  "notes": [
+    "SM clocks are NOT locked. Use minimum-of-N rather than mean, interleave candidate and baseline timing in one process, and say so in the report."
+  ],
+  "peak_bf16_tflops": 88.2,
+  "peak_source": "table",
+  "regs_per_sm": 65536,
+  "ridge_point_flop_per_byte": 143.72729366662892,
+  "sm_count": 66,
+  "smem_per_block_optin": 101376,
+  "smem_per_sm": 102400,
+  "torch_version": "2.8.0+cu128",
+  "total_memory": 17170956288,
+  "triton_version": "3.4.0",
+  "warp_size": 32
+}
