@@ -25,6 +25,7 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | First measured vendor | Intel Arc/XPU | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | Cross-vendor shape | Capability adapters with explicit availability and validation state | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | Research history | Append-only events plus rebuildable projections | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
+| No-accelerator branch | Stop kernel iteration; build infrastructure and cited literature survey | 2026-08-29 | [ADR 0003](adr/0003-no-accelerator-literature-only-run.md) |
 
 ## Pressure Points
 
@@ -35,6 +36,8 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
   the attention core, so profiling must control optimization direction.
 - NVIDIA and AMD adapters can be implemented and contract-tested here but not honestly
   performance-validated without their hardware.
+- Synthetic objectives may test orchestration mechanics but may never be stored or
+  reported as empirical measurements.
 
 ## Recording Rule (Design Tree vs ADR)
 

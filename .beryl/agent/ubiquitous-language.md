@@ -29,3 +29,6 @@
 | Catalogue Projection | `CatalogueProjection` | Deterministically rebuilt current view over append-only experiment events. | May be regenerated; never substitutes for source events. | Catalogue fact |
 | Paper Importance | `PaperImportance` | Decision that evidence changes the concise research narrative enough to include. | Independent of whether an experiment is scientifically informative. | Experiment success |
 | Untuned Fallback | `UntunedFallback` | Correct portable implementation selected when no validated candidate exists for a regime. | Must be visible in dispatch and reports. | Silent fallback |
+| No-Run Gate | `NoRunEvidence` | Immutable evidence that research stopped because the selected backend or runtime was unavailable. | Contains environment, plan, and reason; contains no empirical result fields. | Failed experiment with zero timing |
+| Literature Claim | `LiteratureClaim` | A statement derived from a reviewed source rather than a project experiment. | Must carry a bibliography key and unmeasured label where relevant. | Project result |
+| Synthetic Fixture | `SyntheticFixture` | Test-only data used to exercise orchestration, search, or dispatch mechanics. | Lives under tests and never enters the production catalogue or paper evidence. | Experiment |

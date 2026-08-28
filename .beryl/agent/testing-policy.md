@@ -56,6 +56,22 @@ evaluator's executable absolute-OR-relative thresholds (`atol=0.002`, `rtol=0.02
 The reference evaluator's non-CUDA host-timer output is compatibility output only and
 must not be entered as Intel performance evidence.
 
+## No-Accelerator Gate
+
+When `.venv/bin/python -m ratchet.backends --backend xpu` reports unavailable, the
+current build is globally no-run even if another adapter can be selected:
+
+- Stop before candidate generation, compilation, correctness execution, profiling, and
+  kernel iteration.
+- A no-run event must omit timing, correctness, memory, speedup, profile, trace, counter,
+  and current-best fields.
+- Dispatch must return `is_tuned=false` without qualifying measurements.
+- The paper must reject uncited empirical claims when the catalogue has no successful
+  measurements.
+- Synthetic objective/timing fixtures stay under `tests/fixtures/` and never enter the
+  production catalogue.
+- Historical CUDA calibration cannot qualify Intel or the current runtime.
+
 ## Default Loop
 
 1. Identify or add the failing behavior.

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "record_kind": "provisional_environment_observation",
+  "environment_id": "ENV-0001",
+  "observed_at": "2026-08-29T01:41:39+08:00",
+  "git_commit_before_record": "31a55293ff2bbf27ccdc4f62e7b0cb15f04eed7c",
+  "host": {
+    "kernel": "Linux 6.6.87.2-microsoft-standard-WSL2 x86_64",
+    "system_python": "3.14.5",
+    "project_python": "3.12.3"
+  },
+  "requested_backend": "xpu",
+  "availability": "unavailable",
+  "backend_doctor_exit_code": 2,
+  "backend_doctor_reason": "PyTorch is not installed",
+  "device_interfaces": {
+    "xpu_smi": false,
+    "sycl_ls": false,
+    "dev_dri": false,
+    "dev_dxg": false
+  },
+  "probe_semantics": {
+    "backend_doctor": ".venv/bin/python -m ratchet.backends --backend xpu",
+    "command_presence": ["command -v xpu-smi", "command -v sycl-ls"],
+    "device_presence": ["test -e /dev/dri", "test -e /dev/dxg"]
+  },
+  "empirical_work_permitted": false,
+  "decision": "literature_only",
+  "notes": [
+    "No kernel candidate was generated or benchmarked.",
+    "Historical NVIDIA calibration is not evidence for this environment."
+  ]
+}

@@ -3,7 +3,10 @@
 ## Build Contract
 
 - Scope: Research-driven, append-only, multi-vendor transformer optimization system;
-  Intel Arc is the first measured target and the supplied evaluator controls acceptance.
+  Intel Arc is the first future measured target and the supplied evaluator controls
+  acceptance. This build produces hardware-independent infrastructure and a cited
+  literature survey because no qualified PyTorch XPU runtime is available in the
+  current workspace.
 - Non-goals: training/backward, distributed execution, cross-vendor performance parity,
   hostile-code sandboxing, benchmark manipulation, or unvalidated performance claims.
 - Ratified on: 2026-08-29
@@ -97,25 +100,30 @@
   and doctor output (16 passed); public contracts, including unavailable-capability
   contradictions, passed (31 total contract tests). Ruff format/lint, manifest,
   related-test command, full pytest (54 passed), and `./.beryl/scripts/check.sh` passed
-  on 2026-08-29. No real accelerator was used; IB-05 remains the Intel qualification gate.
+  on 2026-08-29. No real accelerator was used; IB-05 is the XPU availability gate.
 
-### IB-05 — Intel qualification
+### IB-05 — XPU availability decision
 - Parent: IB-04
 - Dependencies: IB-04
-- Deliverable: Actual Arc identity and qualified XPU runtime/compiler/timer/memory capabilities.
+- Deliverable: Recorded XPU availability decision and an enforced no-empirical-work gate.
 - Acceptance checks:
-  - `python -m ratchet.backends doctor --backend xpu`
-  - XPU allocation, SDPA, compile, synchronize, event, memory, and dtype probes
-- Status: pending
+  - `.venv/bin/python -m ratchet.backends --backend xpu`
+  - unavailable runtime prevents kernel generation, profiling, and measurement
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/testing-policy.md`
   - `.beryl/agent/architecture.md`
-- Evidence: Current shell has no visible Arc or PyTorch; empirical work stops if unchanged.
+- Evidence: Provisional observation `ENV-0001` records backend doctor exit 2 (`PyTorch is
+  not installed`), no `xpu-smi`, no `sycl-ls`, no `/dev/dri`, and no `/dev/dxg` on
+  2026-08-29. ADR 0003 activates the literature-only branch; no kernel candidate or
+  empirical result was produced. IB-07 will validate and import this observation.
 
-### IB-06 — Authoritative measurement harness
+### IB-06 — Measurement orchestration contract
 - Parent: IB-03
-- Dependencies: IB-04, IB-05
-- Deliverable: Correctness-first subprocess harness with synchronized timing, memory, provenance, timeout, and crash containment.
+- Dependencies: IB-04
+- Deliverable: Correctness-first subprocess harness contract for synchronized timing,
+  memory, provenance, timeout, and crash containment, verified only with fake backends
+  here; authoritative evaluator execution remains unvalidated.
 - Acceptance checks:
   - `pytest tests/measurement -q`
   - incorrect candidates have no timing; crash and timeout remain recorded
@@ -127,8 +135,10 @@
 
 ### IB-07 — Immutable experiment archive
 - Parent: IB-03
-- Dependencies: IB-03, IB-06
-- Deliverable: Append-only event catalogue, unique experiment IDs, artifacts, schemas, and deterministic projections.
+- Dependencies: IB-03
+- Deliverable: Append-only event catalogue, unique experiment IDs, artifacts, versioned
+  empirical and no-run schemas, validation/import of `ENV-0001`, and deterministic
+  projections.
 - Acceptance checks:
   - `pytest tests/experiments -q`
   - projections rebuild byte-identically; duplicate IDs and mutation fail
@@ -165,11 +175,12 @@
 
 ### IB-10 — Baseline portfolio
 - Parent: IB-04
-- Dependencies: IB-05, IB-06
-- Deliverable: Fair eager, compiled, SDPA, and available vendor baselines with compilation separated from steady state.
+- Dependencies: IB-02, IB-03, IB-04
+- Deliverable: Reproducible eager, compiled, SDPA, and vendor baseline definitions with
+  compilation separated from steady state; no baseline is executed in this build.
 - Acceptance checks:
   - `pytest tests/benchmarks -q`
-  - correctness and provenance for every baseline
+  - configuration and provenance contract for every baseline definition
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
@@ -178,10 +189,11 @@
 ### IB-11 — Candidate seam
 - Parent: IB-02
 - Dependencies: IB-02, IB-03, IB-10
-- Deliverable: Optimized model delegates through the evaluator's designated seam only.
+- Deliverable: The evaluator's designated customization seam is structurally
+  characterized without importing PyTorch, implementing, or timing an optimized kernel.
 - Acceptance checks:
   - protected-region AST/hash guard
-  - weight-copy, mask, causal, and output contract tests
+  - source-level weight-copy, mask, causal, and output contract characterization
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
@@ -189,22 +201,25 @@
 
 ### IB-12 — Baseline profiling
 - Parent: IB-10
-- Dependencies: IB-10
-- Deliverable: Arc operator profile and evidence-backed end-to-end bottleneck.
+- Dependencies: IB-08, IB-10
+- Deliverable: Cited literature survey of likely Arc transformer bottlenecks, clearly
+  distinguished from a project profile.
 - Acceptance checks:
-  - XPU profiler trace and operator breakdown
+  - every bottleneck claim traces to a reviewed primary source
+  - all unmeasured project-specific claims are labelled as hypotheses
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
-- Evidence: If no GPU is accessible, publish literature survey and leave this node blocked.
+- Evidence: No XPU profiler trace is permitted in the current environment.
 
 ### IB-13 — First Intel hypothesis
 - Parent: IB-11
-- Dependencies: IB-11, IB-12
-- Deliverable: Genuine profiling-justified candidate, initially compiled SDPA unless evidence redirects it.
+- Dependencies: IB-08, IB-11, IB-12
+- Deliverable: Literature-backed future Intel experiment protocol queued as
+  `not_run_hardware_unavailable`; no candidate implementation is generated.
 - Acceptance checks:
-  - authoritative correctness matrix
-  - paired synchronized XPU timing and peak memory
+  - explicit hypothesis, shapes, correctness tolerances, timing method, and stop criteria
+  - no empirical result fields are populated
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
@@ -212,8 +227,9 @@
 
 ### IB-14 — Multi-vendor dispatch
 - Parent: IB-04
-- Dependencies: IB-07, IB-10, IB-13
-- Deliverable: Capability- and evidence-driven selection with explicit untuned fallbacks.
+- Dependencies: IB-04, IB-07, IB-10
+- Deliverable: Capability- and evidence-driven selection with explicit untuned fallbacks;
+  every unavailable or unmeasured backend remains untuned.
 - Acceptance checks:
   - `pytest tests/dispatch -q`
   - decisions respond to profile perturbations; no evaluator detection
@@ -248,11 +264,14 @@
 
 ### IB-17 — Autoresearch controller
 - Parent: IB-14
-- Dependencies: IB-07, IB-14, IB-15, IB-16
-- Deliverable: Idea-to-synthesis controller with correctness gating, comparison, recording, and bounded continuation.
+- Dependencies: IB-05, IB-07, IB-14, IB-15, IB-16
+- Deliverable: Idea-to-synthesis controller with correctness gating, comparison,
+  recording, and bounded continuation; unavailable hardware stops before candidate
+  generation, compilation, correctness execution, or timing.
 - Acceptance checks:
   - `pytest tests/optimization/test_controller.py -q`
-  - end-to-end dry-run records compile and correctness failures
+  - end-to-end no-run path records the unavailable reason without empirical, profile,
+    trace, or counter fields
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
@@ -262,7 +281,8 @@
 ### IB-18 — Search strategies
 - Parent: IB-17
 - Dependencies: IB-17
-- Deliverable: Parametric and architectural search, caching, infeasibility recording, and random-search ablation.
+- Deliverable: Parametric and architectural search mechanics, caching, infeasibility
+  recording, and random-search ablation, exercised with test-only synthetic fixtures.
 - Acceptance checks:
   - `pytest tests/optimization/test_search.py -q`
 - Status: pending
@@ -271,21 +291,25 @@
 - Evidence: none
 
 ### IB-19 — First autoresearch run
-- Parent: IB-18
-- Dependencies: IB-09, IB-13, IB-17, IB-18
-- Deliverable: Real Intel baseline and at least one complete optimization experiment.
+- Parent: IB-17
+- Dependencies: IB-05, IB-07, IB-13, IB-17
+- Deliverable: Immutable no-run research event proving the controller stopped because
+  hardware was unavailable.
 - Acceptance checks:
-  - complete immutable `EXP-NNNN` with correctness, timing, comparisons, and decision
+  - complete immutable event with environment, intended protocol, and unavailable reason
+  - timing, memory, correctness, speedup, profile, trace, counter, and current-best fields
+    are absent
 - Status: pending
 - Canonical context targets:
   - `.beryl/agent/project-brief.md`
   - `.beryl/agent/design-tree.md`
-- Evidence: If no GPU is accessible, this node is blocked and no empirical substitute is created.
+- Evidence: No synthetic or historical measurement may substitute for the missing run.
 
 ### IB-20 — Research synthesis
 - Parent: IB-09
-- Dependencies: IB-19
-- Deliverable: Statistics, meaningful visualization, concise narrative, negative evidence, and next hypothesis.
+- Dependencies: IB-08, IB-09, IB-19
+- Deliverable: Concise cited literature survey, source-derived visualization, explicit
+  no-run disclosure, and an evidence-backed next hypothesis.
 - Acceptance checks:
   - every paper claim traces to experiment IDs or cited literature
   - `research/paper/latest.pdf` regenerates from repository data
@@ -297,8 +321,9 @@
 
 ### IB-21 — Adversarial pool
 - Parent: IB-17
-- Dependencies: IB-06, IB-07, IB-19
-- Deliverable: Permanent numerical near-miss pool without tolerance changes.
+- Dependencies: IB-02, IB-06, IB-07
+- Deliverable: Test-only synthetic numerical near-miss fixtures without tolerance changes;
+  fixtures never enter the experiment catalogue or paper evidence.
 - Acceptance checks:
   - `pytest tests/evaluation/test_adversarial_pool.py -q`
 - Status: pending
@@ -309,7 +334,9 @@
 ### IB-22 — Critic and scout
 - Parent: IB-17
 - Dependencies: IB-08, IB-18, IB-21
-- Deliverable: Citation-aware scout and candidate-held-out epoch-frozen critic.
+- Deliverable: Citation-aware scout and candidate-held-out epoch-frozen critic; the scout
+  remains active for literature while the performance critic remains dormant without
+  measurements.
 - Acceptance checks:
   - `pytest tests/optimization/test_critic.py tests/optimization/test_scout.py -q`
 - Status: pending
@@ -321,7 +348,8 @@
 ### IB-23 — NVIDIA support path
 - Parent: IB-04
 - Dependencies: IB-04, IB-06, IB-14
-- Deliverable: CUDA adapter, functional fallback, timing contract, and hardware-gated validation command.
+- Deliverable: CUDA adapter contract, defined untuned fallback, timing contract, and
+  hardware-gated validation command; runtime functionality remains unverified here.
 - Acceptance checks:
   - backend contract tests
   - documented CUDA integration gate
@@ -333,7 +361,8 @@
 ### IB-24 — AMD support path
 - Parent: IB-04
 - Dependencies: IB-04, IB-06, IB-14
-- Deliverable: ROCm/HIP adapter, functional fallback, timing contract, and hardware-gated validation command.
+- Deliverable: ROCm/HIP adapter contract, defined untuned fallback, timing contract, and
+  hardware-gated validation command; runtime functionality remains unverified here.
 - Acceptance checks:
   - backend contract tests
   - documented ROCm integration gate
@@ -373,9 +402,18 @@
 - Deliverable: Full review, all available gates, durable context, hierarchy deletion, final commits, and verified GitHub push.
 - Acceptance checks:
   - formatter, narrow suites, `./.beryl/scripts/check.sh`
-  - required hardware gates or explicit blocked status
+  - recorded no-run gate and zero blocked active-scope nodes
   - clean worktree and remote commit verification
 - Status: pending
 - Canonical context targets:
   - all relevant `.beryl/agent/*.md`
 - Evidence: none
+
+## Deferred Hardware Qualification
+
+The following future gate is deliberately outside this build's active completion graph:
+
+- **FG-01 — Intel Arc qualification:** identify the device and validate XPU allocation,
+  SDPA, compilation, synchronization, event timing, memory observation, and supported
+  dtypes on an accessible Intel runtime. Successful qualification starts a new ratified
+  empirical hierarchy; it does not rewrite this build's no-run evidence.

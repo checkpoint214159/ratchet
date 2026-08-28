@@ -77,3 +77,20 @@ Human/literature -> Optimization -> Models -> Measurement
 
 The experiment event log and measurement artifacts are facts. Rankings, dispatch tables,
 critic predictions, charts, and paper prose are derived views and may be regenerated.
+
+## No-Accelerator Execution
+
+This build is unconditionally literature-only after the recorded XPU availability
+decision. If XPU becomes available, FG-01 redirects empirical work into a new ratified
+hierarchy rather than changing this build in place. Once the archive exists, the
+controller validates the provisional environment observation and appends
+`NoRunEvidence` with environment identity, planned hypothesis, and stop reason. It then
+stops before candidate generation, compilation, correctness, profiling, timing, or
+memory collection. Timing, memory, correctness, speedup, profile, trace, counter, and
+current-best fields must be absent, not zero or synthetic. The gate cannot be bypassed
+by selecting XPU, CUDA, HIP, or a host timer in the current build.
+
+Synthetic timing and objective fixtures live only under `tests/fixtures/`. They exercise
+selection mechanics but are prohibited from the production experiment catalogue and
+paper results. A literature claim carries a bibliography key; it is never phrased as a
+project measurement.

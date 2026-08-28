@@ -6,9 +6,11 @@ Build Ratchet for GPU-kernel researchers and coding agents so they can turn an
 authoritative transformer workload into faster, correct, reproducible implementations
 while retaining every experiment and continuously publishing the important conclusions.
 
-Intel Arc is the first measured target. NVIDIA CUDA and AMD ROCm/HIP are first-class
-adapter paths with functional PyTorch fallbacks, but they are not described as validated
-until their hardware gates run.
+Intel Arc is the first future measured target. The current workspace has no qualified
+PyTorch XPU runtime, so the current delivery verifies hardware-independent infrastructure
+and produces a cited literature survey without kernel iteration or performance claims.
+NVIDIA CUDA and AMD ROCm/HIP remain first-class adapter contracts with defined fallbacks,
+but runtime functionality is not described as validated until their hardware gates run.
 
 ## Authoritative Contract
 
@@ -59,9 +61,9 @@ until their hardware gates run.
 
 | System | Why it exists | Interface owner | Failure fallback |
 | --- | --- | --- | --- |
-| Intel XPU runtime | First measured backend | `ratchet.backends` XPU adapter | Mark hardware nodes blocked; produce literature-only research output |
-| CUDA / ROCm runtimes | Portable functional paths | matching backend adapter | Explicit unvalidated PyTorch fallback |
-| Compiler stacks | `torch.compile`, optional SYCL/Triton candidates | backend adapter | Eager/vendor-library candidate |
+| Intel XPU runtime | First future measured backend | `ratchet.backends` XPU adapter | Complete no-run path; defer qualification to FG-01 |
+| CUDA / ROCm runtimes | Portable adapter contracts | matching backend adapter | Defined untuned fallback; runtime remains unverified |
+| Compiler stacks | Future `torch.compile`, SYCL, or Triton protocols | backend adapter | Record the literature-backed protocol without execution |
 | Git and GitHub | Provenance, experiment isolation, durable delivery | experiment workspace adapter | Retain local commits and report push failure |
 | Tectonic | Reproducible LaTeX-to-PDF build | reporting adapter | Keep validated LaTeX and report missing PDF tool |
 | Coding-agent/LLM runner | Architectural proposals and synthesis | optimization proposer adapter | Human/file-backed hypothesis queue |
@@ -72,7 +74,8 @@ The initial build is complete only when every ratified hierarchy node passes, du
 context is promoted, the transient hierarchy is removed, `HANDOFF.md` is retired after
 its useful content is preserved, and the completed commits are verified on GitHub.
 
-If no accelerator is accessible, no empirical kernel-iteration claim may be made. The
-system, literature survey, and paper may still be built, but hardware-dependent hierarchy
-nodes remain explicitly blocked rather than being satisfied with fabricated or cached
-measurements.
+Because no qualified PyTorch XPU runtime is available, no empirical kernel-iteration
+claim may be made in this build. The system, literature survey, and paper are built
+through a no-run gate: the environment observation and stop decision are facts, while
+timing, correctness, memory, and speedup fields remain absent. Synthetic fixtures never
+enter the production catalogue.
