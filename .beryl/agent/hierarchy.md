@@ -55,11 +55,13 @@
 - Acceptance checks:
   - Original SHA-256 remains `5529c96a80799b51f68092e1444a30b17994554dffdf52da98ba701489a7f36e`
   - `pytest tests/evaluation -q`
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/testing-policy.md`
   - `.beryl/agent/design-tree.md`
-- Evidence: none
+- Evidence: Reference relocated byte-for-byte; SHA-256 matched exactly. CPU-only source
+  characterization, including the no-`benchmarks.reference`-import guard (5 passed),
+  Ruff format/lint, and `./.beryl/scripts/check.sh` (7 passed) succeeded on 2026-08-29.
 
 ### IB-03 — Domain boundaries
 - Parent: IB-00

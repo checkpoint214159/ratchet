@@ -42,7 +42,7 @@ extend-exclude = [
     ".beryl",
     "ratchet/oracle",
     "tests/golden",
-    "torch_transformer_benchmark.py",
+    "benchmarks/reference/torch_transformer_benchmark.py",
 ]
 
 [tool.ruff.lint]
