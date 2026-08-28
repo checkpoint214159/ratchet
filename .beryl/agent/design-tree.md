@@ -27,14 +27,16 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | Research history | Append-only events plus rebuildable projections | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | No-accelerator branch | Stop kernel iteration; build infrastructure and cited literature survey | 2026-08-29 | [ADR 0003](adr/0003-no-accelerator-literature-only-run.md) |
 | Baseline portfolio | Four definition-only Intel-XPU future full-workload baselines; substituted attention is semantically constrained and oneDNN Graph dispatch remains unverified | 2026-08-29 | — |
+| Bottleneck evidence | Keep source observations separate from explicitly unmeasured project hypotheses until qualified profiling exists | 2026-08-29 | — |
 
 ## Pressure Points
 
 - The current shell exposes neither Intel Arc nor a compatible PyTorch installation.
 - The supplied evaluator synchronizes only CUDA and cannot substantiate XPU latency.
 - The legacy oracle is CUDA/Triton attention-specific and semantically stricter.
-- The default transformer is likely dominated by projections and FFN rather than only
-  the attention core, so profiling must control optimization direction.
+- Literature motivates attention data movement, work partitioning, graph compilation,
+  configuration sensitivity, XMX, and Triton-XPU scheduling as future hypotheses; none is
+  an observed Ratchet bottleneck, so qualified profiling must control optimization direction.
 - NVIDIA and AMD adapters can be implemented and contract-tested here but not honestly
   performance-validated without their hardware.
 - Synthetic objectives may test orchestration mechanics but may never be stored or

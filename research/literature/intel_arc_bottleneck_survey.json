@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "survey_id": "LIT-SURVEY-0001",
+  "scope": "literature_only_not_project_profile",
+  "target": "future_intel_arc_xpu",
+  "project_profile_status": "not_measured",
+  "literature_observations": [
+    {
+      "claim_id": "OBS-001",
+      "statement": "Exact attention implementations can reduce IO through tiled algorithms.",
+      "citation_keys": ["dao2022flashattention"]
+    },
+    {
+      "claim_id": "OBS-002",
+      "statement": "Attention implementations can change work partitioning and non-matmul overhead.",
+      "citation_keys": ["dao2024flashattention2"]
+    },
+    {
+      "claim_id": "OBS-003",
+      "statement": "PyTorch 2 introduces optional torch.compile graph capture/compilation alongside eager execution.",
+      "citation_keys": ["ansel2024pytorch"]
+    },
+    {
+      "claim_id": "OBS-004",
+      "statement": "Kernel autotuning outcomes depend on target, shape, and code configuration.",
+      "citation_keys": ["schoonhoven2022autotuning"]
+    },
+    {
+      "claim_id": "OBS-005",
+      "statement": "Intel XMX joint-matrix operations are a hardware-specific lower-level programming path.",
+      "citation_keys": ["intel_joint_matrix_2024"]
+    },
+    {
+      "claim_id": "OBS-006",
+      "statement": "The Intel Triton-XPU path exposes descriptor, block, warp, stage, GRF-mode, and grid-ordering controls.",
+      "citation_keys": ["intel_triton_xpu_2026"]
+    }
+  ],
+  "hypotheses": [
+    {
+      "hypothesis_id": "HYP-LIT-001",
+      "label": "hypothesis",
+      "candidate_bottleneck": "attention_data_movement",
+      "statement": "Hypothesis: after the qualified XPU gate, attention data movement may merit an isolated sidecar measurement before any kernel work.",
+      "citation_keys": ["dao2022flashattention"]
+    },
+    {
+      "hypothesis_id": "HYP-LIT-002",
+      "label": "hypothesis",
+      "candidate_bottleneck": "attention_work_partitioning",
+      "statement": "Hypothesis: after the qualified XPU gate, attention work partitioning and non-matmul work may be worth comparing under the authoritative full workload.",
+      "citation_keys": ["dao2024flashattention2"]
+    },
+    {
+      "hypothesis_id": "HYP-LIT-003",
+      "label": "hypothesis",
+      "candidate_bottleneck": "graph_compilation",
+      "statement": "Hypothesis: after the qualified XPU gate, eager and torch.compile should be measured as separate baseline conditions.",
+      "citation_keys": ["ansel2024pytorch"]
+    },
+    {
+      "hypothesis_id": "HYP-LIT-004",
+      "label": "hypothesis",
+      "candidate_bottleneck": "configuration_sensitivity",
+      "statement": "Hypothesis: after the qualified XPU gate, any tuning search should be bounded and recorded per workload configuration.",
+      "citation_keys": ["schoonhoven2022autotuning"]
+    },
+    {
+      "hypothesis_id": "HYP-LIT-005",
+      "label": "hypothesis",
+      "candidate_bottleneck": "xmx_matrix_path",
+      "statement": "Hypothesis: after the qualified XPU gate, XMX joint-matrix work is a later branch only if a measured profile establishes headroom and hardware support.",
+      "citation_keys": ["intel_joint_matrix_2024"]
+    },
+    {
+      "hypothesis_id": "HYP-LIT-006",
+      "label": "hypothesis",
+      "candidate_bottleneck": "triton_xpu_schedule",
+      "statement": "Hypothesis: after the qualified XPU gate, Triton-XPU schedule controls are a later versioned experiment branch, not a present implementation path.",
+      "citation_keys": ["intel_triton_xpu_2026"]
+    }
+  ]
+}

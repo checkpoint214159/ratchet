@@ -260,10 +260,16 @@
 - Acceptance checks:
   - every bottleneck claim traces to a reviewed primary source
   - all unmeasured project-specific claims are labelled as hypotheses
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
-- Evidence: No XPU profiler trace is permitted in the current environment.
+- Evidence: `LIT-SURVEY-0001` records six primary-source observations and six explicitly
+  unmeasured, hardware-gated project hypotheses in aligned JSON and Markdown. Exact-schema,
+  unique-ID, first-column citation resolution, per-hypothesis label/gate, and no-present-result
+  checks passed with `pytest tests/literature -q` (10 passed), plus repository Ruff and
+  `git diff --check` on 2026-08-29. Design and slice reviews approved the separation of
+  literature fact from Ratchet protocol choice. No XPU profile, timing, candidate, kernel,
+  or empirical result was produced.
 
 ### IB-13 — First Intel hypothesis
 - Parent: IB-11
