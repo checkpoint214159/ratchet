@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 # Ratchet bootstrap. Run in WSL2, not PowerShell.
 #
-# VENDORED into the repo 2026-08-28 for reproduction (M13). One patch vs the
-# original: --test-runner pytest -> pytest-testmon ("pytest" is not a valid value
-# in the pinned Beryl revision and fails STEP 5). pip install pytest-testmon first.
+# VENDORED into the repo 2026-08-28 as the record of how this repo was built (M13).
+# One patch vs the original: --test-runner pytest -> pytest-testmon ("pytest" is not
+# a valid value in the pinned Beryl revision and fails STEP 5).
+#
+# DO NOT RUN THIS FROM INSIDE THE WORKING REPO. It only makes sense when run from the
+# original handoff package (which has a seed/ directory); the guard below enforces
+# that. If you are a teammate setting up a fresh machine: just clone this repo,
+# `pip install pytest-testmon`, then run `python3 -m ratchet.oracle.device` to
+# calibrate for YOUR gpu. There is nothing to bootstrap.
 #
 # ---------------------------------------------------------------------------------------
 # READ THIS BEFORE RUNNING
@@ -39,6 +45,17 @@ set -euo pipefail
 PROJECT="${PROJECT:-$HOME/ratchet}"
 BERYL="${BERYL:-$HOME/.beryl-src}"
 HANDOFF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Guard: must run from the handoff PACKAGE, not from an already-bootstrapped repo.
+# The package has seed/; the repo does not (the seed became the live code). Without
+# this check the script half-creates $PROJECT before dying at the seed copy.
+if [ ! -d "$HANDOFF_DIR/seed" ]; then
+  echo "ERROR: $HANDOFF_DIR has no seed/ directory -- this is the bootstrapped working"
+  echo "repo, not the handoff package. Setup here is already done; nothing to run."
+  echo "Fresh machine? Clone this repo, pip install pytest-testmon, then calibrate:"
+  echo "  python3 -m ratchet.oracle.device"
+  exit 1
+fi
 
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 
