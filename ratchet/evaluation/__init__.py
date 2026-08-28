@@ -49,6 +49,18 @@ class CorrectnessPolicy:
 
 
 @dataclass(frozen=True, slots=True)
+class CorrectnessResult:
+    """Evaluator-owned outcome that gates any later measurement stage."""
+
+    passed: bool
+    diagnostic: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.passed and not self.diagnostic:
+            raise ValueError("failed correctness requires a diagnostic")
+
+
+@dataclass(frozen=True, slots=True)
 class EvaluationCase:
     """A deterministic correctness or timing case owned by evaluation."""
 

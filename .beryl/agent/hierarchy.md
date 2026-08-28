@@ -127,26 +127,41 @@
 - Acceptance checks:
   - `pytest tests/measurement -q`
   - incorrect candidates have no timing; crash and timeout remain recorded
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/testing-policy.md`
-- Evidence: none
+- Evidence: The public measurement surface is an unconditional no-run gate with no
+  successful execution path. Correctness-first subprocess, timeout, crash, synchronized
+  timing, and memory lifecycle mechanics are isolated under `tests/fixtures/` and always
+  emit synthetic-classified evidence. Constructor invariants prevent no-run facts from
+  representing anything except unavailable status. On 2026-08-29, 11 measurement tests,
+  43 measurement plus contract tests, Ruff format/lint, manifest checks, and architecture
+  and slice reviews passed. No PyTorch or accelerator execution occurred.
 
 ### IB-07 — Immutable experiment archive
 - Parent: IB-03
 - Dependencies: IB-03
 - Deliverable: Append-only event catalogue, unique experiment IDs, artifacts, versioned
-  empirical and no-run schemas, validation/import of `ENV-0001`, and deterministic
-  projections.
+  empirical and no-run schemas, validation/storage of `ENV-0001` as immutable
+  provenance, and deterministic projections.
 - Acceptance checks:
   - `pytest tests/experiments -q`
   - projections rebuild byte-identically; duplicate IDs and mutation fail
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/ubiquitous-language.md`
-- Evidence: none
+- Evidence: Separate `EVT-NNNNNN`, `EXP-NNNN`, and `ENV-NNNN` identities, exact
+  conditional success/failure/no-run schemas, protected evaluator provenance,
+  content-addressed artifacts, comparison-regime checks, and deterministic projections
+  are implemented. A process lock and validated fsync'd journal recover interrupted
+  target-plus-manifest transactions and reject tampering. `ENV-0001` is immutable
+  unavailable-XPU provenance only and forbids empirical append; IB-19 alone may append
+  the no-run experiment event. Process races, crash recovery, finite/recomputed timing
+  statistics, referential integrity, and no-run result-field exclusion are covered. On
+  2026-08-29, 41 focused tests, Ruff, manifest and Beryl checks, plus architecture and
+  slice reviews passed. No GPU work occurred.
 
 ### IB-08 — Literature and hypotheses
 - Parent: IB-07

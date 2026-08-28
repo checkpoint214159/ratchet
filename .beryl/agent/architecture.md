@@ -13,8 +13,8 @@ may specialize execution but may return only vendor-neutral domain records.
 | Evaluation | Transformer configuration, reference/baseline model, input and correctness semantics, protected benchmark seam | Timing, device APIs, search policy | `ratchet/evaluation/__init__.py` |
 | Models | Candidate transformer implementations and weight-compatible public model factory | Evaluation criteria, timers, catalogue writes | `ratchet/models/__init__.py` |
 | Backends | Accelerator discovery, synchronization, timing primitives, memory, compilation, capabilities | Workload correctness, promotion, narrative | `ratchet/backends/__init__.py` |
-| Measurement | Correctness-first subprocess execution, paired statistics, provenance assembly | Candidate generation, device-specific objects, paper selection | `ratchet/measurement/__init__.py` |
-| Experiments | Experiment IDs, append-only events, artifacts, projections, worktree provenance | GPU execution, hypothesis generation, LaTeX presentation | `ratchet/experiments/__init__.py` |
+| Measurement | Current-build no-run gate and future correctness-first orchestration contract | Candidate generation, synthetic execution, device-specific objects, paper selection | `ratchet/measurement/__init__.py` |
+| Experiments | Separate event/experiment/environment IDs, journaled append-only events, artifacts, exact evidence schemas, projections | GPU execution, hypothesis generation, LaTeX presentation | `ratchet/experiments/__init__.py` |
 | Dispatch | Evidence- and capability-driven candidate selection | Timing, benchmark semantics, vendor SDK calls | `ratchet/dispatch/__init__.py` |
 | Optimization | Human queue, proposer adapters, parametric/architectural search, accept/reject policy | Mutating evaluator, measurement facts, vendor clients | `ratchet/optimization/__init__.py` |
 | Reporting | Statistics, importance selection, figures, tables, LaTeX/PDF generation | Editing catalogue facts, executing candidates | `ratchet/reporting/__init__.py` |
@@ -77,6 +77,9 @@ Human/literature -> Optimization -> Models -> Measurement
 
 The experiment event log and measurement artifacts are facts. Rankings, dispatch tables,
 critic predictions, charts, and paper prose are derived views and may be regenerated.
+Archive writes use a process lock and a validated, fsync'd recovery journal spanning the
+content-addressed target and manifest. Recovery accepts only the recorded before or after
+state and verifies the completed archive before removing the journal.
 
 ## No-Accelerator Execution
 

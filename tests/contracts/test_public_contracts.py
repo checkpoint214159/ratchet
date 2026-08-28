@@ -22,8 +22,15 @@ from ratchet.evaluation import (
     EvaluationCase,
     TransformerConfiguration,
 )
-from ratchet.experiments import CatalogueProjection, ExperimentEvent, ExperimentId
+from ratchet.experiments import (
+    EMPIRICAL_EVENT,
+    CatalogueProjection,
+    EventId,
+    ExperimentEvent,
+    ExperimentId,
+)
 from ratchet.measurement import (
+    EvidenceClassification,
     MeasurementEvidence,
     MeasurementRequest,
     MeasurementStatus,
@@ -143,14 +150,21 @@ def test_measurement_experiment_dispatch_optimization_and_reporting_contracts():
     timing = TimingEvidence("event", (100,), True)
     memory = MemoryEvidence(1, 2)
     evidence = MeasurementEvidence(
-        "request-1", MeasurementStatus.OK, True, timing, memory
+        "request-1",
+        MeasurementStatus.OK,
+        True,
+        timing,
+        memory,
+        classification=EvidenceClassification.SYNTHETIC,
     )
-    event = ExperimentEvent(ExperimentId("EXP-0001"), 0, "measured", "payload-digest")
-    projection = CatalogueProjection("current", 1)
+    event = ExperimentEvent(
+        EventId("EVT-000001"), ExperimentId("EXP-0001"), 0, EMPIRICAL_EVENT, "a" * 64
+    )
+    projection = CatalogueProjection("b" * 64, 1)
 
     assert request.candidate is candidate
     assert evidence.timing is timing
-    assert event.experiment_id.value == "EXP-0001"
+    assert event.event_id.value == "EVT-000001"
     assert DispatchRequest("default", _identity()).regime == "default"
     assert DispatchDecision("candidate-1", False, "untuned fallback").is_tuned is False
     assert OptimizationRequest(
@@ -158,9 +172,21 @@ def test_measurement_experiment_dispatch_optimization_and_reporting_contracts():
     )
     assert ReportRequest("report-1", projection).projection is projection
     assert ReportArtifact("report-1", "digest").content_digest == "digest"
-    with pytest.raises(ValueError, match="must not include timing"):
+    with pytest.raises(ValueError, match="timing or memory"):
         MeasurementEvidence(
-            "request-1", MeasurementStatus.INCORRECT, False, timing, None
+            "request-1",
+            MeasurementStatus.INCORRECT,
+            False,
+            timing,
+            None,
+            classification=EvidenceClassification.SYNTHETIC,
         )
     with pytest.raises(ValueError, match="cannot pass correctness"):
-        MeasurementEvidence("request-1", MeasurementStatus.INCORRECT, True, None, None)
+        MeasurementEvidence(
+            "request-1",
+            MeasurementStatus.INCORRECT,
+            True,
+            None,
+            None,
+            classification=EvidenceClassification.SYNTHETIC,
+        )
