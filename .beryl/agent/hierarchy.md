@@ -37,14 +37,16 @@
 - Deliverable: Clean manifest, real Python checks, and documented installed-target Beryl state.
 - Acceptance checks:
   - `./.beryl/scripts/check-tests-unchanged.sh`
-  - `ruff format --check . && ruff check .`
+  - `.venv/bin/ruff format --check . && .venv/bin/ruff check .`
   - `pytest -m 'not gpu'`
   - `./.beryl/scripts/check.sh`
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/testing-policy.md`
   - `.beryl/agent/agent-rules.md`
-- Evidence: none
+- Evidence: manifest excludes ignored bytecode; direct simulated-missing-torch collection,
+  `pytest -m 'not gpu'` (2 passed), native Ruff format/lint, agent doctor, and
+  `./.beryl/scripts/check.sh` passed on 2026-08-29.
 
 ### IB-02 — Benchmark custody
 - Parent: IB-00

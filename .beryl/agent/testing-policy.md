@@ -8,8 +8,8 @@
 | Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope from `.beryl/agent/test-manifest.conf` |
 | Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
 | Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
-| Format | `ruff format --check .` | unavailable | `ruff` resolves to a Windows pyenv shim that Linux Bash cannot execute (exit 127); install a native Ruff binary before CB-02. |
-| Lint | `ruff check .` | unavailable | Same unavailable Ruff executable; no Ruff configuration is added until the tool can run here. |
+| Format | `.venv/bin/ruff format --check .` | available | Ruff 0.16.5 is pinned in the `dev` extra; managed, immutable, and byte-preserved paths are excluded in `pyproject.toml`. |
+| Lint | `.venv/bin/ruff check .` | available | Uses the same explicit Ruff surface and baseline rules. |
 | Typecheck | `not available yet` | unavailable | Add the project typecheck command when configured |
 | Unit tests | `not available yet` | unavailable | Add the project unit test command when configured |
 | Integration tests | `not available yet` | unavailable | Add the project integration test command when configured |

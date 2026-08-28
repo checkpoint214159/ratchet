@@ -18,9 +18,8 @@ import json
 import math
 import os
 import random
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
+from typing import Iterator, Optional
 
 SCHEMA = 1
 DEFAULT_PATH = "ledger/measurements.jsonl"
@@ -76,7 +75,9 @@ class Ledger:
                 except json.JSONDecodeError:
                     bad += 1
         if bad:
-            print(f"[ledger] skipped {bad} unparseable line(s) -- likely a crash mid-write")
+            print(
+                f"[ledger] skipped {bad} unparseable line(s) -- likely a crash mid-write"
+            )
 
     def ok_rows(self) -> Iterator[dict]:
         for r in self.rows():
@@ -87,6 +88,7 @@ class Ledger:
 # ======================================================================================
 # Derived views. Pure functions of the ledger. Delete and rebuild at will.
 # ======================================================================================
+
 
 def _shape_key(row: dict) -> str:
     s = row.get("shape", {})
@@ -121,9 +123,11 @@ def _ci_overlap(a: dict, b: dict, k: float = 2.0) -> bool:
     return not ((ma + k * sa) < (mb - k * sb) or (mb + k * sb) < (ma - k * sa))
 
 
-def promotion_candidates(ledger: Ledger,
-                         deployed: Optional[dict[tuple[str, str], str]] = None,
-                         k_sigma: float = 2.0) -> list[dict]:
+def promotion_candidates(
+    ledger: Ledger,
+    deployed: Optional[dict[tuple[str, str], str]] = None,
+    k_sigma: float = 2.0,
+) -> list[dict]:
     """Which shapes have a challenger that beats what is currently deployed, decisively?
 
     `deployed` maps (shape_key, env_key) -> candidate_id of whatever the dispatch table
@@ -150,23 +154,39 @@ def promotion_candidates(ledger: Ledger,
             inc_cid = deployed.get(key)
             incumbent = next((r for r in rows if r["candidate_id"] == inc_cid), None)
         else:
-            incumbent = next((r for r in rows[1:]
-                              if r["candidate_id"] != best["candidate_id"]), None)
+            incumbent = next(
+                (r for r in rows[1:] if r["candidate_id"] != best["candidate_id"]), None
+            )
 
         if incumbent is None or incumbent["candidate_id"] == best["candidate_id"]:
-            out.append({"shape_key": key[0], "env_key": key[1], "challenger": best,
-                        "incumbent": None, "decisive": True,
-                        "reason": "no incumbent to beat"})
+            out.append(
+                {
+                    "shape_key": key[0],
+                    "env_key": key[1],
+                    "challenger": best,
+                    "incumbent": None,
+                    "decisive": True,
+                    "reason": "no incumbent to beat",
+                }
+            )
             continue
 
-        decisive = (best["timing"]["mean_ns"] < incumbent["timing"]["mean_ns"]
-                    and not _ci_overlap(best, incumbent, k_sigma))
-        out.append({
-            "shape_key": key[0], "env_key": key[1],
-            "challenger": best, "incumbent": incumbent, "decisive": decisive,
-            "speedup": incumbent["timing"]["mean_ns"] / best["timing"]["mean_ns"],
-            "reason": "non-overlapping CI" if decisive else "CIs overlap -- do not promote",
-        })
+        decisive = best["timing"]["mean_ns"] < incumbent["timing"][
+            "mean_ns"
+        ] and not _ci_overlap(best, incumbent, k_sigma)
+        out.append(
+            {
+                "shape_key": key[0],
+                "env_key": key[1],
+                "challenger": best,
+                "incumbent": incumbent,
+                "decisive": decisive,
+                "speedup": incumbent["timing"]["mean_ns"] / best["timing"]["mean_ns"],
+                "reason": "non-overlapping CI"
+                if decisive
+                else "CIs overlap -- do not promote",
+            }
+        )
     return out
 
 
@@ -197,7 +217,7 @@ def clade_stats(ledger: Ledger) -> dict[str, tuple[int, int]]:
     def walk(cid: str, seen: frozenset) -> tuple[int, int]:
         if cid in memo:
             return memo[cid]
-        if cid in seen:            # cycles should be impossible, but do not hang on one
+        if cid in seen:  # cycles should be impossible, but do not hang on one
             return (0, 0)
         s, f = own.get(cid, (0, 0))
         for ch in children.get(cid, []):
@@ -235,12 +255,16 @@ def failure_corpus(ledger: Ledger) -> list[dict]:
     rather than skipped: in comparable tuning spaces 68-78% of configurations fail to
     compile, so the failures ARE the dataset.
     """
-    return [r for r in ledger.rows()
-            if r.get("status") in ("compile_error", "incorrect", "timeout", "crash", "oom")]
+    return [
+        r
+        for r in ledger.rows()
+        if r.get("status") in ("compile_error", "incorrect", "timeout", "crash", "oom")
+    ]
 
 
-def critic_training_split(ledger: Ledger, holdout_frac: float = 0.25,
-                          seed: int = 0) -> tuple[list[dict], list[dict]]:
+def critic_training_split(
+    ledger: Ledger, holdout_frac: float = 0.25, seed: int = 0
+) -> tuple[list[dict], list[dict]]:
     """Split BY CANDIDATE, never by row.
 
     A candidate's measurements across shapes are not independent samples. Splitting by row
@@ -254,8 +278,10 @@ def critic_training_split(ledger: Ledger, holdout_frac: float = 0.25,
     rng.shuffle(cids)
     n_hold = max(1, int(len(cids) * holdout_frac))
     held = set(cids[:n_hold])
-    return ([r for r in rows if r["candidate_id"] not in held],
-            [r for r in rows if r["candidate_id"] in held])
+    return (
+        [r for r in rows if r["candidate_id"] not in held],
+        [r for r in rows if r["candidate_id"] in held],
+    )
 
 
 def beta_lower_bound(successes: int, failures: int, eps: float = 0.1) -> float:
