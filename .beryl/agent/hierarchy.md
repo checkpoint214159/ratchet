@@ -279,10 +279,18 @@
 - Acceptance checks:
   - explicit hypothesis, shapes, correctness tolerances, timing method, and stop criteria
   - no empirical result fields are populated
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
-- Evidence: If no GPU is accessible, no kernel iteration is performed.
+- Evidence: `PROTO-INTEL-0001` defines the hardware-gated eager-versus-compiled Intel
+  full-workload hypothesis with four exact float32 cases, conditional BF16/FP16 expansion,
+  executable evaluator tolerances, synchronized block timing, stop ordering, and promotion
+  thresholds. Exact-schema and recursive forbidden-field tests prove it contains no event,
+  candidate, result, comparison, artifact, or decision payload. `pytest tests/protocols -q`
+  passed 7 tests with Ruff, manifest, and diff checks on 2026-08-29; architecture and slice
+  reviews approved. Status remains `not_run_hardware_unavailable`, and no production module,
+  archive event, accelerator call, candidate, kernel, PyTorch execution, or empirical result
+  was created.
 
 ### IB-14 — Multi-vendor dispatch
 - Parent: IB-04

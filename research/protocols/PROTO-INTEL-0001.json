@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "protocol_id": "PROTO-INTEL-0001",
+  "hypothesis_id": "HYP-0001",
+  "source_idea_id": "IDEA-0001",
+  "source_survey_id": "LIT-SURVEY-0001",
+  "scope": "definition_only_future_protocol",
+  "execution_status": "not_run_hardware_unavailable",
+  "execution_permitted": false,
+  "target": {
+    "vendor": "intel",
+    "backend": "xpu",
+    "device_family": "Intel Arc",
+    "qualification_gate": "FG-01"
+  },
+  "hypothesis": "After FG-01 qualifies Intel Arc/XPU, the full authoritative workload under ratchet.intel.xpu.compiled.v1 may reduce steady-state latency versus ratchet.intel.xpu.eager.v1 while preserving authoritative correctness and promotion gates.",
+  "motivation": "Compare the direct PyTorch eager and torch.compile baseline conditions before any Triton-XPU attention work; this is a future protocol, not a project profile or result.",
+  "literature_keys": [
+    "ansel2024pytorch",
+    "pytorch_xpu_2026",
+    "schoonhoven2022autotuning"
+  ],
+  "evaluator_contract": {
+    "relative_path": "benchmarks/reference/torch_transformer_benchmark.py",
+    "sha256": "5529c96a80799b51f68092e1444a30b17994554dffdf52da98ba701489a7f36e"
+  },
+  "arms": [
+    {
+      "baseline_id": "ratchet.intel.xpu.eager.v1",
+      "configuration_path": "benchmarks/runners/configurations/eager.json",
+      "kind": "eager",
+      "definition_only": true
+    },
+    {
+      "baseline_id": "ratchet.intel.xpu.compiled.v1",
+      "configuration_path": "benchmarks/runners/configurations/compiled.json",
+      "kind": "compiled",
+      "definition_only": true,
+      "compilation": {
+        "backend": "inductor",
+        "mode": "default",
+        "fullgraph": false,
+        "dynamic": false
+      }
+    }
+  ],
+  "evaluation_cases": [
+    {
+      "case_id": "default",
+      "batch_size": 8,
+      "sequence_length": 128,
+      "model_width": 512,
+      "head_count": 8,
+      "feed_forward_width": 2048,
+      "layer_count": 6,
+      "causal": false,
+      "padding_ratio": 0.0,
+      "dtype": "float32",
+      "seed": 1234
+    },
+    {
+      "case_id": "causal",
+      "batch_size": 2,
+      "sequence_length": 257,
+      "model_width": 512,
+      "head_count": 8,
+      "feed_forward_width": 2048,
+      "layer_count": 2,
+      "causal": true,
+      "padding_ratio": 0.0,
+      "dtype": "float32",
+      "seed": 2234
+    },
+    {
+      "case_id": "padded",
+      "batch_size": 4,
+      "sequence_length": 127,
+      "model_width": 256,
+      "head_count": 8,
+      "feed_forward_width": 1024,
+      "layer_count": 2,
+      "causal": false,
+      "padding_ratio": 0.25,
+      "dtype": "float32",
+      "seed": 3234
+    },
+    {
+      "case_id": "long",
+      "batch_size": 1,
+      "sequence_length": 512,
+      "model_width": 512,
+      "head_count": 8,
+      "feed_forward_width": 2048,
+      "layer_count": 2,
+      "causal": false,
+      "padding_ratio": 0.0,
+      "dtype": "float32",
+      "seed": 4234
+    }
+  ],
+  "conditional_dtype_expansion": {
+    "condition": "qualified_backend_probe_supports_dtype",
+    "dtypes": ["bfloat16", "float16"],
+    "case_ids": ["default", "long"],
+    "future_only": true
+  },
+  "correctness_protocol": {
+    "shared_weights": "strict",
+    "identical_inputs": true,
+    "trial_count": 5,
+    "seed_offsets": [0, 1, 2, 3, 4],
+    "executable_rule": "abs_error <= atol OR abs_error <= rtol * abs(reference)",
+    "atol": 0.002,
+    "rtol": 0.02
+  },
+  "timing_protocol": {
+    "baseline_protocol": {
+      "compilation_recorded_separately": true,
+      "first_run_recorded_separately": true,
+      "steady_state_recorded_separately": true,
+      "synchronization": "backend synchronize before and after measured region",
+      "timing_method": "backend device events with host-timer cross-check",
+      "warmup_completed_calls": 20,
+      "ordering_blocks": 10,
+      "completed_calls_per_model_per_block": 30,
+      "ordering_patterns": ["ABBA", "BAAB"]
+    },
+    "timed_input_seed_offset": 100000,
+    "input_creation_excluded": true,
+    "retained_measurement_data": [
+      "raw_samples",
+      "median",
+      "mean",
+      "p90",
+      "minimum",
+      "standard_error",
+      "paired_bootstrap_95_percent_interval",
+      "peak_allocated_memory",
+      "peak_reserved_memory",
+      "clock_power_status",
+      "method"
+    ]
+  },
+  "stop_criteria": [
+    {
+      "order": 1,
+      "trigger": "current_xpu_runtime_unavailable",
+      "action": "stop before construction, compilation, correctness, profiling, timing, or kernel work"
+    },
+    {
+      "order": 2,
+      "trigger": "authoritative_evaluator_hash_or_contract_mismatch",
+      "action": "stop and repair custody before future execution"
+    },
+    {
+      "order": 3,
+      "trigger": "backend_not_qualified",
+      "action": "stop before future execution"
+    },
+    {
+      "order": 4,
+      "trigger": "synchronization_or_device_events_missing",
+      "action": "stop before timing"
+    },
+    {
+      "order": 5,
+      "trigger": "compilation_failure",
+      "action": "stop the affected arm"
+    },
+    {
+      "order": 6,
+      "trigger": "timeout_or_crash",
+      "action": "stop the affected arm"
+    },
+    {
+      "order": 7,
+      "trigger": "any_correctness_failure",
+      "action": "stop before timing or promotion"
+    }
+  ],
+  "acceptance_criteria": {
+    "all_correctness_cases_pass": true,
+    "latency_intervals_disjoint": true,
+    "paired_speedup_95_percent_lower_bound": {
+      "operator": ">",
+      "value": 1.02
+    },
+    "unexplained_peak_memory_increase_ratio": {
+      "operator": "<=",
+      "value": 0.05
+    },
+    "failure_outcome": "reject_or_inconclusive_never_promote"
+  }
+}
