@@ -1,0 +1,1 @@
+{"schema_version":1,"transition_id":"LTR-0005","key":"pytorch_xpu_2026","from":"to_read","to":"read","on":"2026-08-29","source_url":"https://docs.pytorch.org/docs/stable/xpu.html","previous_digest":"6d74bdaece88fa86fbc86c50c2a0e0b8b81f23e22f70eac86bef70f0466de8a3","record_digest":"3d79abed7413cc7cd5999fbc7abba37714c595ac25750d04e04ae3f7d9e1f864"}

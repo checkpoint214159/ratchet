@@ -170,10 +170,17 @@
 - Acceptance checks:
   - `pytest tests/literature -q`
   - bibliography keys resolve and read/to-read transitions preserve history
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/project-brief.md`
-- Evidence: none
+- Evidence: `papers_read.md` records nine read primary sources with source URLs and
+  DOIs where assigned; `papers_to_read.md` holds three explicit unread backlog items.
+  BibTeX and chained immutable read-transition records align with the same keys, and
+  hardware-gated `IDEA-0001` queues the follow-on question without creating an experiment
+  protocol. The project retires IPEX as a future integration path without making a
+  product-retirement claim. On 2026-08-29, `pytest tests/literature -q` (7 passed),
+  repository-wide Ruff, manifest verification, and `./.beryl/scripts/check.sh` passed.
+  No GPU or empirical work occurred.
 
 ### IB-09 — Paper pipeline
 - Parent: IB-07
@@ -196,10 +203,20 @@
 - Acceptance checks:
   - `pytest tests/benchmarks -q`
   - configuration and provenance contract for every baseline definition
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/design-tree.md`
-- Evidence: none
+- Evidence: Four vendor-neutral, definition-only Intel-XPU future baseline
+  configurations (eager, compiled, SDPA, and vendor-library) retain the complete
+  reference-transformer workload and authoritative evaluator SHA-256. Compilation,
+  first-run, and steady-state reporting are separated and synchronized; the compiled
+  definition fixes Inductor backend/mode/fullgraph/dynamic policy. SDPA and oneDNN Graph
+  SDPA substitutions are attention-core-only and preserve weight-copy, valid-mask, causal,
+  and output semantics. The oneDNN Graph partition-dispatch check remains required and
+  unverified; all configurations remain unavailable and unvalidated. On 2026-08-29, 11
+  CPU-only portfolio tests, Ruff format/lint, manifest verification, and
+  `./.beryl/scripts/check.sh` passed. No PyTorch, candidate, kernel, or accelerator
+  execution occurred.
 
 ### IB-11 — Candidate seam
 - Parent: IB-02

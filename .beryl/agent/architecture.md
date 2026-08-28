@@ -11,6 +11,7 @@ may specialize execution but may return only vendor-neutral domain records.
 | Context | Owns | Does Not Own | Public Entry Point |
 | --- | --- | --- | --- |
 | Evaluation | Transformer configuration, reference/baseline model, input and correctness semantics, protected benchmark seam | Timing, device APIs, search policy | `ratchet/evaluation/__init__.py` |
+| Benchmarks | Definition-only eager, compiled, SDPA, and vendor-library baseline protocols and evaluator custody | Framework imports, model construction, timing, or backend calls | `ratchet/benchmarks/__init__.py` |
 | Models | Candidate transformer implementations and weight-compatible public model factory | Evaluation criteria, timers, catalogue writes | `ratchet/models/__init__.py` |
 | Backends | Accelerator discovery, synchronization, timing primitives, memory, compilation, capabilities | Workload correctness, promotion, narrative | `ratchet/backends/__init__.py` |
 | Measurement | Current-build no-run gate and future correctness-first orchestration contract | Candidate generation, synthetic execution, device-specific objects, paper selection | `ratchet/measurement/__init__.py` |
@@ -19,6 +20,13 @@ may specialize execution but may return only vendor-neutral domain records.
 | Optimization | Human queue, proposer adapters, parametric/architectural search, accept/reject policy | Mutating evaluator, measurement facts, vendor clients | `ratchet/optimization/__init__.py` |
 | Reporting | Statistics, importance selection, figures, tables, LaTeX/PDF generation | Editing catalogue facts, executing candidates | `ratchet/reporting/__init__.py` |
 | Legacy attention oracle | Existing checksummed CUDA attention reference and diagnostics | Authoritative transformer acceptance or Intel timing | `ratchet/oracle/__init__.py` |
+
+Baseline configurations are definitions, never executable adapters. Every definition keeps
+the complete `reference_transformer` workload and authoritative evaluator custody. SDPA and
+vendor-library variants may substitute only the attention core while preserving weight-copy
+compatibility, valid-mask and causal semantics, and the output contract. The current Intel
+vendor declaration names oneDNN Graph SDPA, remains unavailable and unvalidated, and requires
+oneDNN Graph partition inspection before any future result can claim that dispatch.
 
 ## AcceleratorBackend Public Contract
 

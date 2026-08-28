@@ -26,6 +26,7 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | Cross-vendor shape | Capability adapters with explicit availability and validation state | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | Research history | Append-only events plus rebuildable projections | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | No-accelerator branch | Stop kernel iteration; build infrastructure and cited literature survey | 2026-08-29 | [ADR 0003](adr/0003-no-accelerator-literature-only-run.md) |
+| Baseline portfolio | Four definition-only Intel-XPU future full-workload baselines; substituted attention is semantically constrained and oneDNN Graph dispatch remains unverified | 2026-08-29 | — |
 
 ## Pressure Points
 

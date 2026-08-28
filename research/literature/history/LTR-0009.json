@@ -1,0 +1,1 @@
+{"schema_version":1,"transition_id":"LTR-0009","key":"intel_ipex_retirement_2026","from":"to_read","to":"read","on":"2026-08-29","source_url":"https://github.com/intel/intel-extension-for-pytorch","previous_digest":"61595e92875f8467b48635e2be1207a07a3144fb4827e6f58ddd5ae08d29fdf5","record_digest":"658ecfb1e657db7d0a5647f30f7ce9f5f34e5beaca9b7f629be93bfa88482159"}

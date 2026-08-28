@@ -1,0 +1,1 @@
+{"schema_version":1,"transition_id":"LTR-0007","key":"intel_triton_xpu_2026","from":"to_read","to":"read","on":"2026-08-29","source_url":"https://github.com/intel/intel-xpu-backend-for-triton","previous_digest":"e02d8888b5642250c98d0a9b134672ba8bdb56886d6a7eb9090531c3a656efda","record_digest":"5b0d9b7365280bcd5b0de183057308e6c8d88b72b4530e7b0325a09d405417fc"}
