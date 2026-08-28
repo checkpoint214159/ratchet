@@ -46,7 +46,9 @@
   - `.beryl/agent/agent-rules.md`
 - Evidence: manifest excludes ignored bytecode; direct simulated-missing-torch collection,
   `pytest -m 'not gpu'` (2 passed), native Ruff format/lint, agent doctor, and
-  `./.beryl/scripts/check.sh` passed on 2026-08-29.
+  `./.beryl/scripts/check.sh` passed on 2026-08-29. Generated `.testmondata*` caches
+  are ignored; the recoverable tracked `.testmondata-shm` and `.testmondata-wal` files
+  were intentionally retired from tracking on 2026-08-29.
 
 ### IB-02 — Benchmark custody
 - Parent: IB-00
@@ -70,12 +72,14 @@
 - Acceptance checks:
   - `pytest tests/contracts -q`
   - forbidden-import inspection
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/ubiquitous-language.md`
   - `.beryl/agent/adr/0002-separate-evaluation-measurement-and-backends.md`
-- Evidence: none
+- Evidence: Torch-free public records/protocols and AST boundary checks added; 26 contract
+  tests, including nested cross-context rejection, Ruff format/lint, manifest check, and
+  `./.beryl/scripts/check.sh` (33 passed) succeeded on 2026-08-29.
 
 ### IB-04 — Platform registry
 - Parent: IB-03
