@@ -128,4 +128,6 @@ def test_nested_cross_context_import_is_rejected():
     ],
 )
 def test_public_contract_entry_points_are_torch_free(context: str):
-    _assert_no_import_prefix(context, ("torch", "triton"))
+    entry_point = ROOT / "ratchet" / context / "__init__.py"
+    imports = _imports(entry_point)
+    assert not {module for module in imports if module.startswith(("torch", "triton"))}

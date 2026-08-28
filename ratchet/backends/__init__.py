@@ -1,4 +1,4 @@
-"""Vendor-neutral public contracts for accelerator execution."""
+"""Vendor-neutral public contracts and lazy accelerator-backend registry."""
 
 from __future__ import annotations
 
@@ -19,6 +19,22 @@ class ValidationState(str, Enum):
     AVAILABLE = "available"
     QUALIFIED = "qualified"
     UNAVAILABLE = "unavailable"
+
+
+class AvailabilityState(str, Enum):
+    """Whether this process can currently use a backend runtime and device."""
+
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+
+class BackendUnavailableError(RuntimeError):
+    """Raised when an operation requires a runtime or device that is not usable."""
+
+    def __init__(self, backend: BackendKind, reason: str) -> None:
+        self.backend = backend
+        self.reason = reason
+        super().__init__(f"{backend.value} backend is unavailable: {reason}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +60,7 @@ class BackendIdentity:
 
 @dataclass(frozen=True, slots=True)
 class BackendCapabilities:
+    availability: AvailabilityState
     validation: ValidationState
     supports_events: bool
     supports_compilation: bool
@@ -53,6 +70,19 @@ class BackendCapabilities:
     def __post_init__(self) -> None:
         if len(set(self.supported_dtypes)) != len(self.supported_dtypes):
             raise ValueError("supported_dtypes must be unique")
+        if self.availability is AvailabilityState.UNAVAILABLE:
+            if self.validation is not ValidationState.UNAVAILABLE:
+                raise ValueError("unavailable backends require unavailable validation")
+            if any(
+                (
+                    self.supports_events,
+                    self.supports_compilation,
+                    self.supports_peak_memory,
+                )
+            ):
+                raise ValueError("unavailable backends cannot support capabilities")
+            if self.supported_dtypes:
+                raise ValueError("unavailable backends cannot support dtypes")
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,14 +133,17 @@ class CompilationPolicy:
 
 @dataclass(frozen=True, slots=True)
 class CompiledModel:
-    model_id: str
+    """An executable opaque model paired with vendor-neutral compilation metadata."""
+
+    model: object
     backend: BackendKind
     policy: CompilationPolicy
+    compiler: str
     artifact_id: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.model_id:
-            raise ValueError("model_id must not be empty")
+        if not self.compiler:
+            raise ValueError("compiler must not be empty")
 
 
 class AcceleratorBackend(Protocol):
@@ -126,8 +159,54 @@ class AcceleratorBackend(Protocol):
         self, operation: Callable[[], None], configuration: TimingConfiguration
     ) -> TimingEvidence: ...
 
+    def reset_memory_stats(self) -> None: ...
+
     def memory_stats(self) -> MemoryEvidence: ...
 
     def compile_model(
-        self, model_id: str, policy: CompilationPolicy
+        self, model: object, policy: CompilationPolicy
     ) -> CompiledModel: ...
+
+
+def get_backend(backend: BackendKind | str) -> AcceleratorBackend:
+    """Construct a backend without importing a vendor runtime at package import time."""
+
+    try:
+        kind = backend if isinstance(backend, BackendKind) else BackendKind(backend)
+    except ValueError as error:
+        raise ValueError(f"unknown backend: {backend!r}") from error
+
+    if kind is BackendKind.CPU:
+        from ratchet.backends.cpu import CpuBackend
+
+        return CpuBackend()
+    if kind is BackendKind.XPU:
+        from ratchet.backends.xpu import XpuBackend
+
+        return XpuBackend()
+    if kind is BackendKind.CUDA:
+        from ratchet.backends.cuda import CudaBackend
+
+        return CudaBackend()
+    if kind is BackendKind.HIP:
+        from ratchet.backends.hip import HipBackend
+
+        return HipBackend()
+    raise AssertionError(f"unhandled backend kind: {kind}")
+
+
+__all__ = [
+    "AcceleratorBackend",
+    "AvailabilityState",
+    "BackendCapabilities",
+    "BackendIdentity",
+    "BackendKind",
+    "BackendUnavailableError",
+    "CompilationPolicy",
+    "CompiledModel",
+    "MemoryEvidence",
+    "TimingConfiguration",
+    "TimingEvidence",
+    "ValidationState",
+    "get_backend",
+]

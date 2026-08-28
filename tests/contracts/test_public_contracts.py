@@ -5,6 +5,7 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from ratchet.backends import (
+    AvailabilityState,
     BackendCapabilities,
     BackendIdentity,
     BackendKind,
@@ -68,6 +69,7 @@ def test_evaluation_and_model_contracts_are_immutable_and_validated():
 def test_backend_contracts_are_vendor_neutral_and_validated():
     identity = _identity()
     capabilities = BackendCapabilities(
+        availability=AvailabilityState.AVAILABLE,
         validation=ValidationState.UNVALIDATED,
         supports_events=False,
         supports_compilation=True,
@@ -78,15 +80,61 @@ def test_backend_contracts_are_vendor_neutral_and_validated():
     assert capabilities.supported_dtypes == ("float32", "bfloat16")
     assert TimingConfiguration(0, 1).measured_calls == 1
     assert MemoryEvidence(None, None).peak_allocated_bytes is None
-    assert CompiledModel(
-        "candidate-1", BackendKind.XPU, CompilationPolicy("eager", False)
+    executable = object()
+    compiled = CompiledModel(
+        executable,
+        BackendKind.XPU,
+        CompilationPolicy("eager", False),
+        compiler="eager",
     )
+    assert compiled.model is executable
     with pytest.raises(ValueError, match="unique"):
         BackendCapabilities(
-            ValidationState.AVAILABLE, True, True, True, ("float32", "float32")
+            AvailabilityState.AVAILABLE,
+            ValidationState.AVAILABLE,
+            True,
+            True,
+            True,
+            ("float32", "float32"),
         )
     with pytest.raises(ValueError, match="positive"):
         TimingEvidence("event", (), True)
+
+
+@pytest.mark.parametrize(
+    (
+        "validation",
+        "supports_events",
+        "supports_compilation",
+        "supports_peak_memory",
+        "supported_dtypes",
+        "message",
+    ),
+    [
+        (ValidationState.AVAILABLE, False, False, False, (), "require unavailable"),
+        (ValidationState.UNAVAILABLE, True, False, False, (), "support capabilities"),
+        (ValidationState.UNAVAILABLE, False, True, False, (), "support capabilities"),
+        (ValidationState.UNAVAILABLE, False, False, True, (), "support capabilities"),
+        (ValidationState.UNAVAILABLE, False, False, False, ("float32",), "dtypes"),
+    ],
+)
+def test_unavailable_backend_capabilities_reject_each_contradiction(
+    validation: ValidationState,
+    supports_events: bool,
+    supports_compilation: bool,
+    supports_peak_memory: bool,
+    supported_dtypes: tuple[str, ...],
+    message: str,
+):
+    with pytest.raises(ValueError, match=message):
+        BackendCapabilities(
+            AvailabilityState.UNAVAILABLE,
+            validation,
+            supports_events,
+            supports_compilation,
+            supports_peak_memory,
+            supported_dtypes,
+        )
 
 
 def test_measurement_experiment_dispatch_optimization_and_reporting_contracts():

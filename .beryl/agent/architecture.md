@@ -28,12 +28,15 @@ may specialize execution but may return only vendor-neutral domain records.
 - `capabilities() -> BackendCapabilities`
 - `synchronize() -> None`
 - `time(callable, config) -> TimingEvidence`
+- `reset_memory_stats() -> None`
 - `memory_stats() -> MemoryEvidence`
 - `compile_model(model, policy) -> CompiledModel`
 
 Vendor objects and SDK types remain internal to `ratchet/backends/xpu/`,
 `ratchet/backends/cuda/`, and `ratchet/backends/hip/`. Domain records contain ordinary
-Python values and stable enums only.
+Python values and stable enums only. `BackendCapabilities` separates current runtime/device
+availability from the evidence-backed validation state; an available adapter is not thereby
+qualified for empirical claims.
 
 ## Boundary Rules
 

@@ -88,11 +88,16 @@
 - Acceptance checks:
   - `pytest tests/backends -q`
   - unsupported capabilities fail clearly
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/design-tree.md`
-- Evidence: none
+- Evidence: Fake-runtime CPU tests cover CPU/XPU/CUDA/HIP event timing, compilation,
+  explicit memory-reset lifecycle, read-only memory observation, unavailable runtime/device,
+  and doctor output (16 passed); public contracts, including unavailable-capability
+  contradictions, passed (31 total contract tests). Ruff format/lint, manifest,
+  related-test command, full pytest (54 passed), and `./.beryl/scripts/check.sh` passed
+  on 2026-08-29. No real accelerator was used; IB-05 remains the Intel qualification gate.
 
 ### IB-05 — Intel qualification
 - Parent: IB-04

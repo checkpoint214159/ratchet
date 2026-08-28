@@ -23,7 +23,7 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | Authoritative acceptance | Supplied full-transformer evaluator, executable OR tolerance | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | Intel evidence | Synchronized sidecar over identical workload/configuration | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | First measured vendor | Intel Arc/XPU | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
-| Cross-vendor shape | Capability adapters with explicit validation state | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
+| Cross-vendor shape | Capability adapters with explicit availability and validation state | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 | Research history | Append-only events plus rebuildable projections | 2026-08-29 | [ADR 0002](adr/0002-separate-evaluation-measurement-and-backends.md) |
 
 ## Pressure Points
