@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | Markdown sanity | `./.beryl/scripts/check-md.sh` | available | Unclosed fences and tabs |
 | Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope from `.beryl/agent/test-manifest.conf` |
-| Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
+| Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Uses the repository `.venv/bin/pytest`; it fails clearly until the pinned `dev` extra is installed. |
 | Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
 | Format | `.venv/bin/ruff format --check .` | available | Ruff 0.16.5 is pinned in the `dev` extra; managed, immutable, and byte-preserved paths are excluded in `pyproject.toml`. |
 | Lint | `.venv/bin/ruff check .` | available | Uses the same explicit Ruff surface and baseline rules. |

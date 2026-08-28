@@ -8,7 +8,16 @@
 # appended arguments, let testmon choose, and treat "no tests affected" (exit 5)
 # as success -- that is testmon saying nothing needs to run, not an error.
 set -uo pipefail
-python3 -m pytest --testmon
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTEST_BIN="${SCRIPT_DIR}/../.venv/bin/pytest"
+
+if [[ ! -x "${PYTEST_BIN}" ]]; then
+  printf 'ERROR: missing repository test environment: %s\n' "${PYTEST_BIN}" >&2
+  printf 'Install the pinned dev extra before running related tests.\n' >&2
+  exit 1
+fi
+
+"${PYTEST_BIN}" --testmon
 rc=$?
 [ "$rc" -eq 5 ] && exit 0
 exit $rc
