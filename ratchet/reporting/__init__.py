@@ -7,6 +7,8 @@ from typing import Protocol
 
 from ratchet.experiments import CatalogueProjection
 
+from .paper import PaperBuildError, PaperSelection, build_paper, generate_sources
+
 
 @dataclass(frozen=True, slots=True)
 class ReportRequest:
@@ -30,3 +32,14 @@ class ReportArtifact:
 
 class ReportBuilder(Protocol):
     def build(self, request: ReportRequest) -> ReportArtifact: ...
+
+
+__all__ = [
+    "PaperBuildError",
+    "PaperSelection",
+    "ReportArtifact",
+    "ReportBuilder",
+    "ReportRequest",
+    "build_paper",
+    "generate_sources",
+]

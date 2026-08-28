@@ -28,6 +28,15 @@ compatibility, valid-mask and causal semantics, and the output contract. The cur
 vendor declaration names oneDNN Graph SDPA, remains unavailable and unvalidated, and requires
 oneDNN Graph partition inspection before any future result can claim that dispatch.
 
+Evaluation publishes a Torch-free structural contract for the evaluator's designated
+`UserOptimizedTransformer` class, its unchanged forward signature, and causal/valid-mask/
+output obligations. `BaselineTransformer` inheritance is recorded as the current observed
+implementation, not a future requirement. The contract also records strict-by-default
+baseline-to-candidate copying, the evaluator-supported `strict=False` path, and the
+alternative to customize `copy_model_weights` when parameter names differ. It is not an
+executable candidate factory; future work must retain the protected evaluator hash and
+implement only after a separately ratified hardware-qualified hierarchy.
+
 ## AcceleratorBackend Public Contract
 
 `ratchet.backends` exposes one vendor-neutral `AcceleratorBackend` protocol:

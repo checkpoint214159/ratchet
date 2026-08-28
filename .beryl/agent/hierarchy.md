@@ -189,11 +189,23 @@
 - Acceptance checks:
   - `python -m ratchet.reporting build-paper`
   - deterministic regeneration and Tectonic PDF validation
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/testing-policy.md`
-- Evidence: none
+- Evidence: `.venv/bin/python -m ratchet.reporting build-paper` deterministically regenerates
+  marked catalogue/literature/no-run inputs plus a local evidence-boundary figure, and writes a Tectonic-validated
+  `research/paper/latest.pdf`. Selection resolves exactly the nine reviewed bibliography
+  keys and the verified immutable archive projection; its nine reviewed sources and zero
+  experiment events lead only to literature synthesis and no empirical conclusions. The
+  empty catalogue accepts empirical/comparative tokens only in exact controlled generated
+  disclosures and rejects them in every hand-authored included TeX source, including negated
+  and spelled-out-ratio wording. TeX and bibliography dependencies use fixed local allowlists,
+  and Tectonic is untrusted and cached-only; two cached builds produce byte-identical PDFs.
+  On 2026-08-29, `pytest tests/reporting tests/literature -q` (30 passed), repository-wide
+  Ruff, manifest verification, `pytest -m 'not gpu' -q` (160 passed), paper build, and
+  `./.beryl/scripts/check.sh` passed. No GPU,
+  PyTorch, candidate, hypothesis protocol, or empirical work occurred.
 
 ### IB-10 — Baseline portfolio
 - Parent: IB-04
@@ -226,10 +238,19 @@
 - Acceptance checks:
   - protected-region AST/hash guard
   - source-level weight-copy, mask, causal, and output contract characterization
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
-- Evidence: none
+- Evidence: Torch-free evaluation records define the protected evaluator path/hash,
+  designated `UserOptimizedTransformer` class and unchanged forward signature, current
+  observed `BaselineTransformer` inheritance, strict-by-default weight copy with the
+  evaluator-supported `strict=False` path, and the supported `copy_model_weights`
+  customization path for parameter-name differences. Valid-mask/causal/output obligations
+  remain fixed. Source-only AST tests prove these facts against the byte-preserved evaluator
+  and reject executable integration state; no candidate factory, framework import, optimized
+  candidate, or kernel exists. On 2026-08-29, 11 evaluation tests, 42 evaluation-plus-
+  contract tests, Ruff format/lint, manifest verification, and `./.beryl/scripts/check.sh`
+  passed. No PyTorch or accelerator execution occurred.
 
 ### IB-12 — Baseline profiling
 - Parent: IB-10

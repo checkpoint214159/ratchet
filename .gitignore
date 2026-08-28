@@ -6,5 +6,6 @@ __pycache__/
 ledger/artifacts/
 ledger/logs/
 ledger/state/
+research/archive/.archive.lock
 
 .beryl/agent/session-state.md
