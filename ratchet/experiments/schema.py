@@ -602,10 +602,18 @@ class EnvironmentArtifact:
 class CatalogueProjection:
     projection_id: str
     event_count: int
+    event_ids: tuple[str, ...]
 
     def __post_init__(self) -> None:
-        if not SHA.fullmatch(self.projection_id) or self.event_count < 0:
+        if (
+            not isinstance(self.event_ids, tuple)
+            or not SHA.fullmatch(self.projection_id)
+            or self.event_count != len(self.event_ids)
+            or len(set(self.event_ids)) != len(self.event_ids)
+        ):
             raise ValueError("invalid projection")
+        for event_id in self.event_ids:
+            EventId(event_id)
 
 
 class ExperimentCatalogue(Protocol):

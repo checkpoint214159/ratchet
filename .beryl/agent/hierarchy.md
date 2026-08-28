@@ -300,11 +300,20 @@
 - Acceptance checks:
   - `pytest tests/dispatch -q`
   - decisions respond to profile perturbations; no evaluator detection
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/ubiquitous-language.md`
-- Evidence: none
+- Evidence: The pure dispatch policy binds candidate evidence to immutable event membership
+  in one verified projection and exact evaluator/configuration/profile/backend identity.
+  CPU, zero-event, unavailable, unqualified, unsupported-dtype, missing-event/memory,
+  compilerless, mismatched, or sub-threshold cases select immutable vendor-specific eager
+  fallbacks. Only fully qualified evidence can produce a provenance-bound tuned decision,
+  ranked deterministically by paired lower-bound speedup then implementation/event identity.
+  `pytest tests/dispatch tests/experiments tests/contracts tests/reporting -q` passed 117
+  tests with Ruff and `./.beryl/scripts/check.sh` on 2026-08-29; architecture and slice
+  reviews approved. Current repository evidence selects no tuned implementation, and no
+  GPU, PyTorch, candidate, kernel, synthetic archive record, or empirical result was used.
 
 ### IB-15 — Human research input
 - Parent: IB-08

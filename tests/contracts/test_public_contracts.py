@@ -16,7 +16,7 @@ from ratchet.backends import (
     TimingEvidence,
     ValidationState,
 )
-from ratchet.dispatch import DispatchDecision, DispatchRequest
+from ratchet.dispatch import DispatchProfile, DispatchRequest, UntunedFallback
 from ratchet.evaluation import (
     CorrectnessPolicy,
     EvaluationCase,
@@ -160,13 +160,29 @@ def test_measurement_experiment_dispatch_optimization_and_reporting_contracts():
     event = ExperimentEvent(
         EventId("EVT-000001"), ExperimentId("EXP-0001"), 0, EMPIRICAL_EVENT, "a" * 64
     )
-    projection = CatalogueProjection("b" * 64, 1)
+    projection = CatalogueProjection("b" * 64, 1, ("EVT-000001",))
 
     assert request.candidate is candidate
     assert evidence.timing is timing
     assert event.event_id.value == "EVT-000001"
-    assert DispatchRequest("default", _identity()).regime == "default"
-    assert DispatchDecision("candidate-1", False, "untuned fallback").is_tuned is False
+    profile = DispatchProfile("default", "c" * 64, "d" * 64, "float32")
+    dispatch_request = DispatchRequest(
+        profile,
+        _identity(),
+        BackendCapabilities(
+            AvailabilityState.UNAVAILABLE,
+            ValidationState.UNAVAILABLE,
+            False,
+            False,
+            False,
+            (),
+        ),
+    )
+    assert dispatch_request.profile is profile
+    assert (
+        UntunedFallback("ratchet.intel.xpu.eager.v1", "untuned fallback").is_tuned
+        is False
+    )
     assert OptimizationRequest(
         "opt-1", Hypothesis("hyp-1", HypothesisSource.HUMAN, "test")
     )

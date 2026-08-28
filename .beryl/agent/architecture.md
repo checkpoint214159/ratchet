@@ -37,6 +37,16 @@ alternative to customize `copy_model_weights` when parameter names differ. It is
 executable candidate factory; future work must retain the protected evaluator hash and
 implement only after a separately ratified hardware-qualified hierarchy.
 
+Dispatch is a pure projection consumer. `CatalogueProjection` exposes immutable ordered
+event membership, and `EvidenceDrivenDispatch` accepts only an immutable evidence tuple.
+Promotion requires a qualified non-CPU backend, an exact evaluator/configuration/profile
+and backend identity match, non-empty compiler identity, supported dtype, event timing and
+peak-memory capabilities, passed correctness, synchronized timing, disjoint latency
+intervals, a paired speedup lower bound above 1.02, no more than five percent unexplained
+peak-memory increase, and verified implementation dispatch. Evidence must name an event in
+the exact verified projection. Otherwise a read-only vendor-specific eager mapping produces
+an explicit `UntunedFallback`; the current zero-event projection can never tune a candidate.
+
 ## AcceleratorBackend Public Contract
 
 `ratchet.backends` exposes one vendor-neutral `AcceleratorBackend` protocol:
@@ -64,8 +74,8 @@ qualified for empirical claims.
 4. Optimization may read experiment projections and request measurements; it may not
    edit protected evaluation or historical events.
 5. Reporting is a pure reader of catalogue projections and literature records.
-6. Dispatch compares evidence only within the same evaluation contract, backend,
-   device, toolchain, dtype, and configuration.
+6. Dispatch compares provenance-bound evidence only within the same verified projection,
+   evaluation contract, backend, device, toolchain, dtype, and configuration.
 7. CPU timing is diagnostic only; it is never accelerator-performance evidence.
 
 ## Forbidden Import Policy

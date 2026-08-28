@@ -624,4 +624,5 @@ class FileExperimentArchive:
             projection = self._projection_bytes_locked()
             events = self._manifest_data()["events"]
             assert isinstance(events, list)
-            return CatalogueProjection(digest(projection), len(events))
+            event_ids = tuple(string(entry, "event_id") for entry in events)
+            return CatalogueProjection(digest(projection), len(events), event_ids)

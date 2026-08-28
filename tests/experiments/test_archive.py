@@ -180,6 +180,34 @@ def test_no_run_schema_is_exact_and_projection_is_byte_identical(tmp_path: Path)
         archive.projection_bytes()
         == FileExperimentArchive(tmp_path / "archive").projection_bytes()
     )
+    assert archive.projection().event_ids == ("EVT-000001",)
+
+
+@pytest.mark.parametrize(
+    ("event_count", "event_ids"),
+    ((1, ()), (1, ("EVT-000001", "EVT-000002")), (2, ("EVT-000001", "EVT-000001"))),
+)
+def test_catalogue_projection_rejects_invalid_immutable_event_membership(
+    event_count: int, event_ids: tuple[str, ...]
+):
+    from ratchet.experiments import CatalogueProjection
+
+    with pytest.raises(ValueError, match="invalid projection"):
+        CatalogueProjection("a" * 64, event_count, event_ids)
+
+
+def test_catalogue_projection_rejects_malformed_event_membership():
+    from ratchet.experiments import CatalogueProjection
+
+    with pytest.raises(ValueError, match="event id"):
+        CatalogueProjection("a" * 64, 1, ("not-an-event",))
+
+
+def test_catalogue_projection_rejects_mutable_event_membership():
+    from ratchet.experiments import CatalogueProjection
+
+    with pytest.raises(ValueError, match="invalid projection"):
+        CatalogueProjection("a" * 64, 1, ["EVT-000001"])  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
