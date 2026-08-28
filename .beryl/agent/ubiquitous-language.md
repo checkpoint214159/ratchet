@@ -19,3 +19,13 @@
 | Vertical Slice | `VerticalSlice` | Smallest end-to-end behavior change through one boundary. | Must be testable in isolation. | `BigRefactor` |
 | Adapter | `Adapter` | Boundary object that isolates external systems from domain logic. | Domain must not depend on vendor details. | `ServiceHelper` |
 | ADR | `ADR` | Architecture Decision Record for durable decisions. | Required for lasting boundary changes. | `RandomNote` |
+| Authoritative Evaluator | `BenchmarkContract` | The supplied full-transformer behavior that controls acceptance, including its executable correctness rule. | Protected except for the designated optimized-model seam. | `Oracle` without qualification |
+| Research Oracle | `LegacyAttentionOracle` | The checksummed, stricter CUDA attention subsystem retained for supplementary research. | Does not decide authoritative transformer acceptance. | `Authoritative Evaluator` |
+| Sidecar Measurement | `MeasurementHarness` | Backend-aware execution of the authoritative workload with explicit accelerator synchronization and provenance. | Must reuse evaluator models, weights, inputs, and configurations; cannot change correctness. | `Benchmark` when timing provenance is absent |
+| Accelerator Backend | `AcceleratorBackend` | Vendor-neutral interface for discovery, capabilities, synchronization, timing, memory, and compilation. | Vendor SDK types never cross its public boundary. | `DeviceHelper` |
+| Backend Identity | `BackendIdentity` | Stable device, driver, runtime, framework, and compiler identity attached to evidence. | Required for valid comparison and dispatch promotion. | GPU name alone |
+| Measurement Evidence | `MeasurementEvidence` | Correctness, timing, memory, method, environment, and artifact facts from one candidate/configuration run. | Immutable after append; corrections are later events. | Score |
+| Experiment | `Experiment` | A uniquely identified hypothesis-to-decision research unit composed of append-only events and artifacts. | IDs are never reused; failed and inconclusive experiments remain discoverable. | Trial without provenance |
+| Catalogue Projection | `CatalogueProjection` | Deterministically rebuilt current view over append-only experiment events. | May be regenerated; never substitutes for source events. | Catalogue fact |
+| Paper Importance | `PaperImportance` | Decision that evidence changes the concise research narrative enough to include. | Independent of whether an experiment is scientifically informative. | Experiment success |
+| Untuned Fallback | `UntunedFallback` | Correct portable implementation selected when no validated candidate exists for a regime. | Must be visible in dispatch and reports. | Silent fallback |

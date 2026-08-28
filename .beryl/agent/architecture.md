@@ -1,31 +1,76 @@
 # Architecture
 
+## Organizing Rule
+
+Acceptance semantics, accelerator execution, measurement orchestration, immutable facts,
+optimization policy, and human-facing synthesis are separate responsibilities. A backend
+may specialize execution but may return only vendor-neutral domain records.
+
 ## Bounded Contexts
 
 | Context | Owns | Does Not Own | Public Entry Point |
 | --- | --- | --- | --- |
-| [Context name] | [Domain concepts] | [Excluded concerns] | [Path/API] |
+| Evaluation | Transformer configuration, reference/baseline model, input and correctness semantics, protected benchmark seam | Timing, device APIs, search policy | `ratchet/evaluation/__init__.py` |
+| Models | Candidate transformer implementations and weight-compatible public model factory | Evaluation criteria, timers, catalogue writes | `ratchet/models/__init__.py` |
+| Backends | Accelerator discovery, synchronization, timing primitives, memory, compilation, capabilities | Workload correctness, promotion, narrative | `ratchet/backends/__init__.py` |
+| Measurement | Correctness-first subprocess execution, paired statistics, provenance assembly | Candidate generation, device-specific objects, paper selection | `ratchet/measurement/__init__.py` |
+| Experiments | Experiment IDs, append-only events, artifacts, projections, worktree provenance | GPU execution, hypothesis generation, LaTeX presentation | `ratchet/experiments/__init__.py` |
+| Dispatch | Evidence- and capability-driven candidate selection | Timing, benchmark semantics, vendor SDK calls | `ratchet/dispatch/__init__.py` |
+| Optimization | Human queue, proposer adapters, parametric/architectural search, accept/reject policy | Mutating evaluator, measurement facts, vendor clients | `ratchet/optimization/__init__.py` |
+| Reporting | Statistics, importance selection, figures, tables, LaTeX/PDF generation | Editing catalogue facts, executing candidates | `ratchet/reporting/__init__.py` |
+| Legacy attention oracle | Existing checksummed CUDA attention reference and diagnostics | Authoritative transformer acceptance or Intel timing | `ratchet/oracle/__init__.py` |
+
+## AcceleratorBackend Public Contract
+
+`ratchet.backends` exposes one vendor-neutral `AcceleratorBackend` protocol:
+
+- `probe() -> BackendIdentity`
+- `capabilities() -> BackendCapabilities`
+- `synchronize() -> None`
+- `time(callable, config) -> TimingEvidence`
+- `memory_stats() -> MemoryEvidence`
+- `compile_model(model, policy) -> CompiledModel`
+
+Vendor objects and SDK types remain internal to `ratchet/backends/xpu/`,
+`ratchet/backends/cuda/`, and `ratchet/backends/hip/`. Domain records contain ordinary
+Python values and stable enums only.
 
 ## Boundary Rules
 
-1. A context may import only another context's public entry point.
-2. Internal files of another context are forbidden imports.
-3. External APIs, SDKs, and persistence details must be accessed through adapters.
-4. Domain logic must not depend directly on HTTP objects, ORM records, UI state, or vendor client types.
-
-## Public Interface Rule
-
-Each context exposes one explicit public entry point:
-
-- TypeScript: `src/<context>/index.ts`
-- Python: `src/<context>/__init__.py`
-- Go: exported symbols in `internal/<context>` via deliberate package API
+1. A context imports only another context's public entry point.
+2. Evaluation never imports measurement or optimization.
+3. Measurement may call evaluation, models, and backends, then append through the public
+   experiments API; it may not choose future candidates.
+4. Optimization may read experiment projections and request measurements; it may not
+   edit protected evaluation or historical events.
+5. Reporting is a pure reader of catalogue projections and literature records.
+6. Dispatch compares evidence only within the same evaluation contract, backend,
+   device, toolchain, dtype, and configuration.
+7. CPU timing is diagnostic only; it is never accelerator-performance evidence.
 
 ## Forbidden Import Policy
 
-Record concrete forbidden import patterns here once contexts exist:
+- `ratchet/evaluation/** -> ratchet/measurement/**`
+- `ratchet/evaluation/** -> ratchet/optimization/**`
+- `ratchet/models/** -> ratchet/backends/*/internal/**`
+- `ratchet/measurement/** -> ratchet/backends/{xpu,cuda,hip}/**`
+- `ratchet/experiments/** -> torch.{xpu,cuda}/**`
+- `ratchet/reporting/** -> ratchet/measurement/**`
+- `ratchet/optimization/** -> ratchet/oracle/internal/**`
 
-- `[from] -> [to/internal/**]`
-- `[from] -> [to/infrastructure/**]`
+## Trust And Data Flow
 
-Keep this list small and high-signal. Add rules only after repeated boundary mistakes.
+```text
+Human/literature -> Optimization -> Models -> Measurement
+                                            |        |
+                                    Evaluation    Backends
+                                            \        /
+                                             Evidence
+                                                |
+                                          Experiments
+                                           /        \
+                                      Dispatch    Reporting -> PDF
+```
+
+The experiment event log and measurement artifacts are facts. Rankings, dispatch tables,
+critic predictions, charts, and paper prose are derived views and may be regenerated.

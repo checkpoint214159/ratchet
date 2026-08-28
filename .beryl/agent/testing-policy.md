@@ -8,12 +8,53 @@
 | Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope from `.beryl/agent/test-manifest.conf` |
 | Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
 | Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
-| Format | `not available yet` | unavailable | Add the project formatter command when configured |
-| Lint | `not available yet` | unavailable | Add the project lint command when configured |
+| Format | `ruff format --check .` | unavailable | `ruff` resolves to a Windows pyenv shim that Linux Bash cannot execute (exit 127); install a native Ruff binary before CB-02. |
+| Lint | `ruff check .` | unavailable | Same unavailable Ruff executable; no Ruff configuration is added until the tool can run here. |
 | Typecheck | `not available yet` | unavailable | Add the project typecheck command when configured |
 | Unit tests | `not available yet` | unavailable | Add the project unit test command when configured |
 | Integration tests | `not available yet` | unavailable | Add the project integration test command when configured |
 | E2E smoke | `not available yet` | unavailable | When web runtime exists, use Microsoft Playwright MCP for deterministic browser feedback |
+
+This repository is an installed Beryl target, not a Beryl source checkout. The broad
+command is `./.beryl/scripts/check.sh`; `--development` is invalid without Beryl's
+source-checkout marker.
+
+## Authoritative Transformer Matrix
+
+The protected evaluator's executable defaults are the primary compatibility case:
+
+| Case | B | S | D | H | FFN | Layers | Causal | Padding | Dtype | Seed |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: | --- | ---: |
+| default | 8 | 128 | 512 | 8 | 2048 | 6 | no | 0 | float32 | 1234 |
+| causal | 2 | 257 | 512 | 8 | 2048 | 2 | yes | 0 | float32 | 2234 |
+| padded | 4 | 127 | 256 | 8 | 1024 | 2 | no | 0.25 | float32 | 3234 |
+| long | 1 | 512 | 512 | 8 | 2048 | 2 | no | 0 | float32 | 4234 |
+
+When the backend probe declares BF16 or FP16 support, repeat the default and long cases
+for each supported dtype. Unsupported dtypes are recorded as capability results, not
+silently skipped. Correctness uses five trials beginning at the listed seed and the
+evaluator's executable absolute-OR-relative thresholds (`atol=0.002`, `rtol=0.02`).
+
+## Accelerator Performance Evidence
+
+- Record compilation time and first-run latency separately from steady-state execution.
+- Warm each model for 20 completed calls.
+- Use ten alternating ABBA/BAAB blocks with 30 completed calls per model per block.
+- Use backend events where supported and cross-check with a host timer bounded by an
+  explicit synchronize before and after the measured region.
+- Generate the timed input with `seed + 100000` and exclude input creation from timing.
+- Record raw samples, median, mean, p90, minimum, standard error, a paired-bootstrap 95%
+  speedup interval, peak allocated/reserved memory, clock/power status, and method.
+- Candidate and baseline must share dtype, compiler policy, warm-up, process, input,
+  and ordering blocks.
+- Promotion requires full correctness, baseline and candidate 95% latency intervals not
+  overlapping, the paired speedup interval lower bound above 1.02, and no unexplained
+  peak-memory increase above 5%.
+- If no accelerator is visible, hardware tests skip locally and empirical kernel
+  iteration stops. Cached calibration is never accepted as a new result.
+
+The reference evaluator's non-CUDA host-timer output is compatibility output only and
+must not be entered as Intel performance evidence.
 
 ## Default Loop
 
