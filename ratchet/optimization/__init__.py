@@ -6,6 +6,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
+from .human_queue import (
+    FileHumanResearchQueue,
+    HumanInputKind,
+    HumanInputRecord,
+    HumanInputSubmission,
+    HumanQueueIntegrityError,
+    HumanQueueItem,
+    HumanQueueProjection,
+    HumanResearchQueue,
+)
+
 
 class HypothesisSource(str, Enum):
     HUMAN = "human"
@@ -36,3 +47,19 @@ class OptimizationRequest:
 
 class OptimizationController(Protocol):
     def request(self, request: OptimizationRequest) -> None: ...
+
+
+__all__ = [
+    "FileHumanResearchQueue",
+    "HumanInputKind",
+    "HumanInputRecord",
+    "HumanInputSubmission",
+    "HumanQueueIntegrityError",
+    "HumanQueueItem",
+    "HumanQueueProjection",
+    "HumanResearchQueue",
+    "Hypothesis",
+    "HypothesisSource",
+    "OptimizationController",
+    "OptimizationRequest",
+]

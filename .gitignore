@@ -7,5 +7,6 @@ ledger/artifacts/
 ledger/logs/
 ledger/state/
 research/archive/.archive.lock
+research/ideas/intake/.human-input.lock
 
 .beryl/agent/session-state.md

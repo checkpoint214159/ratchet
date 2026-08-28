@@ -321,10 +321,19 @@
 - Deliverable: Auditable intake for ideas, constraints, literature, priorities, and redirects.
 - Acceptance checks:
   - `pytest tests/optimization/test_human_queue.py -q`
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/project-brief.md`
-- Evidence: none
+- Evidence: A frozen public human-input contract and locked file-backed queue retain
+  contiguous `HRI-NNNNNN` records in a canonical SHA-256 chain. `HRI-000001` preserves
+  immutable `IDEA-0001` semantics and custody; subsequent records enforce exact kind rules,
+  reviewed-literature resolution, planning-only FG-01 scope, priority ordering, constraint
+  accumulation, first-occurrence literature deduplication, and acyclic redirects. Atomic
+  writes, shared/exclusive process locks, symlink/partial/tamper/deletion/rewrite rejection,
+  and concurrent append/read behavior are covered. `pytest tests/optimization/
+  test_human_queue.py tests/contracts -q` passed 48 tests with Ruff, manifest, and diff
+  checks on 2026-08-29; architecture and slice reviews approved. The queue exposes no
+  controller conversion, archive write, backend call, candidate, or empirical field.
 
 ### IB-16 — Independent experiment branches
 - Parent: IB-07

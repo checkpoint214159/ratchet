@@ -37,6 +37,13 @@ but runtime functionality is not described as validated until their hardware gat
 4. **Deploy the best implementation:** select a candidate using measured workload and
    backend capabilities, with an explicit untuned fallback.
 
+Human steering is retained in a separate append-only planning queue. Each input remains
+`planning_only` behind `FG-01`, is chained to its predecessor, and may create an idea or
+attach a constraint, reviewed-literature reference, priority, or acyclic redirect. The
+queue cannot create an optimization request, experiment event, candidate, measurement, or
+backend action; a later controller may consume only its deterministic projection after
+independently enforcing the active no-run gate.
+
 ## Scope
 
 - Inference for the supplied full-transformer workload on one accelerator.
