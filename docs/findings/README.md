@@ -9,6 +9,7 @@ the note. Where something is inferred rather than measured, it says so.
 
 | # | Finding | Established |
 |---|---|---|
+| [00](00-learnings.md) | **Running learnings — the loop's long-term memory** | ongoing |
 | [01](01-competition-matrix.md) | The announced shape matrix and what it implies | 2026-08-29 |
 | [02](02-allowed-techniques.md) | What the rules permit, decided against measurement | 2026-08-29 |
 | [03](03-baseline-measurements.md) | Baseline and candidate across the real matrix | 2026-08-29 |
