@@ -7,8 +7,12 @@ confident verdict costs 15-20 minutes of GPU. Five expander agents produce candi
 faster than that, and the queue -- not ideation -- becomes the bottleneck. Most ideas are
 wrong; they should die for 20 seconds, not 20 minutes.
 
-    screen  ->  bench/screen.py    20s   4 configs, one pass, verdict only
+    screen  ->  bench/screen.py     30s  4 configs, one pass, verdict only
     confirm ->  bench/run_matrix.py 112s  all 13, recorded to the ledger
+
+MEASURED end to end at 29.6s against 112s, a 3.8x saving. The 20s predicted from summing
+per-config ledger medians was optimistic: it omitted process startup and first-call
+compilation, which a screen pays once per candidate and a full sweep amortizes.
 
 THE SCREEN SET WAS DERIVED, NOT CHOSEN
 --------------------------------------
