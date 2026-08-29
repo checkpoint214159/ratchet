@@ -91,6 +91,32 @@ def fits(d_model: int, ffn_dim: int, elem_size: int, block_m: int, smem_optin: i
     return smem_bytes(d_model, ffn_dim, elem_size, block_m) <= smem_optin
 
 
+# Derived from the measured crossover in finding 25, not fitted to config ids. Speedup is
+# monotone in weight-bytes-per-token, and the sign flips between 1.0 and 8.0:
+#     0.051 -> -7.6%    0.5 -> -5.7%    1.0 -> -2.5%    8.0 -> ~+1.3%    128 -> +49%
+# Expressed as a FRACTION of activation traffic so it carries to other widths and cards.
+AMORTIZE_FRACTION = 0.002
+
+
+def activation_bytes_per_token(d_model: int) -> int:
+    """One token's traffic through the fused block: fp16 normalized input read, fp32
+    residual read, fp32 output write."""
+    return d_model * 2 + d_model * 4 + d_model * 4
+
+
+def amortizes(tokens: int, d_model: int, ffn_dim: int, elem_size: int) -> bool:
+    """Is there enough work to pay for hoisting the weights into shared memory?
+
+    The kernel's entire advantage is loading both weight matrices ONCE and streaming
+    activations past them, so the advantage scales with how many tokens reuse them.
+    Below the crossover the program moves more bytes of weights than of data (L37).
+    """
+    if tokens <= 0:
+        return False
+    weight_bytes = 2 * d_model * ffn_dim * elem_size
+    return weight_bytes / tokens <= AMORTIZE_FRACTION * activation_bytes_per_token(d_model)
+
+
 def fused_ffn(xn: torch.Tensor, res: torch.Tensor,
               w1: torch.Tensor, b1: torch.Tensor,
               w2: torch.Tensor, b2: torch.Tensor,
