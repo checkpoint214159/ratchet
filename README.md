@@ -289,6 +289,9 @@ Read [`docs/research-process.md`](docs/research-process.md) for the full process
 [`docs/benchmarking.md`](docs/benchmarking.md) for the measurement contract,
 [`docs/hardware-support.md`](docs/hardware-support.md) for vendor gates, and
 [`docs/experiments.md`](docs/experiments.md) for provenance and recovery rules.
+See [`docs/architecture.md`](docs/architecture.md) for the bounded-context map and
+[`docs/optimization-principles.md`](docs/optimization-principles.md) for the standing,
+hardware-agnostic optimization contract.
 
 ## Agent and Beryl orientation
 
