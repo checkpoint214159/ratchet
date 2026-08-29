@@ -70,3 +70,62 @@ fast path.
 The benchmark exposes `--padding-ratio`. If the graders run anything above zero, every
 number in the ledger is off the path that would actually execute. This is unmeasured, and
 it is the largest untested assumption in the project.
+
+## L6 — L5 was right, and the fix was a proof rather than a tuning (2026-08-29)
+
+The padding blind spot was real and large: v6 retained only 51% of its speedup on configs
+1 and 5 at `padding_ratio=0.5`, and **28% on config 13**. v8 recovers it — 6.730x unpadded
+(unchanged from v6) and 5.853x at padding 0.5, against v6's ~2.86x.
+
+The fix came from *reading the reference's masking semantics*, not from measurement: with
+right-padding and causality the key mask is provably redundant, which is what lets the
+fp16 no-mask flash path qualify. Two runs of profiling would never have found it.
+
+**Method note for the next iteration:** the highest-value move this session was auditing an
+assumption, not optimizing a hot spot. Before proposing another kernel change, check what
+else has only ever been run at a default — `input_scale` is still 1.0 everywhere, `dtype`
+is still float32 everywhere, and `--compile-baseline` has never been used, which means
+**the baseline we quote speedups against has never been the strongest available baseline**.
+That last one would deflate every number in the ledger and is the next thing to test.
+
+## L7 — Branching is now real, but a fork still does not exist (2026-08-29)
+
+v8 lives on `cand/g8/right-pad-redundant-mask`, the first candidate branch. But it branched
+from HEAD, so the history is still linear and L1 still applies: no siblings means clade
+statistics still rank by age. **A genuine fork — two candidates from the same parent —
+is required before the Thompson draw carries information.** Do that next.
+
+## L8 — We committed the exact error our own contract was written to prevent (2026-08-29)
+
+Every number from v1 to v8 was quoted against an **eager** baseline. `CLAUDE.md` rule 5
+and `docs/04-failure-modes.md` both open by forbidding this, citing KernelBench collapsing
+1.43x -> 0.88x under the same correction. `--compile-baseline` existed the whole time and
+was never used.
+
+Corrected: **7.229x -> 1.692x geomean**, and we lose outright on configs 9 (0.94x) and
+12 (0.90x).
+
+The shape of what survives is informative: we beat `torch.compile` where an ALGORITHMIC
+choice matters (config 13 at 7.89x from streaming attention, config 6 at 3.00x from
+L2-sized chunking, config 11 at 3.69x) and lose where the win would be pure kernel fusion,
+which Inductor does better than hand-written op sequences.
+
+**Both numbers must appear in any report.** The benchmark defaults compile-baseline to
+off, so 7.2x is what a default run prints and is not fabricated — but quoting it alone is
+the artifact this project exists to avoid.
+
+**Method rule this establishes:** before optimizing anything further, audit what the
+comparison is against. Two of the three largest findings this session (L6/finding 11, and
+this one) came from auditing an untested default, not from profiling. Remaining unaudited
+defaults: `input_scale=1.0` and `dtype=float32` everywhere.
+
+## L9 — Ad-hoc scripts reintroduce the errors the harness prevents (2026-08-29)
+
+My first compiled-baseline audit compiled all 13 configs in ONE process and produced
+~1.00x ratios for later configs, which I nearly reported as "compile does not help here".
+`torch._dynamo` caches per process and silently falls back to eager past its recompile
+limit; compile times of 0.1-0.3s versus 2-6s were the only tell.
+
+`bench/run_matrix.py` already enforces one-config-per-subprocess. I bypassed it for speed
+and got a contaminated result — the same class of error as finding 05. **Measure through
+the harness, or accept that the harness's guarantees do not apply.**

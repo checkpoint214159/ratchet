@@ -101,3 +101,20 @@ def test_writing_the_ledger_does_not_dirty_the_run():
                                capture_output=True, text=True).stdout
     if DEFAULT_PATH.split("/")[-1] in porcelain and len(porcelain.strip().splitlines()) == 1:
         assert not is_dirty(), "a modified ledger alone must not mark the tree dirty"
+
+
+def test_scoreboard_separates_padding_conditions(tmp_path):
+    # v8 was measured at padding 0.0 and 0.5. Pooling them collapses two different
+    # measurement conditions onto one key, and last-write-wins then reports whichever
+    # happened to run last as if it were the candidate's score.
+    led = BenchLedger(tmp_path / "r.jsonl")
+    # below the 3x clip, or both would saturate and the comparison says nothing
+    for pad, sp in ((0.0, 2.5), (0.5, 1.8)):
+        for cfg in range(1, 15):
+            row = _row("f" * 40, cfg, sp)
+            row["padding_ratio"] = pad
+            led.append(row)
+    board = scoreboard(led)
+    assert len(board) == 2, "each padding condition is its own scoreboard entry"
+    assert {round(e["padding_ratio"], 2) for e in board} == {0.0, 0.5}
+    assert board[0]["weighted_score"] > board[1]["weighted_score"]
