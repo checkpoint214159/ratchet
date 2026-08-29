@@ -87,6 +87,28 @@ def test_generation_is_byte_identical_and_declares_the_no_run_state(tmp_path: Pa
     )
 
 
+def test_evidence_figure_is_a_proportional_bar_chart_from_the_projection(
+    tmp_path: Path,
+):
+    root = _paper_root(tmp_path)
+    generate_sources(root)
+    generated = root / "research" / "paper" / "generated"
+    figure = (generated / "evidence_figure.tex").read_text()
+
+    # Deterministic bars drawn with only the \rule primitive: reviewed sources are the
+    # largest series (full 120pt), the single no-run event scales to round(120/9)=13pt,
+    # and zero empirical events render as a zero-width bar -- the honest depiction of the
+    # evidence boundary rather than a hidden row.
+    assert r"Reviewed primary sources & 9 & \rule{120pt}{6pt}" in figure
+    assert r"No-run evidence events & 1 & \rule{13pt}{6pt}" in figure
+    assert r"Empirical result events & 0 & \rule{0pt}{6pt}" in figure
+    assert r"\caption{Evidence composition of the current build" in figure
+    assert (
+        r"\input{generated/evidence_figure.tex}"
+        in (root / "research" / "paper" / "main.tex").read_text()
+    )
+
+
 def test_reviewed_literature_citations_resolve_exactly_to_bibliography():
     selection = select_paper_content(ROOT)
     archive = FileExperimentArchive(ROOT / "research" / "archive")
