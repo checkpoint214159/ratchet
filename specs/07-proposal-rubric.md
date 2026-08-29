@@ -30,8 +30,13 @@ Instead the two axes play **different structural roles**, mapped onto a Beta pri
     mu    = Q                                  quality sets the prior MEAN
     kappa = KAPPA_MAX - E*(KAPPA_MAX-KAPPA_MIN)  entropy sets the prior STRENGTH (inverted)
 
-    alpha_0 = mu * kappa
-    beta_0  = (1 - mu) * kappa
+    alpha_0 = mu * kappa + 1
+    beta_0  = (1 - mu) * kappa + 1
+
+The +1 on each side is NOT cosmetic: without it a proposal scoring Q = 1.0 gives
+beta_0 = 0 and a degenerate Beta that raises. Found by the backtest (finding 20), not by
+reading the formula. It also matches the Beta(1+s, 1+f) convention `sample_parent`
+already uses, so the node-side and idea-side samplers agree.
 
 A high-quality, low-entropy idea (an obvious next step, well evidenced) gets a **narrow**
 posterior centred high: it will be sampled early and, if it disappoints, abandoned fast.
@@ -42,8 +47,12 @@ temperature parameter or an exploration bonus to tune.
 
 Suggested constants, to be recalibrated by the backtest below:
 
-    KAPPA_MAX = 20.0   (a low-entropy idea is worth ~20 pseudo-observations of prior)
-    KAPPA_MIN = 2.0    (a high-entropy idea is worth ~2: almost uninformed)
+    KAPPA_MAX = 8.0    (a low-entropy idea is worth ~8 pseudo-observations of prior)
+    KAPPA_MIN = 0.5    (a high-entropy idea is worth ~0.5: almost uninformed)
+
+RECALIBRATED from (20, 2) by the backtest. At (20, 2) the top-ranked idea won 50.5% of
+Thompson draws, so a five-agent queue would hand the same idea to two agents. At (8, 0.5)
+it takes 27.5% and five draws yield ~4 distinct ideas. See finding 20.
 
 As real measurements land, the posterior updates conventionally:
 
@@ -85,6 +94,13 @@ scored, not queued, and not counted against the proposer's yield.
      EVIDENCE REQUIRED: a profile line, a ledger row, or a source citation.
 
 **A2. Headroom, roofline-grounded.** How much is actually available if it works?
+  THE SIBLING RULE: score the MECHANISM, not the proposal's framing of it. Proposals that
+  share a mechanism inherit the same A2. In the backtest v9a and v9b made the identical
+  move (hand the decomposition to a compiler) and realized +58.3% and +56.9%, but v9b's
+  modest self-description ("a compile-COST question, not a speed one") talked the rubric
+  down 20 points. A rubric that can be talked DOWN by modest framing can be talked UP by
+  grandiose framing -- a direct exploit for a proposer scoring its own work. Enforcing
+  this rule took the backtest's rank correlation from +0.267 to +0.483.
   Must cite a number from the device table (613.7 GB/s, 88.2 BF16-TFLOP/s FP32-acc,
   ridge 144 FLOP/B, 2.22 us launch, 48 MB L2, 66 SMs) or from `bench/results.jsonl`.
   0  no quantified ceiling
@@ -173,12 +189,22 @@ the controller rather than argued about.
 
 1. **Evidence or zero.** A1, A2 and B3 have mandatory evidence. Missing evidence is not
    a low score, it is a zero.
-2. **BACKTEST BEFORE TRUSTING.** Score the 14 already-measured candidates from their
-   pre-measurement descriptions alone. A valid rubric must rank the g9 fork
-   (2.678x, the largest real jump) and v12 (2.712x) ABOVE v5_fp16_resid (failed 12/14)
-   and v7_fused_norm (bought nothing, finding 10). If it does not, the rubric is wrong
-   and gets revised BEFORE it schedules a single GPU minute. This is the same discipline
-   applied to the objective function in finding 12, which had silently saturated.
+2. **BACKTEST BEFORE TRUSTING.** DONE, 2026-08-29: `bench/proposals/backtest.py`,
+   written up as finding 20. It found three defects (a degenerate Beta at Q=1.0, the
+   wrong scoring target, and the framing exploit above) before the rubric spent a GPU
+   minute. Re-run it whenever a dimension changes.
+
+   **Score candidates on MARGINAL GAIN OVER PARENT, never on the cumulative ledger
+   number.** The cumulative geomean measures the stack a candidate INHERITS: v13 reads
+   2.711x mostly because it inherited v12. Aimed at the cumulative number the rubric had
+   rho = +0.050 -- no predictive power at all; aimed at the marginal number, +0.483.
+   This generalizes beyond the rubric: any selection scoring candidates by their absolute
+   ledger number is scoring their ancestors.
+
+   Acceptance: the g9 fork and v12 must rank ABOVE v5_fp16_resid and v7_fused_norm.
+   Currently PASSES all four pairwise checks at rho = +0.483 -- which for n=9 is NOT
+   significant (5% critical value ~0.68). The honest status is "not obviously broken",
+   not "validated".
 3. **Calibration drift.** The controller tracks realized-vs-predicted per proposal. A
    proposer whose A2 headroom estimates are systematically optimistic gets its scores
    shrunk toward the prior, and that shrinkage is recorded.
