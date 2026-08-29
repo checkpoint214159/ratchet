@@ -411,10 +411,18 @@
   fixtures never enter the experiment catalogue or paper evidence.
 - Acceptance checks:
   - `pytest tests/evaluation/test_adversarial_pool.py -q`
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/testing-policy.md`
-- Evidence: none
+- Evidence: Six frozen `SYN-NUM-*` scalar fixtures pin exact/just-over absolute and
+  relative thresholds, negative-reference magnitude handling, and an additive-tolerance
+  trap against the evaluator's executable `abs_ok | rel_ok` rule. AST and repository scans
+  prove no transformer configuration overlap, production/test import, archive reference,
+  benchmark reference, or paper source/bibliography reference; the authoritative benchmark
+  hash remains unchanged. `pytest tests/evaluation/test_adversarial_pool.py -q` passed 7
+  tests with Ruff, manifest, and diff checks on 2026-08-29; architecture and slice reviews
+  approved. No production API, tolerance change, candidate, GPU, PyTorch, archive event, or
+  paper evidence was created.
 
 ### IB-22 — Critic and scout
 - Parent: IB-17

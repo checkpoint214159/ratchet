@@ -70,6 +70,10 @@ current build is globally no-run even if another adapter can be selected:
   measurements.
 - Synthetic objective/timing fixtures stay under `tests/fixtures/` and never enter the
   production catalogue.
+- The adversarial scalar pool pins the executable absolute-OR-relative boundary, including
+  exact, just-over, negative-reference, and additive-rule-trap cases. It imports no
+  production code, carries no transformer shape/seed/device fields, and its IDs are
+  forbidden from `ratchet/`, `benchmarks/`, the archive, and every paper input.
 - Historical CUDA calibration cannot qualify Intel or the current runtime.
 
 ## Default Loop
