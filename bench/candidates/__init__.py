@@ -52,6 +52,11 @@ def _v5(baseline_cls):
     return build(baseline_cls)
 
 
+def _v6(baseline_cls):
+    from .v6_fp16_gelu import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -83,5 +88,11 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "weights and GELU in fp16, to delete the ~6 dtype conversions per layer "
                 "that profiling put at 12.8-26.8% of candidate kernel time. Tests "
                 "whether the accumulated fp16 error stays inside the 2e-3 budget.",
+    ),
+    "v6_fp16_gelu": CandidateSpec(
+        name="v6_fp16_gelu", generation=6, parent="v3_chunked", build=_v6,
+        summary="v3 with exactly one non-accumulating round-trip removed: GELU runs in "
+                "fp16 instead of upcast-gelu-downcast. Tests the distinction v5 "
+                "established -- the residual accumulates, an elementwise op does not.",
     ),
 }
