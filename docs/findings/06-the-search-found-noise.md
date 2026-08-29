@@ -78,3 +78,46 @@ such gains, the result would have looked like steady progress and been entirely 
 
 That is the failure mode this project was built to catch, and it caught it on the first
 run of its own search loop.
+
+---
+
+## The re-run: the search validated the calibration rather than beating it
+
+With the axes collapsed and the 3% promotion margin in place, the loop was re-run over
+the same four configs (1, 2, 6, 13). It evaluated 10 of the 12 points the space contains
+and **promoted nothing**. The best point is the seed.
+
+| `chunk_ratio` (with CUDA graph) | geomean |
+|---|---|
+| 0.0625 | 7.036x |
+| 0.125 | 8.666x |
+| **0.1667** | **8.997x**  <- the seed, and the analytic L2 derivation |
+| 0.25 | 8.880x |
+| 0.5 | 8.327x |
+
+Without the graph, the same ratios yield 2.81x - 5.08x.
+
+Two things this establishes:
+
+**The curve is real and physically shaped.** It peaks at 0.1667 and falls off in both
+directions — too-small chunks lose parallelism, too-large chunks lose the L2 residency
+the chunking exists to buy. This is not a flat space with noise on top.
+
+**The peak sits exactly where the analytic calibration put it.** `solve_chunk` derives
+0.1667 from measured cache capacity with no search at all. The optimizer explored the
+space around it and found nothing better by more than the noise floor. The hand-derived
+predicate was already optimal.
+
+That is a **null result for the search and a positive result for the calibration**, and
+it is the ablation the dossier's skeptic paper (arXiv 2602.16805) demands before claiming
+evolutionary machinery produced a win. Here it demonstrably did not: the win came from
+the roofline reasoning, and the search's contribution was to confirm it and to refuse to
+promote 2.7% of noise on top.
+
+**A methodological note for the next run.** The space holds 12 points and the loop
+visited 10 of them, repeatedly bouncing off already-cached points during restarts.
+First-improvement iterated local search is designed for spaces too large to enumerate;
+below a few hundred points, exhaustive evaluation is cheaper and gives every point a
+confidence interval instead of one visit. ILS should be reserved for the space that
+actually needs it — the one that opens up when the loop can propose kernel source rather
+than turn existing knobs.
