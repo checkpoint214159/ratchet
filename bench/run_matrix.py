@@ -51,7 +51,8 @@ def load_reference():
 # The measured work -- runs inside the child process
 # ======================================================================================
 
-def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict:
+def measure_one(config_id: int, candidate_name: str, samples: int = 300,
+                padding: float = 0.0) -> dict:
     import torch
 
     sys.path.insert(0, str(REPO))
@@ -73,11 +74,12 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict
     )
     tcfg.validate()
 
-    out: dict = {"config_id": config_id, "candidate": candidate_name}
+    out: dict = {"config_id": config_id, "candidate": candidate_name,
+                 "padding_ratio": padding}
 
     def make_input(seed):
         return ref.generate_random_case(tcfg, device, dtype, seed=seed,
-                                        padding_ratio=0.0, input_scale=1.0)
+                                        padding_ratio=padding, input_scale=1.0)
 
     def median_ms(model, x, mask, n):
         with torch.inference_mode():
@@ -169,11 +171,12 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict
 # Parent process
 # ======================================================================================
 
-def run_child(config_id: int, candidate: str) -> dict:
+def run_child(config_id: int, candidate: str, padding: float = 0.0) -> dict:
     """One config in its own process. An OOM or a crash is a result, not an exception."""
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--child",
-         "--id", str(config_id), "--candidate", candidate],
+         "--id", str(config_id), "--candidate", candidate,
+         "--padding", str(padding)],
         capture_output=True, text=True, cwd=str(REPO), timeout=3600,
     )
     for line in proc.stdout.splitlines():
@@ -190,6 +193,9 @@ def main() -> int:
     ap.add_argument("--candidate", required=True)
     ap.add_argument("--ids", type=int, nargs="*", default=None)
     ap.add_argument("--samples", type=int, default=300)
+    ap.add_argument("--padding", type=float, default=0.0,
+                    help="padding_ratio; every measurement before 2026-08-29 used 0.0, "
+                         "which is the ONLY value where the all-True mask fast path exists")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--json-out", action="store_true",
                     help="emit one __ROW__ json line per config, for the search loop")
@@ -200,7 +206,7 @@ def main() -> int:
     if args.child:
         try:
             print("__RESULT__" + json.dumps(measure_one(args.id, args.candidate,
-                                                        args.samples)))
+                                                        args.samples, args.padding)))
         except Exception:
             traceback.print_exc()
             return 1
@@ -241,7 +247,7 @@ def main() -> int:
     print(f"{'#':>3} {'status':<10} {'baseline':>10} {'cand':>10} {'speedup':>8}  max_abs")
     speedups = {}
     for cid in ids:
-        r = run_child(cid, args.candidate)
+        r = run_child(cid, args.candidate, args.padding)
         t, c = r.get("timing") or {}, r.get("correctness") or {}
         sp = t.get("speedup")
         if sp:
@@ -255,7 +261,7 @@ def main() -> int:
                              timing=r.get("timing"), correctness=r.get("correctness"),
                              memory=r.get("memory"), env=env,
                              config=BY_ID[cid].to_dict(),
-                             notes=(r.get("notes", "") + (
+                             notes=(f"padding_ratio={args.padding} " + r.get("notes", "") + (
                                  f" params={json.dumps(tuned_params)}" if tuned_params else "")
                              ).strip(),
                              provenance_override=run_prov)
