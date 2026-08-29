@@ -227,6 +227,12 @@ def main() -> int:
     except Exception:
         env["triton"] = None
 
+    # A search point is (commit, candidate, params). Without the params in the row,
+    # every point the loop evaluates collapses onto one scoreboard key and the search
+    # becomes unauditable after the fact.
+    import os as _os
+    tuned_params = {k: v for k, v in sorted(_os.environ.items())
+                    if k.startswith("RATCHET_")}
     led = BenchLedger(repo=str(REPO))
     # Provenance is captured ONCE, here, and stamped on every row of this run. Calling
     # provenance() per row means a file edited while the run is in flight silently
@@ -248,7 +254,10 @@ def main() -> int:
             row = led.record(config_id=cid, status=r["status"], candidate=args.candidate,
                              timing=r.get("timing"), correctness=r.get("correctness"),
                              memory=r.get("memory"), env=env,
-                             config=BY_ID[cid].to_dict(), notes=r.get("notes", ""),
+                             config=BY_ID[cid].to_dict(),
+                             notes=(r.get("notes", "") + (
+                                 f" params={json.dumps(tuned_params)}" if tuned_params else "")
+                             ).strip(),
                              provenance_override=run_prov)
         if args.json_out:
             print("__ROW__" + json.dumps({"config_id": cid, "status": r["status"],
