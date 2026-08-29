@@ -367,3 +367,32 @@ check that its inputs still straddle the cap.
 right baseline four generations ago. The scoreboard kept using the wrong one because
 nobody asked what else read that number. **When a finding invalidates an input, grep for
 every consumer of it.**
+
+## L23 — A silent-wrong-answer mode our whole correctness suite was blind to (2026-08-29)
+
+v12 can capture an **empty** CUDA graph (Dynamo re-traces inside the capture region and
+touches the RNG state). `replay()` then does nothing and the candidate returns the stale
+static buffer — right shape, right dtype, wrong values.
+
+v13 verifies the graph against a freshly computed reference and falls back to the compiled
+callable otherwise. **Cost: none.** 2.711x vs v12's 2.712x.
+
+**The test-design lesson is the transferable part.** Every accuracy check we had ran one
+input per trial against a reference computed for that same input. That is structurally
+blind to staleness: a stale buffer holding a correct *previous* answer still matches the
+reference for the *previous* input. The suite could not have caught this no matter how
+many trials it ran.
+
+The test that does catch it is the crudest one imaginable: **two different inputs must not
+produce identical output.** No tolerances, no reference. Add an invariance check like this
+wherever a candidate holds mutable state across calls.
+
+## L24 — "Correct because of how the harness calls it" is not correct (2026-08-29)
+
+v12's published numbers are genuinely sound, because the harness runs five accuracy trials
+on fresh inputs before timing and a stale buffer cannot survive that. But the property was
+accidental — it belonged to the caller's ordering, not to the candidate.
+
+A grader whose harness warms up differently would have gotten silent garbage from our best
+submission. **Ask of every candidate: is it correct on its own terms, or only under the
+call pattern we happen to test it with?**
