@@ -75,6 +75,20 @@ def _v9b(baseline_cls):
     return build(baseline_cls)
 
 
+def _v10a(baseline_cls):
+    from .v10_ablation import build_no_chunk
+    return build_no_chunk(baseline_cls)
+
+
+def _v10b(baseline_cls):
+    from .v10_ablation import build_no_fused_qkv
+    return build_no_fused_qkv(baseline_cls)
+
+
+def _v10c(baseline_cls):
+    from .v10_ablation import build_no_fp16
+    return build_no_fp16(baseline_cls)
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -138,5 +152,20 @@ REGISTRY: dict[str, CandidateSpec] = {
         summary="Sibling B of the g9 fork. Same parent and hypothesis as v9a with one "
                 "variable changed: reduce-overhead instead of max-autotune. Answers "
                 "whether the 2-19s per-shape autotuning cost buys anything measurable.",
+    ),
+    "v10a_no_chunk": CandidateSpec(
+        name="v10a_no_chunk", generation=10, parent="v9a_compiled_core", build=_v10a,
+        summary="Ablation: v9a without L2-sized batch chunking. Does Inductor already "
+                "handle the working set, making v3's chunk loop dead weight?",
+    ),
+    "v10b_no_fusedqkv": CandidateSpec(
+        name="v10b_no_fusedqkv", generation=10, parent="v9a_compiled_core", build=_v10b,
+        summary="Ablation: v9a with three separate Q/K/V projections instead of the "
+                "fused cat. Does Inductor fuse them itself?",
+    ),
+    "v10c_no_fp16": CandidateSpec(
+        name="v10c_no_fp16", generation=10, parent="v9a_compiled_core", build=_v10c,
+        summary="Ablation: v9a in pure fp32, no fp16 weight cache. Does our hand-rolled "
+                "mixed precision still beat the compiler's own choice?",
     ),
 }
