@@ -260,16 +260,16 @@ def test_malformed_dispatch_digests_and_event_ids_reject_at_construction():
         _evidence("candidate", request, source_projection_id="not-a-digest")
 
 
-def test_real_zero_event_projection_always_uses_fallback():
+def test_real_no_run_only_projection_always_uses_fallback():
     projection = FileExperimentArchive(ROOT / "research" / "archive").projection()
     request = _request()
 
-    assert projection.event_count == 0
-    assert projection.event_ids == ()
+    assert projection.event_count == 1
+    assert projection.event_ids == ("EVT-000001",)
     decision = EvidenceDrivenDispatch(projection).choose(request)
 
     assert isinstance(decision, UntunedFallback)
-    assert decision.reason == "verified projection contains no events"
+    assert decision.reason == "no qualifying evidence for dispatch profile"
 
 
 def test_cpu_never_selects_tuned_evidence():

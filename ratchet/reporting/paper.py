@@ -75,12 +75,27 @@ class PaperBuildError(ValueError):
 
 
 @dataclass(frozen=True, slots=True)
+class NoRunPaperEvidence:
+    """One verified no-run event rendered as evidence, never as a performance result."""
+
+    event_id: str
+    experiment_id: str
+    environment_id: str
+    intended_protocol: str
+    stop_reason: str
+    hypothesis: str
+    literature_refs: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class PaperSelection:
     """Reviewed literature and one verified archive projection for a paper build."""
 
     citation_keys: tuple[str, ...]
     projection_id: str
     event_count: int
+    empirical_event_count: int
+    no_run_events: tuple[NoRunPaperEvidence, ...]
 
 
 def repository_root() -> Path:
@@ -106,6 +121,27 @@ def _validate_bibliography(path: Path) -> None:
         )
 
 
+def _no_run_evidence(payload: Mapping[str, object]) -> NoRunPaperEvidence:
+    required = (
+        "event_id",
+        "experiment_id",
+        "environment_id",
+        "intended_protocol",
+        "stop_reason",
+        "hypothesis",
+    )
+    if any(not isinstance(payload.get(name), str) for name in required):
+        raise PaperBuildError("verified no-run payload has invalid paper fields")
+    references = payload.get("literature_refs")
+    if not isinstance(references, list) or not all(
+        isinstance(reference, str) for reference in references
+    ):
+        raise PaperBuildError(
+            "verified no-run payload has invalid literature references"
+        )
+    return NoRunPaperEvidence(*(payload[name] for name in required), tuple(references))
+
+
 def select_paper_content(root: Path | None = None) -> PaperSelection:
     """Select reviewed literature and immutable catalogue facts without execution."""
 
@@ -123,20 +159,51 @@ def select_paper_content(root: Path | None = None) -> PaperSelection:
     try:
         archive.verify()
         projection = archive.projection()
-    except ArchiveIntegrityError as error:
+        projection_data = json.loads(archive.projection_bytes())
+    except (ArchiveIntegrityError, ValueError, json.JSONDecodeError) as error:
         raise PaperBuildError("paper requires a verified archive projection") from error
-    return PaperSelection(citations, projection.projection_id, projection.event_count)
+    events = projection_data.get("events")
+    if not isinstance(events, list) or len(events) != projection.event_count:
+        raise PaperBuildError("verified archive projection has invalid event data")
+    no_run_events: list[NoRunPaperEvidence] = []
+    empirical_event_count = 0
+    for entry in events:
+        if not isinstance(entry, dict) or not isinstance(entry.get("payload"), dict):
+            raise PaperBuildError(
+                "verified archive projection has invalid event payload"
+            )
+        payload = entry["payload"]
+        kind = payload.get("event_kind")
+        if kind == "no_run":
+            no_run_events.append(_no_run_evidence(payload))
+        elif kind == "empirical":
+            empirical_event_count += 1
+        else:
+            raise PaperBuildError(
+                "verified archive projection has an unknown event kind"
+            )
+    if not set(
+        reference for event in no_run_events for reference in event.literature_refs
+    ) <= set(citations):
+        raise PaperBuildError("no-run literature references must be reviewed citations")
+    return PaperSelection(
+        citations,
+        projection.projection_id,
+        projection.event_count,
+        empirical_event_count,
+        tuple(no_run_events),
+    )
 
 
-def reject_empirical_claims(event_count: int, claims: Iterable[str]) -> None:
-    """Reject all empirical-result language in zero-event hand-authored prose."""
+def reject_empirical_claims(empirical_event_count: int, claims: Iterable[str]) -> None:
+    """Reject empirical-result language unless verified empirical events exist."""
 
-    if event_count != 0:
+    if empirical_event_count != 0:
         return
     for claim in claims:
         if _EMPIRICAL_LANGUAGE.search(claim) or _COMPARATIVE_LANGUAGE.search(claim):
             raise PaperBuildError(
-                "zero-event catalogue cannot contain empirical claims"
+                "catalogue without empirical events cannot contain empirical claims"
             )
 
 
@@ -236,16 +303,16 @@ def _validate_no_run_prose(
     sources: Iterable[tuple[Path, str]],
     controlled_generated: Mapping[Path, str],
 ) -> None:
-    if selection.event_count != 0:
+    if selection.empirical_event_count != 0:
         return
     for path, content in sources:
         if controlled_generated.get(path) == content:
             continue
         try:
-            reject_empirical_claims(selection.event_count, (content,))
+            reject_empirical_claims(selection.empirical_event_count, (content,))
         except PaperBuildError as error:
             raise PaperBuildError(
-                f"zero-event catalogue rejects empirical prose in {path.name}"
+                f"catalogue without empirical events rejects empirical prose in {path.name}"
             ) from error
 
 
@@ -265,20 +332,52 @@ def _generated_literature(selection: PaperSelection) -> str:
     )
 
 
+def _paper_text(value: str) -> str:
+    if any(character in value for character in r"\\{}%$#&_~^"):
+        raise PaperBuildError("verified paper fact contains unsupported TeX characters")
+    return value
+
+
 def _generated_no_run(selection: PaperSelection) -> str:
-    if selection.event_count != 0:
-        raise PaperBuildError(
-            "IB-09 survey scaffold only supports an empty event catalogue"
+    if not selection.no_run_events:
+        return "\n".join(
+            (
+                "% GENERATED: do not edit; generated by ratchet.reporting.paper.",
+                r"\section{Evidence status}",
+                "The immutable catalogue contains no experiment events. This document is a "
+                "reproducible literature survey scaffold, not an empirical optimization report.",
+                "",
+            )
         )
+    event = selection.no_run_events[0]
     return "\n".join(
         (
             "% GENERATED: do not edit; generated by ratchet.reporting.paper.",
             r"\section{Evidence status}",
-            "The immutable catalogue contains zero experiment events. ENV-0001 records an "
-            "unavailable PyTorch XPU runtime, so this build generated no candidate, performed "
-            "no compilation, and collected no correctness, timing, memory, trace, or speedup result.",
-            "Consequently this document is a reproducible literature survey scaffold, not an "
-            "empirical optimization report.",
+            f"Verified event {_paper_text(event.event_id)} / {_paper_text(event.experiment_id)} "
+            f"records a no-run decision for {_paper_text(event.environment_id)}: "
+            f"{_paper_text(event.stop_reason)}.",
+            "The controller generated no candidate and recorded no compilation, correctness, "
+            "timing, memory, profile, trace, counter, comparison, speedup, or current-best result.",
+            "This is evidence of an unavailable execution environment, not a failed or slow implementation.",
+            "",
+        )
+    ) + _generated_next_hypothesis(selection)
+
+
+def _generated_next_hypothesis(selection: PaperSelection) -> str:
+    if not selection.no_run_events:
+        return ""
+    event = selection.no_run_events[0]
+    citations = ",".join(event.literature_refs)
+    return "\n".join(
+        (
+            "% GENERATED: do not edit; generated by ratchet.reporting.paper.",
+            r"\section{Next research direction}",
+            "After FG-01 qualifies an Intel Arc/XPU runtime, test the queued protocol "
+            f"{_paper_text(event.intended_protocol)}: {_paper_text(event.hypothesis)} "
+            rf"Its motivation is traceable to \cite{{{citations}}}.",
+            "Until that hardware gate passes, this remains a protocol hypothesis rather than a project result.",
             "",
         )
     )
@@ -305,12 +404,8 @@ def _generated_catalogue(selection: PaperSelection) -> str:
 
 
 def _generated_evidence_boundary(selection: PaperSelection) -> str:
-    """Render the verified inputs and the zero-event outcome as a local TeX figure."""
+    """Render the verified source and current evidence boundary as a local TeX figure."""
 
-    if selection.event_count != 0:
-        raise PaperBuildError(
-            "IB-09 survey scaffold only supports an empty event catalogue"
-        )
     return "\n".join(
         (
             "% GENERATED: do not edit; generated by ratchet.reporting.paper.",
@@ -322,7 +417,7 @@ def _generated_evidence_boundary(selection: PaperSelection) -> str:
             r"\hline",
             r"Verified immutable archive projection \\\\",
             r"\hline",
-            rf"{selection.event_count} experiment events \\\\",
+            rf"{len(selection.no_run_events)} no-run event(s); {selection.empirical_event_count} empirical event(s) \\\\",
             r"\hline",
             r"Literature synthesis only; no empirical conclusions \\\\",
             r"\hline",
@@ -341,11 +436,25 @@ def _generated_data(selection: PaperSelection) -> dict[str, object]:
         "citation_keys": list(selection.citation_keys),
         "projection_id": selection.projection_id,
         "event_count": selection.event_count,
-        "empirical_claims_permitted": selection.event_count > 0,
+        "empirical_event_count": selection.empirical_event_count,
+        "empirical_claims_permitted": selection.empirical_event_count > 0,
+        "no_run_events": [
+            {
+                "event_id": event.event_id,
+                "experiment_id": event.experiment_id,
+                "environment_id": event.environment_id,
+                "intended_protocol": event.intended_protocol,
+                "literature_refs": list(event.literature_refs),
+                "stop_reason": event.stop_reason,
+            }
+            for event in selection.no_run_events
+        ],
         "evidence_boundary": {
             "reviewed_primary_sources": len(selection.citation_keys),
             "experiment_events": selection.event_count,
-            "conclusion_kind": "literature_synthesis_only",
+            "no_run_events": len(selection.no_run_events),
+            "empirical_events": selection.empirical_event_count,
+            "conclusion_kind": "literature_synthesis_with_no_run_evidence",
         },
     }
 

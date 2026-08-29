@@ -152,3 +152,15 @@ Its state machine terminates after one bounded step and exposes no backend, cand
 workspace, compiler, measurement, or archive adapter. An available, altered, or
 noncanonical environment requires a new ratified hardware hierarchy rather than opening
 an execution path. Event append remains a distinct Experiments-owned action in IB-19.
+
+The optimization critic and scout remain planning-only in this no-measurement build. A
+`CriticEpoch` is immutable and candidate-held-out; with zero empirical events it can emit
+only a provenance-bound dormant decision, never a score, gate, or execution request. The
+citation-aware scout accepts only reviewed literature keys and emits FG-01-gated
+architectural intents or explicit citation rejections. Both are stdlib-only and have no
+archive, backend, measurement, model, or candidate runtime path.
+
+Reporting now reads verified public archive projection bytes to synthesize a no-run record
+and its literature-backed FG-01 hypothesis. It tracks empirical-event count separately
+from total events, so the current `EVT-000001` does not permit empirical language. The
+paper's evidence figure, generated data, and PDF remain deterministic pure projections.

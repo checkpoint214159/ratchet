@@ -92,3 +92,17 @@ The first controller pass is recorded as `EXP-0001` / `EVT-000001`. It stopped a
 correctness, compilation, timing, memory, profile, trace, counter, comparison, speedup,
 or current-best result. Its intended future protocol remains `PROTO-INTEL-0001` behind
 FG-01.
+
+## Current research interface
+
+`./scripts/verify-autoresearch.sh` is the reproducible no-GPU entry point. It verifies the
+archive, regenerates `research/paper/latest.pdf` in Tectonic cached/untrusted mode, and
+runs Beryl's deterministic installed-project gate. Its successful output proves the
+current state only: one verified no-run event and zero empirical events.
+
+The regenerated paper records `EVT-000001` / `EXP-0001`, its XPU stop reason, the absence
+of all result fields, three reviewed literature links, and the FG-01-gated
+`PROTO-INTEL-0001` next hypothesis. The citation-aware scout may prepare only reviewed,
+planning-only architectural intents; the candidate-held-out critic is explicitly dormant
+until measured candidate evidence exists. Neither can produce a candidate, score,
+measurement, or archive mutation in this build.

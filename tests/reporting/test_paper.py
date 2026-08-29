@@ -44,27 +44,42 @@ def test_generation_is_byte_identical_and_declares_the_no_run_state(tmp_path: Pa
     assert {
         path.name: path.read_bytes() for path in sorted(generated.iterdir())
     } == first
-    assert selection.event_count == 0
-    assert json.loads((generated / "catalogue.json").read_text()) == {
-        "citation_keys": list(selection.citation_keys),
-        "empirical_claims_permitted": False,
-        "evidence_boundary": {
-            "conclusion_kind": "literature_synthesis_only",
-            "experiment_events": 0,
-            "reviewed_primary_sources": 9,
-        },
-        "event_count": 0,
-        "projection_id": selection.projection_id,
-        "schema_version": 1,
-        "selection": "reviewed_literature_and_catalogue_only",
-    }
-    assert "zero experiment events" in (generated / "no_run.tex").read_text()
+    assert selection.event_count == 1
+    assert selection.empirical_event_count == 0
+    assert selection.no_run_events[0].event_id == "EVT-000001"
+    assert selection.no_run_events[0].experiment_id == "EXP-0001"
+    data = json.loads((generated / "catalogue.json").read_text())
+    assert data["empirical_claims_permitted"] is False
+    assert data["empirical_event_count"] == 0
+    assert data["event_count"] == 1
+    assert data["no_run_events"] == [
+        {
+            "environment_id": "ENV-0001",
+            "event_id": "EVT-000001",
+            "experiment_id": "EXP-0001",
+            "intended_protocol": (
+                "PROTO-INTEL-0001@sha256:"
+                "8497aaf0f9827ca6bedaea89d59a2146157324697fa918c0d84832ec6cdaa9c5"
+            ),
+            "literature_refs": [
+                "ansel2024pytorch",
+                "pytorch_xpu_2026",
+                "schoonhoven2022autotuning",
+            ],
+            "stop_reason": "ENV-0001: PyTorch is not installed; empirical work is not permitted",
+        }
+    ]
+    no_run = (generated / "no_run.tex").read_text()
+    assert "EVT-000001 / EXP-0001" in no_run
+    assert "no compilation, correctness, timing, memory" in no_run
+    assert "Next research direction" in no_run
+    assert "PROTO-INTEL-0001" in no_run
     assert (
-        "Immutable experiment events & 0" in (generated / "catalogue.tex").read_text()
+        "Immutable experiment events & 1" in (generated / "catalogue.tex").read_text()
     )
     boundary = (generated / "evidence_boundary.tex").read_text()
     assert "9 reviewed primary sources" in boundary
-    assert "0 experiment events" in boundary
+    assert "1 no-run event(s); 0 empirical event(s)" in boundary
     assert "Literature synthesis only; no empirical conclusions" in boundary
     assert (
         r"\input{generated/evidence_boundary.tex}"
@@ -81,7 +96,8 @@ def test_reviewed_literature_citations_resolve_exactly_to_bibliography():
 
     assert selection.projection_id == projection.projection_id
     assert selection.event_count == projection.event_count
-    assert projection.event_ids == ()
+    assert projection.event_ids == ("EVT-000001",)
+    assert selection.empirical_event_count == 0
     assert set(selection.citation_keys) == set(
         re.findall(r"@\w+\{([^,]+),", bibliography)
     )
@@ -90,7 +106,7 @@ def test_reviewed_literature_citations_resolve_exactly_to_bibliography():
 
 
 def test_empty_catalogue_rejects_empirical_result_language():
-    with pytest.raises(PaperBuildError, match="zero-event catalogue"):
+    with pytest.raises(PaperBuildError, match="without empirical events"):
         reject_empirical_claims(0, ("Measured latency improved by a speedup.",))
 
 
@@ -105,7 +121,7 @@ def test_empty_catalogue_rejects_empirical_result_language():
     ),
 )
 def test_empty_catalogue_rejects_mixed_clause_and_comparative_claims(claim: str):
-    with pytest.raises(PaperBuildError, match="zero-event catalogue"):
+    with pytest.raises(PaperBuildError, match="without empirical events"):
         reject_empirical_claims(0, (claim,))
 
 
@@ -170,7 +186,7 @@ def test_pipeline_handles_local_input_cycles_without_recursion(tmp_path: Path):
     scope.write_text(scope.read_text() + r"\input{cycle}" + "\n")
     (sections / "cycle.tex").write_text(r"\input{scope}" + "\n")
 
-    assert generate_sources(root).event_count == 0
+    assert generate_sources(root).event_count == 1
 
 
 def test_pipeline_rejects_bibliography_input_escape(tmp_path: Path):
