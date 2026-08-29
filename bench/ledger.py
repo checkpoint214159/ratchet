@@ -54,6 +54,8 @@ DEFAULT_PATH = "bench/results.jsonl"
 
 # Reserved candidate name: rows measuring the unmodified reference implementation.
 BASELINE = "baseline"
+# Reserved: torch.compile(max-autotune) of the unmodified baseline -- the honest reference.
+BASELINE_COMPILED = "baseline_compiled"
 
 _REQUIRED = ("ts", "commit_sha", "config_id", "status")
 
@@ -256,6 +258,23 @@ def _padding_of(row: dict) -> float:
     return 0.0
 
 
+def compiled_baseline_ms(ledger: "BenchLedger") -> dict[int, float]:
+    """Per-config time of torch.compile(max-autotune) on the UNMODIFIED baseline.
+
+    This is the reference honest speedups are quoted against (CLAUDE.md rule 5). Kept as
+    ordinary ledger rows under the reserved candidate name, so it is measured evidence
+    rather than a constant someone typed.
+    """
+    out: dict[int, float] = {}
+    for r in ledger.clean_rows():
+        if r.get("candidate") != BASELINE_COMPILED or r.get("status") != "ok":
+            continue
+        ms = (r.get("timing") or {}).get("candidate_ms")
+        if ms:
+            out[r["config_id"]] = ms
+    return out
+
+
 def best_per_config(ledger: BenchLedger) -> dict[int, dict]:
     """Fastest passing candidate per config id."""
     best: dict[int, dict] = {}
@@ -278,7 +297,7 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
     from collections import defaultdict
     per: dict[tuple[str, str, float], dict] = defaultdict(
         lambda: {"rows": 0, "configs": set(), "passed": set(),
-                 "speedups": {}, "failures": []}
+                 "speedups": {}, "ms": {}, "failures": []}
     )
     for r in ledger.clean_rows():
         # Padding is part of the measurement CONDITION, not a detail. v8 was measured at
@@ -296,14 +315,21 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
         ok = r.get("status") == "ok" and (r.get("correctness") or {}).get("passed")
         if ok:
             agg["passed"].add(r["config_id"])
+            ms = (r.get("timing") or {}).get("candidate_ms")
+            if ms:
+                agg["ms"][r["config_id"]] = ms
             sp = (r.get("timing") or {}).get("speedup")
             if sp is not None:
                 agg["speedups"][r["config_id"]] = sp
         else:
             agg["failures"].append({"config_id": r["config_id"], "status": r.get("status")})
 
+    compiled = compiled_baseline_ms(ledger)
     out = []
     for (sha, cand, pad), agg in per.items():
+        # The honest score: against torch.compile, not against eager.
+        vs_compiled = {c: compiled[c] / ms for c, ms in agg["ms"].items()
+                       if c in compiled and ms}
         out.append({
             "commit_sha": sha,
             "short_sha": sha[:8],
@@ -313,7 +339,12 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
             "configs_passed": len(agg["passed"]),
             "rows": agg["rows"],
             "is_sweep": agg["rows"] > len(agg["configs"]),
-            "weighted_score": weighted_score(agg["speedups"]),
+            "weighted_score": weighted_score(vs_compiled) if vs_compiled else 0.0,
+            "score_vs_eager": weighted_score(agg["speedups"]),
+            "geomean_vs_compiled": (
+                __import__("math").exp(sum(__import__("math").log(v)
+                                           for v in vs_compiled.values()) / len(vs_compiled))
+                if vs_compiled else None),
             "speedups": agg["speedups"],
             "failures": agg["failures"],
         })
@@ -406,12 +437,18 @@ if __name__ == "__main__":
         sys.exit(0)
 
     print("\n=== scoreboard (score -> commit) ===")
-    print(f"{'sha':<10} {'candidate':<24} {'pad':>5} {'cfgs':>5} {'pass':>5} {'score':>7}")
+    print(f"{'sha':<10} {'candidate':<24} {'pad':>5} {'cfgs':>5} {'pass':>5} "
+          f"{'score':>7} {'geo':>7} {'(eager)':>8}")
+    print("  score and geo are vs the COMPILED baseline; (eager) is the saturated "
+          "legacy number")
     for e in scoreboard(led):
+        geo = e.get("geomean_vs_compiled")
         print(f"{e['short_sha']:<10} {e['candidate'][:24]:<24} "
               f"{e['padding_ratio']:>5.2f} "
               f"{e['configs_measured']:>5} {e['configs_passed']:>5} "
-              f"{e['weighted_score']:>7.3f}")
+              f"{e['weighted_score']:>7.3f} "
+              f"{(f'{geo:.3f}x' if geo else '-'):>7} "
+              f"{e['score_vs_eager']:>8.3f}")
 
     print("\n=== clade metaproductivity (pooled over descendants) ===")
     for sha, (s, f) in sorted(clade_stats(led).items(), key=lambda kv: -kv[1][0]):
