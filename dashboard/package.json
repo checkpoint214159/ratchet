@@ -1,0 +1,12 @@
+{
+  "name": "ratchet-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Live operations view for the ratchet GPU-kernel autoresearch loop. Zero runtime dependencies.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "node server/index.mjs",
+    "start": "node server/index.mjs"
+  }
+}

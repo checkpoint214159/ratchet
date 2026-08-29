@@ -153,3 +153,24 @@ that unlocked it was reading our own loss pattern rather than profiling harder.
 standalone and compiled. A hand-written change that looks like a loss standalone may be a
 win once Inductor fuses around it, and v7 (rejected on precision) is worth re-testing
 under compilation for exactly that reason.
+## L11 — First real fork, and it answered a cost question decisively (2026-08-29)
+
+v9a and v9b are true siblings: same parent (v8), same hypothesis (hand the decomposition
+to Inductor), one variable changed — `max-autotune` vs `reduce-overhead`.
+
+| sibling | mode | geomean vs eager | compile cost |
+|---|---|---|---|
+| v9a | max-autotune | 10.630x | 2-19s per shape |
+| v9b | reduce-overhead | 10.600x | much lower |
+
+**0.3% apart — deep inside the 3% noise floor.** The autotuning buys nothing measurable
+on this matrix, so `reduce-overhead` is strictly better for a graded run: identical speed
+for a fraction of the compile time, across 13 shapes.
+
+This is what a fork is FOR. A single lineage would have picked one mode and never learned
+the other was free. Two siblings differing in one variable answered a cost question in one
+run each.
+
+**Note the asymmetry worth carrying:** a null result between siblings is still a
+promotion — not of speed, but of the cheaper option. Equivalence is actionable when the
+two arms have different costs.

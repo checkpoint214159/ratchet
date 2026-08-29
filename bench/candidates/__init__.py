@@ -69,6 +69,8 @@ def _v8(baseline_cls):
 
 def _v9a(baseline_cls):
     from .v9_compiled_core import build
+def _v9b(baseline_cls):
+    from .v9b_reduce_overhead import build
     return build(baseline_cls)
 
 
@@ -129,5 +131,11 @@ REGISTRY: dict[str, CandidateSpec] = {
         summary="Sibling A of the g9 fork. Keeps v8's algorithm (flash, chunking, the "
                 "padding proof) and hands the op sequence to Inductor so it fuses the "
                 "elementwise chains v7 could not fuse by hand without breaking precision.",
+    ),
+    "v9b_reduce_overhead": CandidateSpec(
+        name="v9b_reduce_overhead", generation=9, parent="v8_padfast", build=_v9b,
+        summary="Sibling B of the g9 fork. Same parent and hypothesis as v9a with one "
+                "variable changed: reduce-overhead instead of max-autotune. Answers "
+                "whether the 2-19s per-shape autotuning cost buys anything measurable.",
     ),
 }
