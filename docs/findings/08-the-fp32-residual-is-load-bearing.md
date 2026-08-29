@@ -64,3 +64,38 @@ exact source that produced them, and it failed **correctness before any timing w
 not timed. The two passing configs were timed normally. Failures are recorded as rows with
 `status="incorrect"` rather than discarded, because "this is where the precision floor is"
 is the most reusable thing this run produced.
+
+---
+
+## Resolution: v6 removes the GELU round-trip for free
+
+The refined experiment this finding called for was run immediately after. v6 is v3 with
+exactly one change — `F.gelu(h)` in fp16 instead of `F.gelu(h.float()).to(fp16)` — with
+the fp32 residual left intact.
+
+**Result: bit-identical correctness, 5-12% faster on 12 of 13 configs.**
+
+| | v3 | v6 |
+|---|---|---|
+| geomean | 6.234x | **6.712x** (+7.7%, above the 3% noise floor) |
+| `max_abs`, all 13 configs | — | **bit-identical to v3** |
+
+Not "within tolerance" — the same float, to the last bit, on every config. Per-config
+gains: cfg1 +9.0%, cfg5 +10.5%, cfg9 +10.3%, cfg10 +11.6%, cfg13 +7.5%, and so on; only
+config 12 fell inside the noise floor.
+
+**Why it is free.** PyTorch's fp16 GELU kernel computes in fp32 internally and rounds
+once on write. That is precisely what the explicit `.float() -> gelu -> .to(fp16)` pair
+did — except the explicit version materializes two extra tensors and pays the memory
+traffic for them. The upcast recovered no information because `h` had already been
+rounded to fp16 by the preceding `F.linear`, exactly as predicted before the run.
+
+**The distinction v5 bought us therefore holds, and sharply.** The residual stream
+accumulates and cannot be demoted at any price. A single elementwise op does not
+accumulate, and in this case demoting it costs nothing at all because the library was
+already doing the safe thing internally.
+
+The lesson generalizes past this kernel: **an explicit upcast around a library op may be
+buying nothing**, because well-implemented reduced-precision kernels already accumulate
+internally at higher precision. Check what the kernel does before paying for a round-trip
+to protect it.
