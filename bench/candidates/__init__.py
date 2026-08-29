@@ -118,6 +118,16 @@ def _v15(baseline_cls):
     return build(baseline_cls)
 
 
+def _v16(baseline_cls):
+    from .v16_ffn_megakernel import build
+    return build(baseline_cls)
+
+
+def _v17(baseline_cls):
+    from .v17_dispatched_megakernel import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -226,6 +236,25 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "fusion. Measured 1.58x on config 6's FFN pattern in isolation. Re-asks "
                 "v9b's question -- is max-autotune worth it? -- with the autotuner "
                 "actually enabled, which it was not when v9b answered no.",
+    ),
+    "v16_ffn_megakernel": CandidateSpec(
+        name="v16_ffn_megakernel", generation=16, parent="v9b_reduce_overhead", build=_v16,
+        summary="THE FIRST HAND-WRITTEN KERNEL. One Triton kernel for the whole FFN "
+                "block -- both GEMMs, GELU and the fp32 residual -- with the intermediate "
+                "held in registers. Possible only because ffn_dim == d_model makes both "
+                "weight matrices 64 KB, inside the measured 99 KB opt-in smem. Inductor "
+                "structurally cannot do this: it fuses elementwise into GEMM, never GEMM "
+                "into GEMM. Op-level 2.2x-4.6x AND more accurate than the fp16 path.",
+    ),
+    "v17_dispatched_megakernel": CandidateSpec(
+        name="v17_dispatched_megakernel", generation=17, parent="v13_safe_capture",
+        build=_v17,
+        summary="RECOMBINATION: the g16 FFN megakernel merged into the g13 frontier, "
+                "gated on whether hoisting the weights into smem is paid for. The "
+                "predicate is a ratio of weight traffic to activation traffic -- no "
+                "config ids -- and selects exactly the three configs where g16 measured "
+                "a win. Expected geomean gain ~1.3%, INSIDE the noise floor; the "
+                "defensible claim is per-config, on the matrix's largest shape.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
