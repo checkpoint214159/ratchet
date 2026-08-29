@@ -94,10 +94,10 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict
             expected = baseline(x, mask)
             got = candidate(x, mask)
             res = ref.compare_outputs(expected, got, rtol=RTOL, atol=ATOL)
-            trials.append({"passed": bool(res.passed), "max_abs": float(res.max_abs),
-                           "max_rel": float(res.max_rel), "failed": int(res.failed_elements)})
-            worst_abs = max(worst_abs, float(res.max_abs))
-            worst_rel = max(worst_rel, float(res.max_rel))
+            trials.append({"passed": bool(res.passed), "max_abs": float(res.max_abs_error),
+                           "max_rel": float(res.max_relative_error), "failed": int(res.failed_elements)})
+            worst_abs = max(worst_abs, float(res.max_abs_error))
+            worst_rel = max(worst_rel, float(res.max_relative_error))
             failed += int(res.failed_elements)
             del x, mask, expected, got
     passed = all(t["passed"] for t in trials)
