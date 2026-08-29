@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "baseline_id": "ratchet.cuda.triton_fused.v1",
+  "vendor": "nvidia",
+  "target_backend": "cuda",
+  "kind": "triton_fused",
+  "availability": "available_on_qualified_hardware",
+  "validation": "unvalidated",
+  "definition_only": false,
+  "workload": "reference_transformer",
+  "kernel_fusion": {
+    "fused_qkv": true,
+    "fused_layernorm_residual": true,
+    "fused_gelu_epilogue": true,
+    "sdpa_backend": "triton_flash_attention"
+  },
+  "timing": {
+    "warmup_completed_calls": 20,
+    "ordering_blocks": 10,
+    "completed_calls_per_model_per_block": 30,
+    "ordering_patterns": ["ABBA", "BAAB"],
+    "synchronization": "backend synchronize before and after measured region",
+    "timing_method": "backend device events with host-timer cross-check",
+    "first_run_recorded_separately": true,
+    "compilation_recorded_separately": true,
+    "steady_state_recorded_separately": true
+  }
+}

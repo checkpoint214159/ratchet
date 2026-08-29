@@ -126,6 +126,12 @@ class OptimizedSelfAttention(nn.Module):
         return output
 
 
+from ratchet.kernels.triton_fused_ops import (
+    triton_fused_layernorm_residual,
+    triton_fused_gelu,
+)
+
+
 class OptimizedTransformerBlock(nn.Module):
     """Fused transformer block with pre-LayerNorm, fused QKV SDPA, and exact GELU FFN."""
 
@@ -143,12 +149,27 @@ class OptimizedTransformerBlock(nn.Module):
         valid_token_mask: Optional[torch.Tensor],
         causal: bool,
     ) -> torch.Tensor:
-        # Pre-LN Self-Attention with residual connection
-        x = x + self.attention(self.norm1(x), valid_token_mask, causal)
+        # Pre-LN Self-Attention with fused LayerNorm
+        norm1_out, _ = triton_fused_layernorm_residual(
+            x,
+            residual=None,
+            weight=self.norm1.weight,
+            bias=self.norm1.bias,
+            eps=self.norm1.eps,
+        )
+        attn_out = self.attention(norm1_out, valid_token_mask, causal)
+        x = x + attn_out
 
-        # Pre-LN FFN with exact GELU and residual connection
-        h = self.ffn_in(self.norm2(x))
-        h = F.gelu(h, approximate="none")
+        # Pre-LN FFN with fused LayerNorm and fused GELU
+        norm2_out, _ = triton_fused_layernorm_residual(
+            x,
+            residual=None,
+            weight=self.norm2.weight,
+            bias=self.norm2.bias,
+            eps=self.norm2.eps,
+        )
+        h = self.ffn_in(norm2_out)
+        h = triton_fused_gelu(h)
         x = x + self.ffn_out(h)
 
         if valid_token_mask is not None:
