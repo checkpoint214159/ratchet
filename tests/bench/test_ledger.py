@@ -5,10 +5,24 @@ from bench.ledger import (BenchLedger, clade_stats, scoreboard, descendants,
                           provenance, head_sha)
 
 
+_BASELINE_MS = 10.0
+
+
 def _row(sha, cfg, speedup, passed=True, dirty=False, status="ok"):
     return {"ts": "2026-08-29T00:00:00Z", "commit_sha": sha, "branch": "t",
             "dirty": dirty, "candidate": "c", "config_id": cfg, "status": status,
-            "correctness": {"passed": passed}, "timing": {"speedup": speedup}}
+            "correctness": {"passed": passed},
+            "timing": {"speedup": speedup, "baseline_ms": _BASELINE_MS,
+                       "candidate_ms": _BASELINE_MS / speedup}}
+
+
+def _compiled(sha, cfg, ms):
+    """A compiled-baseline row. clade_stats needs one per config to score anything:
+    beating the EAGER baseline stopped counting as success (finding 21)."""
+    r = _row(sha, cfg, 1.0)
+    r["candidate"] = "baseline_compiled"
+    r["timing"]["candidate_ms"] = ms
+    return r
 
 
 def test_append_is_the_only_write_path(tmp_path):
@@ -78,8 +92,10 @@ def test_failing_rows_never_count_as_clade_successes(tmp_path):
     # A round that fixed a compile error without moving the timing is a failure to
     # improve, not progress -- otherwise the loop drifts toward safe, slow, correct code.
     led = BenchLedger(tmp_path / "r.jsonl")
-    led.append(_row("d" * 40, 1, 0.9))            # correct but slower than baseline
-    led.append(_row("d" * 40, 2, 1.5, passed=False))
+    led.append(_compiled("d" * 40, 1, 10.0))
+    led.append(_compiled("d" * 40, 2, 10.0))
+    led.append(_row("d" * 40, 1, 0.9))            # correct but SLOWER than the baseline
+    led.append(_row("d" * 40, 2, 1.5, passed=False))   # faster but INCORRECT
     stats = clade_stats(led, repo=None)
     assert stats.get("d" * 40, (0, 0))[0] == 0
 
@@ -106,7 +122,8 @@ def test_baseline_rows_are_not_clade_failures(tmp_path):
     row = _row("e" * 40, 1, 1.0)
     row["candidate"] = "baseline"
     led.append(row)
-    led.append(_row("e" * 40, 1, 2.0))          # a real candidate win
+    led.append(_compiled("e" * 40, 1, 8.0))     # the bar a win must clear
+    led.append(_row("e" * 40, 1, 2.0))          # 5.0 ms, beats the compiled 8.0 ms
     s, f = clade_stats(led, repo=None)["e" * 40]
     assert (s, f) == (1, 0)
 
@@ -154,3 +171,50 @@ def test_scoreboard_counts_configs_not_rows(tmp_path):
     assert e["configs_measured"] == 2, "distinct configs, not rows"
     assert e["rows"] == 16
     assert e["is_sweep"] is True
+
+
+def test_beating_only_the_eager_baseline_is_not_a_clade_success(tmp_path):
+    """The defect finding 21 fixed, pinned.
+
+    `speedup > 1.0` against the EAGER baseline marked 88.1% of the whole archive a
+    success, and a Beta posterior fed 88% wins barely discriminates between lineages at
+    all. A row must beat the COMPILED baseline to count.
+    """
+    led = BenchLedger(tmp_path / "r.jsonl")
+    led.append(_compiled("f" * 40, 1, 2.0))     # compiled does it in 2.0 ms
+    led.append(_row("f" * 40, 1, 2.0))          # 5.0 ms: 2x over eager, still LOSES
+    s, f = clade_stats(led, repo=None)["f" * 40]
+    assert (s, f) == (0, 1), "beating only the eager baseline must not count"
+
+
+def test_a_descendant_that_merely_inherits_scores_nothing(tmp_path):
+    """The second bar, and the one that keeps clade rank from tracking commit age.
+
+    Swapping in the compiled baseline ALONE took the age correlation from +0.269 to
+    +0.660: every late commit clears the bar, so an ancestor accrues credit for work its
+    descendants only inherited. A descendant must improve on its nearest measured
+    ancestor by more than the noise floor.
+    """
+    import subprocess
+    from bench.ledger import CLADE_NOISE
+    shas = subprocess.run(["git", "rev-list", "-n", "2", "HEAD"],
+                          capture_output=True, text=True).stdout.split()
+    child, parent = shas[0], shas[1]
+
+    led = BenchLedger(tmp_path / "r.jsonl")
+    led.append(_compiled(parent, 1, 10.0))
+    led.append(_row(parent, 1, 2.0))                       # parent: 5.0 ms, a real win
+    flat = _row(child, 1, 2.0)
+    flat["timing"]["candidate_ms"] = 5.0 * (1 - CLADE_NOISE / 2)   # inside the noise
+    led.append(flat)
+
+    stats = clade_stats(led)
+    assert stats[child] == (0, 1), "carrying the parent's win forward is not a success"
+
+    led2 = BenchLedger(tmp_path / "r2.jsonl")
+    led2.append(_compiled(parent, 1, 10.0))
+    led2.append(_row(parent, 1, 2.0))
+    real = _row(child, 1, 2.0)
+    real["timing"]["candidate_ms"] = 5.0 * (1 - CLADE_NOISE * 2)   # clears the floor
+    led2.append(real)
+    assert clade_stats(led2)[child] == (1, 0), "a genuine improvement must count"

@@ -57,6 +57,11 @@ BASELINE = "baseline"
 # Reserved: torch.compile(max-autotune) of the unmodified baseline -- the honest reference.
 BASELINE_COMPILED = "baseline_compiled"
 
+# A descendant must beat its nearest ancestor by MORE than this to count as a clade
+# success. 7% is the measured run-to-run spread on the short configs (L29); crediting a
+# lineage for movement inside its own noise is how a search reports noise as progress.
+CLADE_NOISE = 0.07
+
 _REQUIRED = ("ts", "commit_sha", "config_id", "status")
 
 
@@ -361,28 +366,100 @@ def clade_stats(ledger: BenchLedger, repo: Optional[str] = None
     good children is a good parent, and ranking by own-performance systematically
     discards those stepping stones.
 
-    A "success" is a row that passed correctness AND beat baseline. Merely compiling is
-    not success -- otherwise the loop drifts toward safe, slow, correct code, which is a
-    measured failure mode of refinement loops.
+    WHAT COUNTS AS A SUCCESS, AND WHY IT TOOK THREE TRIES (finding 21)
+    ------------------------------------------------------------------
+    A success is a row that passed correctness AND cleared BOTH bars:
+
+      1. it beats the COMPILED baseline for its config -- the reference honest speedups
+         are quoted against (finding 12), not the eager one; and
+      2. it improves on the nearest ANCESTOR commit that measured the same config, by
+         more than the noise floor.
+
+    Both are required, and the second is the one that is easy to leave out.
+
+    The original criterion was `speedup > 1.0` against the EAGER baseline. Measured over
+    the archive that marked 88.1% of all rows a success -- a Beta posterior fed 88% wins
+    is nearly flat, so the sampler was barely discriminating between lineages at all.
+    Finding 12 had already established the eager baseline as the wrong reference; the
+    lesson was simply never propagated here.
+
+    But swapping in the compiled baseline ALONE makes things worse, which is why this is
+    measured rather than reasoned. Rate becomes a healthy 70.6%, yet the resulting clade
+    ranking correlates with commit AGE at rho = +0.660 -- worse than the +0.269 it
+    replaced. Every late commit clears the bar, so an old node's subtree accumulates
+    credit for work done by descendants that merely inherited it. That is exactly the L1
+    degeneracy, re-entering through the success criterion instead of through the topology.
+
+    Requiring improvement over the nearest ancestor removes it: rate 15.4%, age
+    correlation -0.130. A descendant that merely carries its parent's win forward now
+    scores nothing, which is the whole point of metaproductivity -- the parent already
+    has that credit.
+
+        criterion                     success rate    rho(clade rank, commit age)
+        speedup > 1.0 vs eager            88.1%   <- vacuous          +0.269
+        beats compiled baseline           70.6%                       +0.660  <- WORSE
+        improves on ancestor              19.2%                       -0.192
+        BOTH (adopted)                    15.4%                       -0.130
     """
+    compiled = compiled_baseline_ms(ledger)
+    ancestry_ = _ancestry(repo)
+
+    # Best (lowest) measured time per (commit, config), so "improves on the ancestor"
+    # compares against that ancestor's best rather than an arbitrary row.
+    best_at: dict[tuple[str, int], float] = {}
+    for r in ledger.clean_rows():
+        if r.get("candidate") in (BASELINE, BASELINE_COMPILED) or r.get("status") != "ok":
+            continue
+        ms = (r.get("timing") or {}).get("candidate_ms")
+        if not ms:
+            continue
+        k = (r["commit_sha"], r["config_id"])
+        if k not in best_at or ms < best_at[k]:
+            best_at[k] = ms
+
+    def _ancestor_ms(sha: str, cfg: int) -> Optional[float]:
+        """Nearest ancestor commit with a measurement for this config, by git ancestry.
+
+        Walks parents breadth-first, so a merge finds the closer of its two lineages.
+        Returns None at the root, where there is nothing to improve on.
+        """
+        seen, queue = {sha}, deque(ancestry_.get(sha, []))
+        while queue:
+            p = queue.popleft()
+            if p in seen:
+                continue
+            seen.add(p)
+            if (p, cfg) in best_at:
+                return best_at[(p, cfg)]
+            queue.extend(ancestry_.get(p, []))
+        return None
+
     own: dict[str, tuple[int, int]] = {}
     for r in ledger.clean_rows():
         # Baseline rows are the reference a candidate is scored AGAINST, not candidates.
-        # Counting them here would book a guaranteed failure per config (speedup is 1.0
-        # by definition) and drag every commit's clade posterior toward zero.
-        if r.get("candidate") == BASELINE:
+        # BOTH kinds must be skipped. The eager row was already excluded (speedup is 1.0
+        # by definition, so it books a guaranteed failure per config), but the COMPILED
+        # row was not -- and under the old `speedup > 1.0 vs eager` rule it scored ~2.6x
+        # and was counted as a candidate SUCCESS, inflating the very statistic it is
+        # supposed to be the yardstick for. Under the new rule it would flip to a
+        # guaranteed failure, since it can never beat itself. Neither is a candidate.
+        if r.get("candidate") in (BASELINE, BASELINE_COMPILED):
             continue
         sha = r["commit_sha"]
         s, f = own.get(sha, (0, 0))
+        ms = (r.get("timing") or {}).get("candidate_ms")
+        cb = compiled.get(r["config_id"])
+        par = _ancestor_ms(sha, r["config_id"]) if ms else None
         ok = (r.get("status") == "ok"
               and (r.get("correctness") or {}).get("passed")
-              and ((r.get("timing") or {}).get("speedup") or 0) > 1.0)
+              and bool(ms) and bool(cb) and ms < cb                    # bar 1: the real baseline
+              and (par is None or ms < par * (1.0 - CLADE_NOISE)))     # bar 2: added something
         own[sha] = (s + 1, f) if ok else (s, f + 1)
 
     if not own:
         return {}
 
-    ancestry = _ancestry(repo)
+    ancestry = ancestry_
     pooled: dict[str, tuple[int, int]] = {}
     for sha in own:
         if sha not in ancestry:
