@@ -134,3 +134,100 @@ def fused_ffn(xn: torch.Tensor, res: torch.Tensor,
         D=d, F=f, BM=block_m, num_warps=num_warps,
     )
     return y
+
+
+# ======================================================================================
+# The norm-fused variant (generation 19, proposal D-01).
+#
+# v17's kernel takes an already-normalized `xn` and an already-added residual `res`, both
+# produced by a SEPARATE Inductor kernel that reads the residual and the attention output,
+# adds them, normalizes, and writes two full-size tensors to HBM -- which the megakernel
+# then reads straight back. A third kernel reads the megakernel's output and normalizes it
+# for the next layer.
+#
+# All three are bandwidth-saturated at ~661 GB/s against the 613.7 GB/s device figure, i.e.
+# AT the achievable roofline. They cannot be made faster. They can only be made not to
+# exist. At d_model = 128 a token's entire row is one tile, so the kernel already holds
+# the whole output row in registers and can do both reductions itself.
+#
+#     res = x + attn ; xn = LN2(res) ; h = gelu(xn @ W1 + b1)
+#     y   = res + h @ W2 + b2 ; store y ; store LN_next(y)
+#
+# Traffic per token: 28*D bytes -> 12*D bytes. Weight traffic is unchanged, so the
+# amortization crossover from finding 25 still governs.
+#
+# PRECISION. The residual stays fp32 from the add, through the normalization, to the
+# store, never round-tripping HBM -- strictly FEWER rounding steps than the Inductor
+# kernel it replaces, which materializes `res` in fp32 and `xn` in fp16. Finding 08's
+# fp32 residual is preserved verbatim.
+# ======================================================================================
+
+
+@triton.jit
+def _ffn_block_normed(
+    X, ATTN,            # fp32 [M, D]: residual in, attention output
+    N2W, N2B,           # fp16 [D]   : norm2 weight/bias
+    W1, B1, W2, B2,     # fp16       : the two FFN matrices and biases
+    NNW, NNB,           # fp16 [D]   : the NEXT consumer's norm weight/bias
+    Y,                  # fp32 [M, D]: this layer's output (the residual stream)
+    YN,                 # fp16 [M, D]: LN_next(Y), the next layer's input
+    M, EPS,
+    D: tl.constexpr, F: tl.constexpr, BM: tl.constexpr,
+    STORE_NEXT: tl.constexpr,
+):
+    pid = tl.program_id(0)
+    rm = pid * BM + tl.arange(0, BM)
+    rd = tl.arange(0, D)
+    rf = tl.arange(0, F)
+    keep = rm < M
+    off = rm[:, None] * D + rd[None, :]
+
+    # --- attention residual add, in fp32 and in registers -----------------------------
+    res = (tl.load(X + off, mask=keep[:, None], other=0.0)
+           + tl.load(ATTN + off, mask=keep[:, None], other=0.0))
+
+    # --- norm2, reduced in fp32 over the row we already hold --------------------------
+    mu = tl.sum(res, axis=1) / D
+    d0 = res - mu[:, None]
+    var = tl.sum(d0 * d0, axis=1) / D
+    xn = d0 * tl.rsqrt(var[:, None] + EPS)
+    xn = xn * tl.load(N2W + rd)[None, :].to(tl.float32) + tl.load(N2B + rd)[None, :].to(tl.float32)
+
+    # --- the two GEMMs, intermediate never leaving registers --------------------------
+    w1 = tl.load(W1 + rd[:, None] * F + rf[None, :])
+    w2 = tl.load(W2 + rf[:, None] * D + rd[None, :])
+    h = tl.dot(xn.to(w1.dtype), w1, out_dtype=tl.float32) + tl.load(B1 + rf)[None, :].to(tl.float32)
+    h = h * 0.5 * (1.0 + tl.erf(h * 0.70710678118654752440))
+    y = (res + tl.dot(h.to(w2.dtype), w2, out_dtype=tl.float32)
+         + tl.load(B2 + rd)[None, :].to(tl.float32))
+    tl.store(Y + off, y, mask=keep[:, None])
+
+    # --- the NEXT consumer's LayerNorm, from the same registers ------------------------
+    # Skipped on the LAST layer: its consumer is `final_norm`, whose result is the model's
+    # fp32 output. Emitting that in fp16 here would round the answer on the way out, which
+    # is the one place in the stack where a downcast is not already being paid.
+    if STORE_NEXT:
+        mu2 = tl.sum(y, axis=1) / D
+        d2 = y - mu2[:, None]
+        var2 = tl.sum(d2 * d2, axis=1) / D
+        yn = d2 * tl.rsqrt(var2[:, None] + EPS)
+        yn = (yn * tl.load(NNW + rd)[None, :].to(tl.float32)
+              + tl.load(NNB + rd)[None, :].to(tl.float32))
+        tl.store(YN + off, yn.to(YN.dtype.element_ty), mask=keep[:, None])
+
+
+def fused_ffn_normed(x, attn, n2w, n2b, w1, b1, w2, b2, nnw, nnb, eps,
+                     block_m: int = 64, num_warps: int = 8, store_next: bool = True):
+    """(y, yn) = the whole post-attention block plus the next layer's normalization.
+
+    `w1`/`w2` are pre-transposed relative to nn.Linear's [out, in], as in `fused_ffn`.
+    """
+    m, d = x.shape
+    f = w1.shape[1]
+    y = torch.empty((m, d), device=x.device, dtype=torch.float32)
+    yn = torch.empty((m, d), device=x.device, dtype=torch.float16)
+    _ffn_block_normed[(triton.cdiv(m, block_m),)](
+        x, attn, n2w, n2b, w1, b1, w2, b2, nnw, nnb, y, yn, m, eps,
+        D=d, F=f, BM=block_m, num_warps=num_warps, STORE_NEXT=store_next,
+    )
+    return y, (yn if store_next else None)
