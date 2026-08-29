@@ -107,6 +107,12 @@ def _v13(baseline_cls):
     return build(baseline_cls)
 
 
+
+def _v14(baseline_cls):
+    from .v14_dispatch import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -207,5 +213,12 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "buffer -- silently wrong. v13 verifies the graph against a freshly "
                 "computed reference and falls back to the compiled callable if capture "
                 "is not provably real.",
+    ),
+    "v14_dispatch": CandidateSpec(
+        name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
+        summary="Shape-aware dispatch with predicates derived from measured free device "
+                "memory, never from config ids. Chooses a streamed path when the working "
+                "set would not fit and v13 otherwise, and reports is_tuned so an untuned "
+                "path is never presented as a tuned one.",
     ),
 }

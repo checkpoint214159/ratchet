@@ -451,3 +451,28 @@ The defaults are now exhausted. The rule that replaces it for the next phase: **
 knob exists and you have never moved it, you do not know what it does.** Applies equally
 to `--benchmark-rounds`, `--repeats`, and `--compile-mode`, none of which we have varied
 either — though L16 already showed our protocol agrees with the harness's on the first two.
+
+## L28 — Dispatch built; it changes nothing measurable, and that is the correct outcome (2026-08-29)
+
+v14 adds shape-aware dispatch with predicates derived from measured free device memory.
+On the 13 runnable configs it measures **identically to v13** (2.70x vs 2.71x, inside
+noise) because it always chooses the resident path there.
+
+**That was predicted in the docstring before the run, and it is the right result.** A
+dispatcher whose branches never fire on the measured set has not failed — it has correctly
+declined to change anything. Its value is entirely in the branch it cannot yet exercise:
+config 14, whose 12.21 GiB input the harness itself cannot build.
+
+Two things make it worth having anyway:
+
+1. **It is the architecture the problem statement asks for** — shape checks are explicitly
+   permitted and per-GPU methods explicitly anticipated. Every prior candidate applied one
+   implementation uniformly.
+2. **The predicate is stated in terms another GPU can evaluate.** Tests assert the source
+   contains no config ids and no announced shape constants, and that halving device memory
+   flips config 6 from resident to streamed. A dispatch that does not respond to the
+   device is a hardcoded table wearing a costume.
+
+**The lesson for the loop:** a candidate that measures flat is not automatically a failure.
+Ask what it was built to change, and whether the measured set can even exercise it. Judging
+v14 by its geomean would discard the one component that handles the shape nothing else can.
