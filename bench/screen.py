@@ -111,13 +111,27 @@ def run_screen(candidate: str, allow_dirty: bool = False) -> dict:
             failures.append({"config_id": r.get("config_id"),
                              "status": r.get("status"),
                              "correct": correct})
+    # A run that emitted NO rows never measured anything. run_matrix refuses outright on
+    # a dirty tree (exit 2) or a contended GPU (exit 3), and a refusal is not a result --
+    # see decide().
     return {"rows": rows, "ms": speedups, "failures": failures,
+            "returncode": proc.returncode,
+            "refusal": proc.stdout.strip()[:400] if not rows else "",
             "stderr": proc.stderr[-2000:] if proc.returncode else ""}
 
 
 def decide(ms: dict[int, float], failures: list, compiled: dict[int, float],
-           parent_geo: float | None) -> tuple[str, float | None, str]:
+           parent_geo: float | None, refusal: str = "") -> tuple[str, float | None, str]:
     """(verdict, screen_geomean, detail). Pure, so the policy is testable without a GPU."""
+    # A REFUSAL IS NOT A RESULT. run_matrix refuses to run at all on a dirty tree or a
+    # contended GPU, and then emits no rows. Reporting that as REJECT tells the loop that
+    # a candidate was measured and lost when in fact another agent held the lock -- the
+    # same shape of error as L38, a check whose output does not mean what it says. This
+    # actually happened to v21_double_buffered on 2026-08-30.
+    if not ms and not failures:
+        return "NOT_MEASURED", None, (
+            f"run_matrix produced no rows -- it refused, or it crashed before the first "
+            f"config. This is not a verdict on the candidate. {refusal}".strip())
     # CORRECTNESS IS NOT A TIEBREAK. Any failure on any screen config is a hard reject,
     # before a single timing number is looked at (CLAUDE.md rule 3).
     if failures:
@@ -148,7 +162,8 @@ def main() -> int:
     res = run_screen(args.candidate, args.allow_dirty)
 
     par = parent_screen_geomean(led, args.parent) if args.parent else None
-    verdict, geo, detail = decide(res["ms"], res["failures"], compiled, par)
+    verdict, geo, detail = decide(res["ms"], res["failures"], compiled, par,
+                                  refusal=res.get("refusal", ""))
 
     prov = provenance()
     rec = {"ts": datetime.now(timezone.utc).isoformat(), "candidate": args.candidate,
@@ -166,7 +181,9 @@ def main() -> int:
     print(f"  {detail}")
     if res["stderr"]:
         print(f"\n  stderr tail:\n{res['stderr']}")
-    return 0 if verdict == "PROMOTE" else 1
+    if verdict == "PROMOTE":
+        return 0
+    return 2 if verdict == "NOT_MEASURED" else 1
 
 
 if __name__ == "__main__":
