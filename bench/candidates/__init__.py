@@ -67,6 +67,11 @@ def _v8(baseline_cls):
     return build(baseline_cls)
 
 
+def _v9b(baseline_cls):
+    from .v9b_reduce_overhead import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -118,5 +123,11 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "that a right-padded causal key mask is redundant. Fixes the blind spot "
                 "that halved every speedup at padding_ratio>0. Guarded: the prefix shape "
                 "is verified at prime time, else it falls back to v6's slow path.",
+    ),
+    "v9b_reduce_overhead": CandidateSpec(
+        name="v9b_reduce_overhead", generation=9, parent="v8_padfast", build=_v9b,
+        summary="Sibling B of the g9 fork. Same parent and hypothesis as v9a with one "
+                "variable changed: reduce-overhead instead of max-autotune. Answers "
+                "whether the 2-19s per-shape autotuning cost buys anything measurable.",
     ),
 }
