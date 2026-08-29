@@ -67,6 +67,11 @@ def _v8(baseline_cls):
     return build(baseline_cls)
 
 
+def _v9a(baseline_cls):
+    from .v9_compiled_core import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -118,5 +123,11 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "that a right-padded causal key mask is redundant. Fixes the blind spot "
                 "that halved every speedup at padding_ratio>0. Guarded: the prefix shape "
                 "is verified at prime time, else it falls back to v6's slow path.",
+    ),
+    "v9a_compiled_core": CandidateSpec(
+        name="v9a_compiled_core", generation=9, parent="v8_padfast", build=_v9a,
+        summary="Sibling A of the g9 fork. Keeps v8's algorithm (flash, chunking, the "
+                "padding proof) and hands the op sequence to Inductor so it fuses the "
+                "elementwise chains v7 could not fuse by hand without breaking precision.",
     ),
 }
