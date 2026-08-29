@@ -199,3 +199,31 @@ different lens immediately exposed three defects the ledger's own CLI had been h
 one of these survived because the ledger was only ever read through the one CLI that wrote
 it. A second independent consumer of the same data found three defects in an afternoon.
 Build the second reader earlier.
+
+## L13 — We are fp32-only, and the audit rule is now 3 for 3 (2026-08-29)
+
+At `--dtype float16`: v8 **crashes** (`expected scalar type Float but found Half`), v9a
+**fails correctness** at max_abs 8.6e-3 against a 2.0e-3 budget. Cause is structural —
+every candidate hardcodes `.float()` on the residual, which finding 08 proved is
+load-bearing, but which assumed the model itself is fp32.
+
+Probably not the graded path (the benchmark defaults to float32, and the 0.002 absolute
+tolerance is nearly unsatisfiable against an fp16 reference — one fp16 ulp at |x|=1 is
+half the budget). **So: declare the precondition, do not chase it.** Crashing silently is
+worse than declaring `dtype == float32` and saying why.
+
+**The audit rule (L8) is now 3 for 3**: padding (finding 11), baseline (finding 12), dtype
+(finding 13) — three findings from questioning inherited defaults, zero from further
+profiling. Remaining unaudited: `input_scale=1.0`, and `--benchmark-rounds`/`--repeats`,
+which we replaced with our own timing loop rather than using the harness's.
+
+## L14 — A regex merge resolution produced valid, broken code (2026-08-29)
+
+Resolving the g9 conflict by concatenating both sides dropped
+`return build(baseline_cls)` from `_v9a`. The function stayed **syntactically valid**,
+imported cleanly, and returned `None` — surfacing three commits later as an opaque
+`TypeError` inside a subprocess.
+
+Never auto-resolve a conflict in executable code by concatenation. A guard test now
+asserts every registered candidate actually builds and names a parent that exists —
+which is the kind of invariant that should have existed before the first fork, not after.
