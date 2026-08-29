@@ -203,6 +203,8 @@ def main() -> int:
                     help="padding_ratio; every measurement before 2026-08-29 used 0.0, "
                          "which is the ONLY value where the all-True mask fast path exists")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--allow-dirty", action="store_true",
+                    help="measure anyway on a dirty tree; rows will not count")
     ap.add_argument("--json-out", action="store_true",
                     help="emit one __ROW__ json line per config, for the search loop")
     ap.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
@@ -225,9 +227,18 @@ def main() -> int:
 
     ids = args.ids or [c.id for c in MATRIX]
     prov = provenance(str(REPO))
-    if prov["dirty"]:
-        print("WARNING: tree is dirty -- rows will be marked dirty and excluded from "
-              "clade statistics. Commit first if these numbers are meant to count.")
+    if prov["dirty"] and not args.allow_dirty:
+        # REFUSE, do not warn. A dirty run produces rows that clean_rows() discards, so
+        # the whole measurement is spent for nothing -- which has now happened twice.
+        # A warning that is routinely ignored is not a guardrail.
+        print("REFUSING: the tree is dirty, so every row this run produces would be "
+              "marked dirty and excluded from clade statistics and the scoreboard.\n"
+              "Commit first, or pass --allow-dirty if you deliberately want throwaway "
+              "rows.\nUncommitted:")
+        import subprocess as _sp
+        print(_sp.run(["git", "status", "--porcelain", "--untracked-files=no"],
+                      cwd=str(REPO), capture_output=True, text=True).stdout.rstrip())
+        return 2
 
     props = torch.cuda.get_device_properties(0)
     env = {"device": props.name, "cc": f"sm_{props.major}{props.minor}",

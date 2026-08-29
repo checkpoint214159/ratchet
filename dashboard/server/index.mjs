@@ -22,6 +22,7 @@ const MIME = {
 const clients = new Set();
 let latest = null;
 let latestJson = "";
+let lastCore = "";
 let seq = 0;
 let polling = false;
 
@@ -30,13 +31,22 @@ async function poll() {
   polling = true;
   try {
     const snap = await snapshot();
-    const json = JSON.stringify(snap);
-    if (json !== latestJson) {
+    // The wall-clock stamp changes every poll; hashing it would make every poll
+    // look like a change and turn "push on change" into a 2 s broadcast.
+    const stamp = snap.generated_at;
+    snap.generated_at = "";
+    const core = JSON.stringify(snap);
+    snap.generated_at = stamp;
+    if (core !== lastCore) {
+      lastCore = core;
       latest = snap;
-      latestJson = json;
+      latestJson = JSON.stringify(snap);
       seq++;
+      const json = latestJson;
       const frame = `event: snapshot\ndata: ${json}\nid: ${seq}\n\n`;
       for (const res of clients) { try { res.write(frame); } catch { clients.delete(res); } }
+    } else if (latest) {
+      latest.generated_at = stamp;   // /api/snapshot still reports real freshness
     }
   } catch (err) {
     const frame = `event: error\ndata: ${JSON.stringify({ error: String(err.message || err) })}\n\n`;

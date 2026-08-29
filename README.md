@@ -271,6 +271,32 @@ See [`docs/architecture.md`](docs/architecture.md) for the bounded-context map a
 [`docs/optimization-principles.md`](docs/optimization-principles.md) for the standing,
 hardware-agnostic optimization contract.
 
+## Live dashboard
+
+`dashboard/` is a read-only operations view of the running autoresearch loop. It is a
+plain Node HTTP server with server-sent events and no runtime dependencies, so it starts
+instantly and needs no build step.
+
+```bash
+cd dashboard
+npm install        # no dependencies; just materialises the lockfile
+npm run dev        # -> http://127.0.0.1:5177   (PORT=... to override)
+```
+
+It binds loopback only and never writes to the repository. Every poll (2 s) re-reads
+`bench/results.jsonl`, `git log --all` / `branch` / `status`, `docs/findings/*.md`, and
+the process table; a change is pushed to the browser over SSE. The ledger is appended to
+and fsync'd per row while the dashboard is running, so a torn final line is expected: it
+is skipped and flagged, never fatal. `bench/matrix.py` and `bench/candidates.REGISTRY`
+are read by shelling out to `python3`, so the dashboard never re-implements them.
+
+Six views: the git DAG as the evolution tree (merge commits included), the scoreboard
+keyed by `(commit, candidate, padding_ratio)` — never pooled across padding conditions —
+a log-scaled per-config heatmap, both baselines side by side (the ledger's speedups are
+against eager; the dashboard also computes `baseline_compiled_ms / candidate_ms`, which
+is the honest number), the failure rows against the locked 2e-3 budget, and the running
+learnings from `docs/findings/`.
+
 ## Agent and Beryl orientation
 
 `AGENTS.md` routes implementation work through the Beryl initial-build or feature
