@@ -101,6 +101,12 @@ def _v12(baseline_cls):
     return build(baseline_cls)
 
 
+
+def _v13(baseline_cls):
+    from .v13_safe_capture import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -193,5 +199,13 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "the compiled callable in our own static-buffer graph, so the steady "
                 "state is one replay with no Dynamo guard evaluation. Motivated by "
                 "config 2 profiling: 22.5us/call of Dynamo cache lookup on a ~97us call.",
+    ),
+    "v13_safe_capture": CandidateSpec(
+        name="v13_safe_capture", generation=13, parent="v12_graph_over_compile", build=_v13,
+        summary="v12 with fail-safe capture. v12 can capture an EMPTY graph under some "
+                "call patterns, after which replay() is a no-op and it returns a stale "
+                "buffer -- silently wrong. v13 verifies the graph against a freshly "
+                "computed reference and falls back to the compiled callable if capture "
+                "is not provably real.",
     ),
 }
