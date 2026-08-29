@@ -529,3 +529,24 @@ worth, because both were reading the same source file and neither had run the fu
 **Agreement between analysts sharing a method is not replication.** Treat converged
 proposals as one hypothesis with good provenance, not two votes.
 
+
+## L36 — A test can pass because its subject was never built (2026-08-30)
+
+The lineage invariant sweep reported 113 green while **four candidates carried a live
+silent-wrong-answer bug** (v9a, v9b, v11, v15 all return Inductor's static CUDA-graph
+buffer instead of a clone). Whole file: 50 passed, 1 failed. One candidate per process:
+v9a FAILED, v9b FAILED, v16 FAILED, v13 passed.
+
+Cause: Dynamo's `cache_size_limit` is 8 and shared per process. Once exhausted,
+`torch.compile` silently falls back to EAGER, which allocates a fresh output every call
+— so the static-buffer test passes **because the candidate was never compiled**. Green
+was produced by a second defect, not by correctness.
+
+**Whenever a test's subject is produced by a lazy, budgeted or fallback-capable mechanism
+— a JIT, a compiler, a cache, a feature flag — the test must assert the mechanism
+actually ran.** v15's mechanism test does this (asserts a `triton_tem` kernel appears);
+the invariant sweep did not. Fixed with `torch._dynamo.reset()` in the fixture.
+
+Twin of [L24] ("correct because of how the harness calls it is not correct"): *green
+because of how the test was run* is not green. See docs/findings/24.
+

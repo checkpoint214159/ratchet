@@ -133,6 +133,11 @@ def build(baseline_cls):
             if not hasattr(self, "_compiled"):
                 self._compiled = torch.compile(
                     self._core, mode="reduce-overhead", dynamic=False)
-            return self._compiled(x, valid_token_mask)
+            # CLONE. reduce-overhead lets Inductor capture CUDA graphs, and a graph
+            # replay writes into a STATIC output buffer -- so handing that tensor back
+            # gives the caller something the next call rewrites underneath them. This is
+            # finding 17's bug arriving by a different route, and finding 24 shows four
+            # earlier candidates in this lineage still carry it.
+            return self._compiled(x, valid_token_mask).clone()
 
     return CandidateV16

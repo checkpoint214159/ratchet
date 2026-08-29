@@ -40,7 +40,17 @@ def _candidate_names():
     #          graph (finding 17). It is superseded by v13, which verifies the capture
     #          and falls back. v12 stays measurable for the lineage; it is not a
     #          candidate for submission, and this test documents why.
-    known_unsafe = {"v5_fp16_resid", "v12_graph_over_compile"}
+    #   v9a/v9b/v11/v15 -- all four let Inductor own CUDA-graph capture (use_graph=False,
+    #          mode= reduce-overhead or max-autotune) and return the compiled callable's
+    #          result DIRECTLY. Under graph replay that is a static buffer, so the caller's
+    #          tensor is rewritten by the next forward. Measured and recorded before the
+    #          defect was known; their ledger rows were taken WITHOUT the clone that fixes
+    #          it, so they are left as measured rather than silently re-defined. v13
+    #          (clones) and v16 (clones) are the safe members of this lineage.
+    #          See docs/findings/24.
+    known_unsafe = {"v5_fp16_resid", "v12_graph_over_compile",
+                    "v9a_compiled_core", "v9b_reduce_overhead",
+                    "v11_lean", "v15_lifted_veto"}
     return sorted(k for k in REGISTRY if k not in known_unsafe)
 
 
@@ -50,6 +60,14 @@ def _candidate_names():
 class TestLineageInvariants:
     @staticmethod
     def _make(name):
+        # Dynamo's cache_size_limit (8) is shared per PROCESS. Without this reset, every
+        # candidate after the eighth silently falls back to EAGER -- which returns fresh
+        # tensors and therefore PASSES the static-buffer test vacuously. That is exactly
+        # how this suite reported 113 green while four candidates carried a live
+        # silent-wrong-answer bug (finding 24). A test that passes because the thing it
+        # tests was never compiled is worse than no test.
+        torch._dynamo.reset()
+
         ref = _bench()
         from bench.candidates import REGISTRY
         cfg = ref.TransformerConfig(batch_size=4, seq_len=64, d_model=64, num_heads=4,
