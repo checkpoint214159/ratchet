@@ -133,6 +133,11 @@ def _v18(baseline_cls):
     return build(baseline_cls)
 
 
+def _v19(baseline_cls):
+    from .v19_norm_fused import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -269,6 +274,14 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "one variable, and the graded harness allocates its timing input OUTSIDE "
                 "it -- we were fast only because the accuracy tests run first. Reports "
                 "capture_source so the degradation is observable instead of silent.",
+    ),
+    "v19_norm_fused": CandidateSpec(
+        name="v19_norm_fused", generation=19, parent="v18_capture_insurance", build=_v19,
+        summary="Folds the attention residual add, norm2, and the NEXT layer's norm1 into "
+                "the megakernel. Those three kernels are 35% of config 6 and all run AT "
+                "the 613.7 GB/s bandwidth roofline -- they cannot be sped up, only "
+                "deleted. Traffic per token 28*D -> 12*D. Op-level 2.51x-3.84x; L33 bounds "
+                "the end-to-end gain at ~1.35x on config 6.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
