@@ -627,3 +627,31 @@ both now been found false by someone LOOKING rather than by the system noticing.
 member of the [L36]/[L38] family in two days: an assurance nobody arranged to be capable of
 failing. See docs/findings/28.
 
+
+## L41 — A probe may propose; it may never conclude (2026-08-30)
+
+Three measurements of v19 on config 6: op-level probe **3.84x better**, model-level probe
+**16.2% worse**, harness sweep **+0.4%** (authoritative, and v19 is flat).
+
+Both wrong numbers came from hazards already written down in this repo, by me, in the
+previous two days:
+
+  * The op-level probe compared against `F.layer_norm` + kernel called separately in eager.
+    The real candidate never does that -- **Inductor fuses the add and the norm into one
+    kernel**, and that is what v19 had to beat. This is [L33] sharpened: isolation does not
+    merely shrink an effect, it can INVENT one that was never available.
+  * The model-level probe held the baseline and the candidate in one process -- exactly
+    [finding 05], the co-residency spill that once inflated a baseline 4.1x, and the reason
+    `run_matrix` times arms in isolation. I wrote `bench/gpu_lock.py` hours earlier; it
+    guards processes, and I put both models in one.
+
+`run_matrix` embodies six rules (arms isolated, one config per subprocess, correctness
+before timing, min-of-N under unlockable clocks, refuse dirty tree, refuse contended GPU).
+**Every ad-hoc probe opts out of all six.** Third recurrence of [L9]. The rule: a number
+that will change a decision comes through the harness, and when a probe disagrees with the
+harness the probe is wrong until proven otherwise -- the correct prior all three times.
+
+Also established: the pointwise bucket is NOT the opportunity the profile suggested.
+Inductor was already fusing it well enough that deleting it changes nothing. On config 6 --
+84% of wall time -- what remains is attention. See docs/findings/29.
+
