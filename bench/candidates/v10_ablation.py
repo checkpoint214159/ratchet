@@ -48,7 +48,11 @@ def _compiled(cls):
             if not hasattr(self, "_compiled_core"):
                 self._compiled_core = torch.compile(
                     self._core, mode="reduce-overhead", dynamic=False)
-            return self._compiled_core(x, valid_token_mask)
+            # CLONE. `reduce-overhead` installs CUDA graphs internally and returns a
+            # tensor backed by a STATIC buffer, which the next call overwrites. Handing
+            # that buffer to a caller who holds it across calls is a silent data race --
+            # caught by the lineage invariant sweep, not by any accuracy check.
+            return self._compiled_core(x, valid_token_mask).clone()
     return Compiled
 
 

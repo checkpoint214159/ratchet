@@ -396,3 +396,26 @@ accidental — it belonged to the caller's ordering, not to the candidate.
 A grader whose harness warms up differently would have gotten silent garbage from our best
 submission. **Ask of every candidate: is it correct on its own terms, or only under the
 call pattern we happen to test it with?**
+
+## L25 — Invariance and equivalence tests catch disjoint bug classes (2026-08-29)
+
+Sweeping all 15 candidates against three crude invariants found **3 bugs, in candidates
+that had all passed the full accuracy suite**:
+
+- v12: different inputs → identical output (the empty-graph staleness of finding 17)
+- v10b, v10c: the returned tensor is mutated by the next call
+
+The second is general and worth carrying: **`torch.compile(mode="reduce-overhead")`
+returns a tensor backed by a static buffer the next call overwrites.** Any candidate using
+it must `.clone()` before returning. It never corrupted a measurement only because the
+harness compares before calling again — L24 again, correctness borrowed from the caller.
+
+**The methodological point.** Our correctness machinery is elaborate: locked tolerances,
+nine input distributions, an FP64 reference, hand-seeded known-bad fixtures. It could not
+see any of these, because every one of those checks assumes the output corresponds to the
+input just given. A stale buffer holding a correct previous answer satisfies all of them.
+
+The tests that caught it assert things that sound too obvious to write down — *a function
+of its input should depend on its input*. **Add invariance checks wherever a component
+holds state across calls; equivalence checks alone leave a blind spot the size of every
+stateful part of the system.**
