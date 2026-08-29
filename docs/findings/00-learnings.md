@@ -129,3 +129,27 @@ limit; compile times of 0.1-0.3s versus 2-6s were the only tell.
 `bench/run_matrix.py` already enforces one-config-per-subprocess. I bypassed it for speed
 and got a contaminated result — the same class of error as finding 05. **Measure through
 the harness, or accept that the harness's guarantees do not apply.**
+
+## L10 — Our algorithm + Inductor's fusion beats either alone (2026-08-29)
+
+v9a keeps v8's algorithm (flash attention, L2 chunking, the redundant-mask proof) and
+hands the resulting op sequence to `torch.compile(max-autotune)`. Against the COMPILED
+baseline:
+
+| | geomean vs compiled | configs lost |
+|---|---|---|
+| v8 (ours alone) | 1.692x | 2 |
+| compiled baseline (Inductor alone) | 1.000x | - |
+| **v9a (ours + Inductor)** | **2.678x** | **0** |
+
+Both of v8's losses became wins: config 9 0.94x -> 1.94x, config 12 0.90x -> 1.47x. The
+range is 1.33x (config 2) to 11.02x (config 13).
+
+**This is the division of labour L8 predicted, exploited rather than merely observed.** We
+choose the decomposition; Inductor fuses it. Neither half gets there alone, and the thing
+that unlocked it was reading our own loss pattern rather than profiling harder.
+
+**Consequence for the loop:** every future candidate should be measured BOTH ways --
+standalone and compiled. A hand-written change that looks like a loss standalone may be a
+win once Inductor fuses around it, and v7 (rejected on precision) is worth re-testing
+under compilation for exactly that reason.
