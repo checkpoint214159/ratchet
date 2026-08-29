@@ -47,6 +47,11 @@ def _v4(baseline_cls):
     return build(baseline_cls)
 
 
+def _v5(baseline_cls):
+    from .v5_fp16_resid import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -71,5 +76,12 @@ REGISTRY: dict[str, CandidateSpec] = {
         summary="v3 with its three constants read from the environment, so the search "
                 "loop can evaluate a point without rewriting source. Identical to v3 at "
                 "the defaults.",
+    ),
+    "v5_fp16_resid": CandidateSpec(
+        name="v5_fp16_resid", generation=5, parent="v3_chunked", build=_v5,
+        summary="Residual stream kept in fp16 for the whole stack, with fp16 LayerNorm "
+                "weights and GELU in fp16, to delete the ~6 dtype conversions per layer "
+                "that profiling put at 12.8-26.8% of candidate kernel time. Tests "
+                "whether the accumulated fp16 error stays inside the 2e-3 budget.",
     ),
 }
