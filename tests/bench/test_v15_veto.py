@@ -91,6 +91,13 @@ def test_v15_actually_reaches_a_triton_gemm_template():
     If a future torch makes templates unreachable for another reason, v15 would quietly
     degrade to 'v9b with a slower compile mode' and still pass every other test here.
     """
+    # Dynamo's per-code-object recompile budget (cache_size_limit, default 8) is shared
+    # across every candidate compiled earlier in this process. Once it is exhausted,
+    # torch.compile SILENTLY falls back to eager -- no Triton at all, not even pointwise.
+    # That is a real hazard for a graded run that compiles 13 shapes in one process; our
+    # harness happens to fork per config, which is luck rather than design (finding 22).
+    torch._dynamo.reset()
+
     ref = _ref()
     cfg = ref.TransformerConfig(batch_size=64, seq_len=128, d_model=128, num_heads=4,
                                 ffn_dim=128, num_layers=2, causal=True)
