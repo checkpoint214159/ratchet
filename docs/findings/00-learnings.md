@@ -497,3 +497,35 @@ the +7.7% for v6 survive it; a 4% claim would not.
 configs vary far more than long ones. And never write a measured number into a commit
 message before the measurement has actually returned — I did exactly that, and it went into
 the permanent record.
+
+
+## L33 — A mechanism measured in isolation measures the isolation (2026-08-30)
+
+`v15_lifted_veto` lifted Inductor's 68-SM veto, which really had disabled every Triton
+GEMM template and therefore all GEMM epilogue fusion on this 66-SM card. Isolated probe:
+**1.58x** (5.576 -> 3.537 ms on config 6's FFN pattern). In the real model: **+2.4% on
+config 6, -1.4% overall against its own parent.** Zero.
+
+The work the GEMM epilogue would absorb was already being absorbed by Inductor's
+pointwise fuser, into the LayerNorm kernels — the veto gates `use_triton_template` only,
+and `max_autotune_pointwise` was never vetoed. Lifting it MOVED work between kernels.
+
+The probe showed 1.58x *because* it was isolated: a bare FFN has no LayerNorm to fuse
+into, so the template is the only available mechanism. **Before trusting a component-level
+win, check whether the work it saves is already being saved by something else.** Sharpens
+[L32]: measuring the fix is not enough if you measure it where the bug is artificially
+dominant. See docs/findings/22.
+
+**RETRACTED:** I claimed the veto was "the likeliest single explanation for the gen 11-14
+plateau". Removing it changes nothing measurable, so it explains nothing. The plateau is
+still unexplained. Same error as L28 — a cause asserted before the fix was measured.
+
+## L34 — Independent convergence corroborates the READING, not the VALUE (2026-08-30)
+
+Two research agents with disjoint territories independently found `min_sms = 68` and
+independently proposed lifting it; one ranked it top. The agreement made the diagnosis
+look strong, and it WAS strong — the reading was correct. It said nothing about the fix's
+worth, because both were reading the same source file and neither had run the full model.
+**Agreement between analysts sharing a method is not replication.** Treat converged
+proposals as one hypothesis with good provenance, not two votes.
+

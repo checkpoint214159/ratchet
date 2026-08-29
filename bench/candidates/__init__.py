@@ -113,6 +113,11 @@ def _v14(baseline_cls):
     return build(baseline_cls)
 
 
+def _v15(baseline_cls):
+    from .v15_lifted_veto import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -213,6 +218,14 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "buffer -- silently wrong. v13 verifies the graph against a freshly "
                 "computed reference and falls back to the compiled callable if capture "
                 "is not provably real.",
+    ),
+    "v15_lifted_veto": CandidateSpec(
+        name="v15_lifted_veto", generation=15, parent="v9b_reduce_overhead", build=_v15,
+        summary="Lifts Inductor's hardcoded 68-SM veto (this card has 66), which had "
+                "silently disabled Triton GEMM templates and therefore ALL GEMM epilogue "
+                "fusion. Measured 1.58x on config 6's FFN pattern in isolation. Re-asks "
+                "v9b's question -- is max-autotune worth it? -- with the autotuner "
+                "actually enabled, which it was not when v9b answered no.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
