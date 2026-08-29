@@ -419,3 +419,35 @@ The tests that caught it assert things that sound too obvious to write down — 
 of its input should depend on its input*. **Add invariance checks wherever a component
 holds state across calls; equivalence checks alone leave a blind spot the size of every
 stateful part of the system.**
+
+## L26 — The tolerance margin is thinner than it looks (2026-08-29)
+
+At `input_scale=0.01` **every candidate fails**, including the pure-fp32 one (2.38e-3 vs a
+2.0e-3 budget). Isolating: substituting only `F.scaled_dot_product_attention` into an
+untouched fp32 baseline is enough to fail, with `max_abs` growing 9.19e-4 -> 2.29e-3.
+
+Crucially the **output magnitude is unchanged** (mean 0.798 either way) because LayerNorm
+normalizes the input scale away. So it is not a small-signal artifact — it is flash
+attention's online softmax accumulating differently, amplified ~2.5x by LayerNorm's `eps`
+becoming ~10% of the input variance at that scale.
+
+**The real lesson is about margin, not this config.** At the default scale our worst
+config uses **94% of the tolerance budget**. A routine, benchmark-exposed change in the
+input distribution multiplies the error by 2.5. We are not passing comfortably; we are
+passing narrowly and got no warning about it, because `max_abs` looked fine at the one
+scale we ever tried.
+
+**Track margin as a first-class metric, not just pass/fail.** A candidate at 94% of budget
+and one at 30% are not equally correct, and only the second survives a distribution shift.
+
+## L27 — The audit rule finished 4 for 4 (2026-08-29)
+
+padding, baseline, dtype, input_scale. **Every inherited default that was never varied
+hid something**, and two of the four (the eager baseline, the padded path) were large
+enough to change the headline number. Zero comparable findings came from further
+profiling in the same period.
+
+The defaults are now exhausted. The rule that replaces it for the next phase: **when a
+knob exists and you have never moved it, you do not know what it does.** Applies equally
+to `--benchmark-rounds`, `--repeats`, and `--compile-mode`, none of which we have varied
+either — though L16 already showed our protocol agrees with the harness's on the first two.
