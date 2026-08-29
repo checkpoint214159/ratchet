@@ -173,6 +173,13 @@ def weighted_score(speedups: dict[int, float], cap: float = 3.0) -> float:
 
     A config with no entry scores 1.0 (no better than baseline), NOT skipped: skipping
     would reward not measuring.
+
+    WHICH SPEEDUPS TO PASS IN. The cap only discriminates if the inputs straddle it.
+    Against the EAGER baseline they do not: by generation 12, 17 of 18 config speedups
+    exceeded 3.0, every candidate from v3 onward scored 2.79-2.82, and the ranking
+    inverted -- the best candidate placed fourth. Pass speedups measured against the
+    COMPILED baseline (see docs/findings/12), where the frontier spans 1.4x-10.9x and the
+    cap bites on 4 of 13 configs instead of 17 of 18.
     """
     if not speedups:
         return 0.0

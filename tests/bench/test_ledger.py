@@ -44,14 +44,34 @@ def test_dirty_rows_are_recorded_but_excluded_from_clade_stats(tmp_path):
     assert list(led.clean_rows()) == [], "but a dirty sha is a false provenance claim"
 
 
+def _compiled_row(cfg, ms):
+    """A baseline_compiled row -- the reference honest scores are quoted against."""
+    return {"ts": "2026-08-29T00:00:00Z", "commit_sha": "0" * 40, "branch": "t",
+            "dirty": False, "candidate": "baseline_compiled", "config_id": cfg,
+            "status": "ok", "correctness": {"passed": True},
+            "timing": {"candidate_ms": ms, "speedup": 1.0}}
+
+
 def test_scoreboard_maps_score_to_commit(tmp_path):
     led = BenchLedger(tmp_path / "r.jsonl")
     for cfg in range(1, 15):
-        led.append(_row("c" * 40, cfg, 2.0))
-    board = scoreboard(led)
-    assert board[0]["commit_sha"] == "c" * 40
-    assert board[0]["configs_passed"] == 14
-    assert board[0]["weighted_score"] == 2.0
+        led.append(_compiled_row(cfg, 4.0))          # compiled reference: 4ms
+        row = _row("c" * 40, cfg, 2.0)
+        row["timing"]["candidate_ms"] = 2.0          # candidate: 2ms -> 2x vs compiled
+        led.append(row)
+    board = [e for e in scoreboard(led) if e["candidate"] != "baseline_compiled"][0]
+    assert board["commit_sha"] == "c" * 40
+    assert board["configs_passed"] == 14
+    assert board["weighted_score"] == 2.0, "scored against the COMPILED baseline"
+
+
+def test_score_is_zero_without_a_compiled_reference(tmp_path):
+    # Refusing to score is correct: quoting against eager is what finding 12 showed
+    # produces a saturated, inverted ranking. Better no number than a misleading one.
+    led = BenchLedger(tmp_path / "r.jsonl")
+    for cfg in range(1, 15):
+        led.append(_row("d" * 40, cfg, 2.0))
+    assert scoreboard(led)[0]["weighted_score"] == 0.0
 
 
 def test_failing_rows_never_count_as_clade_successes(tmp_path):
@@ -109,12 +129,15 @@ def test_scoreboard_separates_padding_conditions(tmp_path):
     # happened to run last as if it were the candidate's score.
     led = BenchLedger(tmp_path / "r.jsonl")
     # below the 3x clip, or both would saturate and the comparison says nothing
-    for pad, sp in ((0.0, 2.5), (0.5, 1.8)):
+    for cfg in range(1, 15):
+        led.append(_compiled_row(cfg, 5.0))
+    for pad, ms in ((0.0, 2.0), (0.5, 2.8)):        # 2.5x and ~1.79x vs compiled
         for cfg in range(1, 15):
-            row = _row("f" * 40, cfg, sp)
+            row = _row("f" * 40, cfg, 5.0 / ms)
             row["padding_ratio"] = pad
+            row["timing"]["candidate_ms"] = ms
             led.append(row)
-    board = scoreboard(led)
+    board = [e for e in scoreboard(led) if e["candidate"] == "c"]
     assert len(board) == 2, "each padding condition is its own scoreboard entry"
     assert {round(e["padding_ratio"], 2) for e in board} == {0.0, 0.5}
     assert board[0]["weighted_score"] > board[1]["weighted_score"]
