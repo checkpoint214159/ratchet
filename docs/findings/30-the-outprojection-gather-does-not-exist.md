@@ -93,3 +93,25 @@ The out-projection plus the pointwise add it absorbs is on the order of **8–10
 neither can one sweep.** The defensible claims are the per-segment number, one fewer
 launch per layer, and the tolerance margin returned on a path that runs `num_layers` times
 per forward (L26: our worst config sits at 94% of the 2e-3 budget).
+
+## The screen ran, and it said what it was always going to say
+
+`python3 bench/screen.py --candidate v24_outproj_prologue --parent v18_capture_insurance`
+
+```
+screen configs : (2, 7, 8, 10)
+VERDICT        : PROMOTE
+screen 2.331x vs parent 2.292x (+1.7%) -- within or above noise
+```
+
+The kernel fires on all four screen configs (128, 8192, 8192 and 8192 tokens; d_model 128,
+32, 1024, 128), so this is the fused path measured, not a fallback. **+1.7% is not
+evidence of a win.** The screen is one pass against a +/-7% floor and its config set
+(2, 7, 8, 10) deliberately excludes 6 and 13, which are where the segment is largest. The
+verdict that matters here is the negative one: PROMOTE means *not clearly worse*, and on
+the wide model (config 8, 6.36 ms) where the kernel processes a 1024-wide contraction it
+did not regress.
+
+Per L39, a candidate whose value the sweep cannot see needs a bespoke falsifier rather
+than a screen verdict. Here that falsifier is `bench/probe_outproj.py` and the fp64
+accuracy comparison, both of which are in the tree and both of which are unambiguous.

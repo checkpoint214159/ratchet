@@ -69,6 +69,11 @@ plus the pointwise add it absorbs, the segment is on the order of **8-10% of con
 forward time**, so a 1.4x on it is worth **2-3% end to end** -- INSIDE the +/-7% noise
 floor of L29. On the 13-config geomean it is smaller still.
 
+SCREENED: `2.331x vs parent 2.292x (+1.7%), PROMOTE` on configs (2, 7, 8, 10), with the
+kernel firing on all four. That is a "not clearly worse" verdict inside the noise floor
+and must not be read as a win -- the screen set excludes 6 and 13, where the segment is
+largest, and one pass cannot resolve 2-3%.
+
 **So this candidate should not be expected to move the geomean, and a screen cannot
 resolve it.** What it can defensibly claim is a per-segment 1.28-1.49x with no losing
 shape, one fewer kernel launch per layer, and the accuracy result below. Whether that is
