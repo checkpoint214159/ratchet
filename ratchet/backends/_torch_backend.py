@@ -72,15 +72,24 @@ class TorchAcceleratorBackend:
                 supported_dtypes=(),
             )
         runtime, device = self._runtime_and_device()
+        supported_dtypes = ["float32"]
+        bf16_probe = getattr(device, "is_bf16_supported", None)
+        if callable(bf16_probe) and bf16_probe():
+            supported_dtypes.append("bfloat16")
         return BackendCapabilities(
             availability=AvailabilityState.AVAILABLE,
             validation=ValidationState.UNVALIDATED,
-            supports_events=callable(getattr(device, "Event", None)),
+            supports_events=callable(getattr(device, "Event", None))
+            and callable(getattr(device, "synchronize", None)),
             supports_compilation=callable(getattr(runtime, "compile", None)),
-            supports_peak_memory=callable(
-                getattr(device, "max_memory_allocated", None)
+            supports_peak_memory=all(
+                callable(getattr(device, name, None))
+                for name in (
+                    "reset_peak_memory_stats",
+                    "max_memory_allocated",
+                )
             ),
-            supported_dtypes=("float32", "bfloat16"),
+            supported_dtypes=tuple(supported_dtypes),
         )
 
     def probe(self) -> BackendIdentity:
@@ -153,8 +162,12 @@ class TorchAcceleratorBackend:
         _, device = self._runtime_and_device()
         allocated = getattr(device, "max_memory_allocated", None)
         reserved = getattr(device, "max_memory_reserved", None)
+        if not callable(allocated):
+            raise BackendUnavailableError(
+                self._kind, "device peak-memory statistics are unavailable"
+            )
         return MemoryEvidence(
-            peak_allocated_bytes=int(allocated()) if callable(allocated) else None,
+            peak_allocated_bytes=int(allocated()),
             peak_reserved_bytes=int(reserved()) if callable(reserved) else None,
         )
 

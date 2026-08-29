@@ -8,9 +8,8 @@ name = "ratchet"
 version = "0.1.0"
 description = "Agentic GPU kernel optimization harness (TikTok TechJam 2026)"
 requires-python = ">=3.10"
-# Confirmed working toolchain on the reference rig (RTX 4070 Ti SUPER, WSL2,
-# CUDA 12.8 driver stack). Install torch/triton per your CUDA setup, not blindly
-# from here.
+# Framework packages must be installed for the selected vendor runtime; dependency
+# presence alone is never treated as hardware availability or backend qualification.
 dependencies = [
     "torch==2.8.0",
     "triton==3.4.0",

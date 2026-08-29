@@ -65,6 +65,15 @@ Python values and stable enums only. `BackendCapabilities` separates current run
 availability from the evidence-backed validation state; an available adapter is not thereby
 qualified for empirical claims.
 
+Accelerator adapters load PyTorch lazily and advertise capabilities only after callable
+device probes succeed. Float32 is the conservative dtype floor; BF16 is advertised only
+after a positive vendor-device probe. Event timing requires both device events and explicit
+synchronization. Peak-memory support requires reset plus allocated-peak observation, while
+reserved-peak observation is optional. CUDA rejects a HIP-built PyTorch runtime. HIP keeps
+PyTorch's internal `cuda` compatibility namespace behind its adapter and exposes only HIP
+identity and runtime metadata. Both vendor paths remain `UNVALIDATED` and select untuned
+eager fallbacks until a separate hardware-qualified hierarchy supplies matching evidence.
+
 ## Boundary Rules
 
 1. A context imports only another context's public entry point.

@@ -456,10 +456,17 @@
 - Acceptance checks:
   - backend contract tests
   - documented CUDA integration gate
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
-- Evidence: Remains unvalidated without NVIDIA hardware.
+- Evidence: The lazy CUDA adapter rejects HIP-built PyTorch, reports float32 by default and
+  BF16 only after a positive device probe, and requires both events and synchronization for
+  timing plus reset/allocated APIs for peak-memory support. Fake-runtime tests cover missing
+  and optional capability surfaces, compilation, lifecycle, doctor output, source isolation,
+  and the vendor-specific untuned fallback. The integration guide names the exact future
+  hardware gate and makes no qualification claim. On 2026-08-29, the combined vendor-focused
+  suite passed 16 tests with Ruff and diff checks; architecture and slice reviews approved.
+  No NVIDIA hardware, PyTorch runtime, candidate, kernel, timing, or empirical result was used.
 
 ### IB-24 — AMD support path
 - Parent: IB-04
@@ -469,10 +476,18 @@
 - Acceptance checks:
   - backend contract tests
   - documented ROCm integration gate
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
-- Evidence: Remains unvalidated without AMD hardware.
+- Evidence: The lazy HIP adapter requires a HIP-built PyTorch runtime, keeps PyTorch's internal
+  CUDA-compatible namespace behind the adapter, and exposes only HIP public identity. It
+  reports float32 by default and BF16 only after a positive device probe; event, compilation,
+  and allocated-peak capability failures are explicit while reserved peak memory is optional.
+  Fake-runtime tests cover lifecycle, doctor output, source isolation, CUDA/HIP rejection,
+  and the vendor-specific untuned fallback. The integration guide names the exact future
+  hardware gate and makes no qualification claim. On 2026-08-29, the combined vendor-focused
+  suite passed 16 tests with Ruff and diff checks; architecture and slice reviews approved.
+  No AMD hardware, PyTorch runtime, candidate, kernel, timing, or empirical result was used.
 
 ### IB-25 — Durable documentation
 - Parent: IB-00

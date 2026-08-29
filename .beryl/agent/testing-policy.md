@@ -76,6 +76,17 @@ current build is globally no-run even if another adapter can be selected:
   forbidden from `ratchet/`, `benchmarks/`, the archive, and every paper input.
 - Historical CUDA calibration cannot qualify Intel or the current runtime.
 
+## Future Vendor Qualification
+
+The CUDA and ROCm/HIP adapter contracts are tested here only with fake runtimes. Their
+hardware gates are `.venv/bin/python -m ratchet.backends --backend cuda` and
+`.venv/bin/python -m ratchet.backends --backend hip`, respectively. A successful doctor
+probe establishes availability, not validation. Qualification requires a separately
+ratified hardware run using device events, synchronization, correctness checks, and the
+full performance-evidence policy above. BF16 cases are admitted only after the vendor
+device API positively reports BF16 support; missing probes retain the float32-only
+capability declaration.
+
 ## Default Loop
 
 1. Identify or add the failing behavior.
