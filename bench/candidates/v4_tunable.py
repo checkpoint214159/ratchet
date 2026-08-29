@@ -44,9 +44,15 @@ def _env_int(name: str, default: int) -> int:
 
 
 def solve_chunk(batch_size: int, seq_len: int, d_model: int, l2_bytes: int,
-                dtype_bytes: int, target_occupancy: float, live_tensors: int) -> int:
-    per_sample = max(1, seq_len * d_model * dtype_bytes * max(1, live_tensors))
-    chunk = int((l2_bytes * target_occupancy) // per_sample)
+                dtype_bytes: int, chunk_ratio: float) -> int:
+    """Chunk sized so its working set is `chunk_ratio` of L2.
+
+    ONE parameter, not two. The earlier (target_occupancy, live_tensors) pair only ever
+    appeared as a quotient, so the search space was degenerate and the optimizer could
+    "improve" by re-measuring its own starting point in new coordinates.
+    """
+    per_sample = max(1, seq_len * d_model * dtype_bytes)
+    chunk = int((l2_bytes * chunk_ratio) // per_sample)
     return max(1, min(batch_size, chunk))
 
 
@@ -64,8 +70,7 @@ def build(baseline_cls):
                 props = torch.cuda.get_device_properties(x.device)
                 self._chunk = solve_chunk(
                     b, s, d, props.L2_cache_size, x.element_size(),
-                    _env_float("RATCHET_TARGET_OCCUPANCY", 0.5),
-                    _env_int("RATCHET_LIVE_TENSORS", 3),
+                    _env_float("RATCHET_CHUNK_RATIO", 0.1667),
                 )
 
             b = x.shape[0]

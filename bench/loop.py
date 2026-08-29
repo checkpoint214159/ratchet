@@ -55,12 +55,22 @@ REPO = Path(__file__).resolve().parent.parent
 # by cache size and by shape. `INFEASIBLE_FITNESS` is large and finite so an optimizer
 # can walk away from a bad region without special-casing exceptions.
 # --------------------------------------------------------------------------------------
+# `target_occupancy` and `live_tensors` were separate axes until the first run showed
+# solve_chunk uses them ONLY as a quotient -- so the optimizer walked the space and
+# arrived back at its own starting configuration wearing different coordinates, then
+# reported the re-measurement as a 2.7% win. Two parameters that only appear as a ratio
+# are one parameter. See docs/findings/06-the-search-found-noise.md.
 SPACE = {
     "use_graph": [True, False],
-    "target_occupancy": [0.25, 0.5, 0.75, 1.0],
-    "live_tensors": [2, 3, 4, 6],
+    "chunk_ratio": [0.0625, 0.125, 0.1667, 0.25, 0.3333, 0.5],
 }
 INFEASIBLE_FITNESS = 1e10
+
+# Run-to-run spread measured from that run's accidental replicates: 1.4-3.0% on
+# identical configurations. A candidate must beat the incumbent by more than this to be
+# promoted, or the loop simply reports its own noise as progress -- which is exactly
+# what it did before this guard existed.
+NOISE_FLOOR = 0.03
 
 
 def enumerate_space() -> list[dict]:
@@ -95,8 +105,7 @@ def evaluate(params: dict, config_ids: list[int], record: bool) -> dict:
     """Measure one point across the given configs. Returns fitness (lower is better)."""
     env_overrides = {
         "RATCHET_USE_GRAPH": "1" if params["use_graph"] else "0",
-        "RATCHET_TARGET_OCCUPANCY": str(params["target_occupancy"]),
-        "RATCHET_LIVE_TENSORS": str(params["live_tensors"]),
+        "RATCHET_CHUNK_RATIO": str(params["chunk_ratio"]),
     }
     cmd = [sys.executable, str(REPO / "bench" / "run_matrix.py"),
            "--candidate", "v4_tunable", "--ids", *[str(i) for i in config_ids],
@@ -151,7 +160,7 @@ def run(rounds: int, config_ids: list[int], seed: int = 0, record: bool = True) 
         return cache[pid]
 
     # Seed from the current default, which is what the candidates ship with.
-    current = {"use_graph": True, "target_occupancy": 0.5, "live_tensors": 3}
+    current = {"use_graph": True, "chunk_ratio": 0.1667}
     best = evaluate_cached(current)
     print(f"seed  fitness={best['fitness']:.4f}  geomean={best.get('geomean', 0):.3f}x  "
           f"{current}")
@@ -169,10 +178,15 @@ def run(rounds: int, config_ids: list[int], seed: int = 0, record: bool = True) 
             result = evaluate_cached(cand)
             marker = "" if not result["feasible"] else f"{result.get('geomean', 0):.3f}x"
             print(f"  eval  fitness={result['fitness']:.4f}  {marker:>8}  {cand}")
-            if result["fitness"] < best["fitness"]:
+            # Promotion requires a MARGIN, not merely a smaller number. The rest of
+            # this project promotes only on non-overlapping confidence intervals; the
+            # loop was not honouring the rule it is embedded in.
+            if result["fitness"] < best["fitness"] * (1.0 - NOISE_FLOOR):
                 best, current, improved = result, cand, True
-                print(f"  -> improved")
+                print(f"  -> improved beyond the {NOISE_FLOOR:.0%} noise floor")
                 break
+            elif result["fitness"] < best["fitness"]:
+                print(f"  -- better but inside noise; not promoted")
         if not improved:
             if len(history) >= rounds:
                 break
