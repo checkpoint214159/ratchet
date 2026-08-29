@@ -360,18 +360,26 @@
 ### IB-17 — Autoresearch controller
 - Parent: IB-14
 - Dependencies: IB-05, IB-07, IB-14, IB-15, IB-16
-- Deliverable: Idea-to-synthesis controller with correctness gating, comparison,
-  recording, and bounded continuation; unavailable hardware stops before candidate
-  generation, compilation, correctness execution, or timing.
+- Deliverable: Environment-first controller that prepares one immutable no-run event
+  without archive authority; unavailable hardware stops before candidate generation,
+  compilation, correctness execution, or timing. IB-19 alone appends the event.
 - Acceptance checks:
   - `pytest tests/optimization/test_controller.py -q`
-  - end-to-end no-run path records the unavailable reason without empirical, profile,
-    trace, or counter fields
-- Status: pending
+  - end-to-end no-run preparation contains the unavailable reason without empirical,
+    profile, trace, or counter fields and leaves the archive unchanged
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/architecture.md`
   - `.beryl/agent/design-tree.md`
-- Evidence: none
+- Evidence: The controller validates the exact pinned `ENV-0001` bytes before reading the
+  human queue or definition-only protocol, rejects any environment/protocol alteration,
+  requires the first active idea, and prepares one byte-stable schema-valid no-run payload.
+  Its public immutable records reject forged/noncanonical bytes and bool/int impostors;
+  the terminal state consumes exactly one bounded step with continuation disabled. AST and
+  archive snapshots prove there is no backend, workspace, model, measurement, compiler,
+  candidate execution, artifact store, or event append path. On 2026-08-29, 62 controller,
+  queue, and contract tests passed with repository-wide Ruff and diff checks; architecture
+  and slice reviews approved. No GPU, PyTorch, candidate, kernel, or empirical work occurred.
 
 ### IB-18 — Search strategies
 - Parent: IB-17

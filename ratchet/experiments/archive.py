@@ -20,7 +20,6 @@ from .schema import (
     NO_RUN_EVENT,
     SCHEMA_VERSION,
     SHA,
-    UNAVAILABLE_XPU_EXECUTION_ENVIRONMENT,
     ArchiveIntegrityError,
     CatalogueProjection,
     EnvironmentArtifact,
@@ -32,6 +31,7 @@ from .schema import (
     digest,
     digest_field,
     string,
+    unavailable_xpu_execution_environment,
     validate_event_payload,
     validate_provisional_environment,
 )
@@ -434,7 +434,7 @@ class FileExperimentArchive:
             raise ArchiveIntegrityError("environment provenance does not match")
         if (
             payload.get("execution_environment")
-            != UNAVAILABLE_XPU_EXECUTION_ENVIRONMENT
+            != unavailable_xpu_execution_environment()
         ):
             raise ArchiveIntegrityError(
                 "event execution environment does not match ENV-0001 provenance"

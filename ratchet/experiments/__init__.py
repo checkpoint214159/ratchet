@@ -3,6 +3,7 @@
 from .archive import FileExperimentArchive
 from .schema import (
     EMPIRICAL_EVENT,
+    EVALUATOR_CONTRACT_DIGEST,
     NO_RUN_EVENT,
     SCHEMA_VERSION,
     ArchiveIntegrityError,
@@ -13,6 +14,8 @@ from .schema import (
     ExperimentCatalogue,
     ExperimentEvent,
     ExperimentId,
+    canonical_json,
+    unavailable_xpu_execution_environment,
     validate_event_payload,
     validate_provisional_environment,
 )
@@ -32,6 +35,7 @@ __all__ = [
     "CatalogueProjection",
     "ConsolidationResult",
     "EMPIRICAL_EVENT",
+    "EVALUATOR_CONTRACT_DIGEST",
     "EnvironmentArtifact",
     "EnvironmentId",
     "EventId",
@@ -48,6 +52,8 @@ __all__ = [
     "WorkspaceCleanupResult",
     "WorkspaceLifecycleError",
     "WorkspaceProvenance",
+    "canonical_json",
+    "unavailable_xpu_execution_environment",
     "validate_event_payload",
     "validate_provisional_environment",
 ]

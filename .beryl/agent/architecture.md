@@ -131,15 +131,24 @@ lifecycle operation appends catalogue evidence or executes a candidate.
 
 This build is unconditionally literature-only after the recorded XPU availability
 decision. If XPU becomes available, FG-01 redirects empirical work into a new ratified
-hierarchy rather than changing this build in place. Once the archive exists, the
-controller validates the provisional environment observation and appends
-`NoRunEvidence` with environment identity, planned hypothesis, and stop reason. It then
-stops before candidate generation, compilation, correctness, profiling, timing, or
-memory collection. Timing, memory, correctness, speedup, profile, trace, counter, and
-current-best fields must be absent, not zero or synthetic. The gate cannot be bypassed
-by selecting XPU, CUDA, HIP, or a host timer in the current build.
+hierarchy rather than changing this build in place. The controller validates the
+provisional environment observation and prepares canonical `NoRunEvidence` bytes with
+environment identity, planned hypothesis, and stop reason. It has no append authority;
+IB-19 alone appends those already validated bytes through the Experiments boundary. The
+controller stops before candidate generation, compilation, correctness, profiling,
+timing, or memory collection. Timing, memory, correctness, speedup, profile, trace,
+counter, and current-best fields must be absent, not zero or synthetic. The gate cannot
+be bypassed by selecting XPU, CUDA, HIP, or a host timer in the current build.
 
 Synthetic timing and objective fixtures live only under `tests/fixtures/`. They exercise
 selection mechanics but are prohibited from the production experiment catalogue and
 paper results. A literature claim carries a bibliography key; it is never phrased as a
 project measurement.
+
+The current autoresearch controller is a read-only preparation boundary. It validates the
+exact immutable `ENV-0001` bytes before reading the human queue or the pinned
+`PROTO-INTEL-0001` definition, then emits canonical schema-validated no-run event bytes.
+Its state machine terminates after one bounded step and exposes no backend, candidate,
+workspace, compiler, measurement, or archive adapter. An available, altered, or
+noncanonical environment requires a new ratified hardware hierarchy rather than opening
+an execution path. Event append remains a distinct Experiments-owned action in IB-19.

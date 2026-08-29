@@ -21,15 +21,20 @@ ENVIRONMENT = re.compile(r"^ENV-[0-9]{4}$")
 EVALUATOR_CONTRACT_DIGEST = (
     "5529c96a80799b51f68092e1444a30b17994554dffdf52da98ba701489a7f36e"
 )
-UNAVAILABLE_XPU_EXECUTION_ENVIRONMENT = {
-    "backend": "xpu",
-    "device": "unavailable",
-    "driver": "unavailable",
-    "runtime": "unavailable",
-    "framework": "PyTorch unavailable",
-    "compiler": "unavailable",
-    "architecture": "unavailable",
-}
+
+
+def unavailable_xpu_execution_environment() -> dict[str, str]:
+    """Return the fixed unavailable-XPU provenance without sharing mutable state."""
+    return {
+        "backend": "xpu",
+        "device": "unavailable",
+        "driver": "unavailable",
+        "runtime": "unavailable",
+        "framework": "PyTorch unavailable",
+        "compiler": "unavailable",
+        "architecture": "unavailable",
+    }
+
 
 COMMON = frozenset(
     {

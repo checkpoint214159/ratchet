@@ -6,6 +6,15 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
+from .controller import (
+    AutoresearchInputs,
+    AutoresearchOutcome,
+    AutoresearchRequest,
+    ControllerState,
+    NoRunAutoresearchController,
+    PreparedNoRunEvent,
+    RepositoryAutoresearchInputs,
+)
 from .human_queue import (
     FileHumanResearchQueue,
     HumanInputKind,
@@ -46,11 +55,15 @@ class OptimizationRequest:
 
 
 class OptimizationController(Protocol):
-    def request(self, request: OptimizationRequest) -> None: ...
+    def prepare(self, request: AutoresearchRequest) -> AutoresearchOutcome: ...
 
 
 __all__ = [
     "FileHumanResearchQueue",
+    "AutoresearchInputs",
+    "AutoresearchOutcome",
+    "AutoresearchRequest",
+    "ControllerState",
     "HumanInputKind",
     "HumanInputRecord",
     "HumanInputSubmission",
@@ -62,4 +75,7 @@ __all__ = [
     "HypothesisSource",
     "OptimizationController",
     "OptimizationRequest",
+    "NoRunAutoresearchController",
+    "PreparedNoRunEvent",
+    "RepositoryAutoresearchInputs",
 ]
