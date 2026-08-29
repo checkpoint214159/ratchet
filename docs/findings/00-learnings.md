@@ -70,3 +70,27 @@ fast path.
 The benchmark exposes `--padding-ratio`. If the graders run anything above zero, every
 number in the ledger is off the path that would actually execute. This is unmeasured, and
 it is the largest untested assumption in the project.
+
+## L6 — L5 was right, and the fix was a proof rather than a tuning (2026-08-29)
+
+The padding blind spot was real and large: v6 retained only 51% of its speedup on configs
+1 and 5 at `padding_ratio=0.5`, and **28% on config 13**. v8 recovers it — 6.730x unpadded
+(unchanged from v6) and 5.853x at padding 0.5, against v6's ~2.86x.
+
+The fix came from *reading the reference's masking semantics*, not from measurement: with
+right-padding and causality the key mask is provably redundant, which is what lets the
+fp16 no-mask flash path qualify. Two runs of profiling would never have found it.
+
+**Method note for the next iteration:** the highest-value move this session was auditing an
+assumption, not optimizing a hot spot. Before proposing another kernel change, check what
+else has only ever been run at a default — `input_scale` is still 1.0 everywhere, `dtype`
+is still float32 everywhere, and `--compile-baseline` has never been used, which means
+**the baseline we quote speedups against has never been the strongest available baseline**.
+That last one would deflate every number in the ledger and is the next thing to test.
+
+## L7 — Branching is now real, but a fork still does not exist (2026-08-29)
+
+v8 lives on `cand/g8/right-pad-redundant-mask`, the first candidate branch. But it branched
+from HEAD, so the history is still linear and L1 still applies: no siblings means clade
+statistics still rank by age. **A genuine fork — two candidates from the same parent —
+is required before the Thompson draw carries information.** Do that next.

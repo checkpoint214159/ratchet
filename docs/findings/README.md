@@ -20,6 +20,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [08](08-the-fp32-residual-is-load-bearing.md) | fp16 residual stream is 1.4x faster and fails 11/13 configs; v6 resolves it | 2026-08-29 |
 | [09](09-config-14-runs.md) | Config 14 runs in 3.18 GB where the reference OOMs -- with a stated limit | 2026-08-29 |
 | [10](10-layernorm-fusion-buys-nothing.md) | LayerNorm downcast fusion: +2.0% (below noise) and fails config 6 | 2026-08-29 |
+| [11](11-the-padding-blind-spot.md) | Every prior number used padding=0; v8 recovers the padded path with a proof | 2026-08-29 |
 
 Related, and deliberately elsewhere:
 
