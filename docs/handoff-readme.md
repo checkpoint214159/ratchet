@@ -1,35 +1,18 @@
-# Ratchet — handoff package
+# Historical handoff materials
 
-A specification package for an agentic GPU kernel optimization harness, to be handed to a
-Claude Code instance running in WSL2 with an NVIDIA GPU.
+The original handoff package is retained as historical research material. It described an
+NVIDIA/Triton competition scaffold before the current Ratchet architecture and must not be
+used as an implementation or measurement instruction.
 
-**Start at `HANDOFF.md`.**
+Current orientation is [`README.md`](../README.md), [`CLAUDE.md`](../CLAUDE.md), and the
+canonical Beryl context in [`.beryl/agent/`](../.beryl/agent/). The current reproducible
+entry point is:
 
-```
-HANDOFF.md              entry point: read order, first actions, the five rules
-CLAUDE.md               durable agent rules — this is what stays in context
-bootstrap.sh            exact setup sequence, incl. Beryl (read its header first)
-
-docs/
-  00-mission.md         what & why, competition constraints, tiering, timeline
-  01-architecture.md    the three-zone design and the invariants
-  02-milestones.md      M0–M14 with acceptance gates
-  03-research-dossier.md papers + reference implementations + API facts that churn
-  04-failure-modes.md   how kernel benchmarks lie — read before writing measurement code
-
-specs/
-  01-measurement-core.md  the oracle
-  02-ledger.md            append-only schema + derived views
-  03-search-loop.md       two-level search, algorithm selection, objective
-  04-dispatch.md          self-calibrating shape × device dispatch
-  05-critic.md            Tier 2 co-evolving critic
-  06-scout.md             the research subagent
-
-seed/
-  ratchet/oracle/       WORKING CODE — device, inputs, reference, correctness, timing
-  ratchet/ledger.py     WORKING CODE — append-only ledger + derived views
-  prompts/              proposer and scout role prompts
+```bash
+./scripts/verify-autoresearch.sh
 ```
 
-The `seed/` code is real and tested where it can be tested without a GPU. Copy it in
-rather than rewriting it; the comments explain why each line is there.
+The historical mission, architecture, milestones, failure-mode catalogue, research dossier,
+and component specifications remain available for provenance. Their durable safety lessons
+are preserved in the agent contract, current benchmarking documentation, and Beryl testing
+policy; their old hardware, ledger, oracle, and execution paths are not current facts.

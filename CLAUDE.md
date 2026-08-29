@@ -1,103 +1,134 @@
-# Ratchet — durable agent rules
+# Agent Operating Instructions
 
-This file is in context on every turn. It is the contract, not a summary.
-Orientation lives in `HANDOFF.md`; the reasoning behind these rules lives in
-`docs/01-architecture.md` and `docs/04-failure-modes.md`.
+This tool-specific instruction file is a generated shim. Do not edit this copy manually. Update `.beryl/agent/tool-instruction-template.md` and rerun `.beryl/agent/scripts/sync-agent-env.sh`.
 
-## What this project is
+You are working in this repository as an implementation agent. Treat repository files as the source of truth. Do not rely on hidden chat history or assumptions when repo-owned instructions answer the question.
 
-An agentic harness that continuously proposes, measures, and improves Triton attention
-kernels for a specific GPU, keeping a permanent record of every measurement ever taken.
-Built for the TikTok TechJam 2026 GPU kernel track and intended to outlive it.
+## Instruction Precedence
 
-## Zones
+1. Explicit user instructions for the current task.
+2. Canonical files under `.beryl/agent/`.
+3. This generated shim.
+4. Existing code, tests, and local conventions.
 
-The repository is divided into three zones with different rules. Know which zone you are
-editing before you edit.
+If this shim conflicts with canonical files under `.beryl/agent/`, treat this shim as stale, follow `.beryl/agent/`, and note the conflict.
 
-**Zone A — `ratchet/oracle/` — IMMUTABLE.**
-Reference implementations, input generation, the correctness gate, the timers, device
-introspection. You may read and call these. You may not modify them during optimization
-work. Changes require the user to explicitly ask, on a separate branch, with the checksum
-manifest regenerated deliberately. `scripts/check-oracle.sh` fails the build otherwise.
+## Required Context Before Editing
 
-Rationale: this is the only thing standing between the search loop and reward hacking.
-If the thing being optimized can edit the thing doing the measuring, every number the
-system produces is meaningless. This is not a style preference.
+Before changing code or tests, read `.beryl/agent/task-routing.md`, classify the current task, and load only the matching workflow from `.beryl/agent/skills/<skill-name>/SKILL.md`.
 
-**Zone B — `ratchet/kernels/`, `ratchet/dispatch/`, `ratchet/search/`, `ratchet/critic/` — EVOLVABLE.**
-Write freely. This is what the loop optimizes.
+Then read the smallest relevant set of canonical files requested by that workflow:
 
-**Zone C — `ledger/` — APPEND-ONLY.**
-`ledger/measurements.jsonl` is never rewritten, never sorted in place, never pruned.
-Derived views (rankings, best-known tables, critic training sets) are rebuilt from it and
-may be deleted at will.
+- `.beryl/agent/project-brief.md`
+- `.beryl/agent/design-tree.md`
+- `.beryl/agent/architecture.md`
+- `.beryl/agent/ubiquitous-language.md`
+- `.beryl/agent/testing-policy.md`
+- `.beryl/agent/agent-rules.md`
 
-## Hard rules
+Load additional files only when relevant.
 
-1. **Never widen a tolerance to make a kernel pass.** `REL_TOL = 0.02`, `ABS_TOL = 0.002`
-   are constants in `oracle/correctness.py`. If a candidate fails, the candidate is wrong.
-   Report it; do not negotiate with it.
+## Always-On Operating Contract
 
-2. **Never special-case a benchmarked shape.** Shape-conditional dispatch is the point of
-   this project and is legitimate. Detecting the benchmark harness, hardcoding an output,
-   or branching on a shape purely because it appears in the timed set is fraud. The line:
-   a branch must be justifiable from device properties and arithmetic intensity, and must
-   generalize to a shape not in the test matrix.
+These operating defaults apply in every agent session even when the user does not restate them. Users only need to speak up when they want to opt out of or override a default for the current prompt, such as explicitly allowing sub-agents.
 
-3. **Correctness before timing, always, in that order, in the same process as the timing.**
-   A candidate that has not passed correctness on this exact input is not timed.
+- Route work through `.beryl/agent/task-routing.md` and the matching workflow skill before editing.
+- Treat ratified feature implementation as `adding-features` work by default.
+- Use `.beryl/agent/session-state.md` only as internal temporary state when needed, and clear it when the feature, repair, or debugging thread is complete.
+- After edits in this Beryl source checkout, run the formatter command if one is configured, then narrow checks, then the broader deterministic gate `./.beryl/scripts/check.sh --development`. Installed projects run `./.beryl/scripts/check.sh`.
+- Treat installed readiness as lock-aware: report an explicitly preserved root
+  contract or hook as external ownership, never as silent Beryl enforcement.
+- Use `install.sh --bootstrap-agent` only as a standalone action after a locked
+  lifecycle operation. Its external-agent mutations are outside Beryl's file
+  transaction.
+- Never weaken tests to make implementation pass.
+- If tests change intentionally, run `./.beryl/scripts/update-test-manifest.sh` and explain why the test and manifest changes were required.
+- Do not use sub-agents unless the user explicitly asks for sub-agents, parallel agents, reviewer agents, or competing agent implementations.
+- For an explicit large or greenfield application request, load the `initial-build` workflow. Discover the repository, ask clarification questions one at a time, and obtain plan ratification before creating `.beryl/agent/hierarchy.md` or editing build code.
+- Treat `.beryl/agent/hierarchy.md` as Git-tracked active-build state. Resume it when present, update it after each dependency-ordered slice, and delete it only after every node and check passes and durable context has been promoted.
 
-4. **Every timed number carries its method.** Record which timer was used, whether L2 was
-   flushed, whether clocks were locked, the clock they were locked to, the number of
-   repeats, and the standard error. A speedup without this metadata is not a result and
-   must not be written to the ledger.
+## Skill Use
 
-5. **The baseline is `torch.compile(mode="max-autotune")` with TF32 enabled**, plus the
-   best available vendor path (`F.scaled_dot_product_attention` across all four backends).
-   Never eager FP32 with TF32 off. Roughly half of all published kernel speedups are an
-   artifact of getting this wrong.
+Skills live in `.beryl/agent/skills/<skill-name>/SKILL.md`.
 
-6. **Report peak memory alongside every speedup.** `torch.cuda.max_memory_allocated()`.
-   A faster kernel that raises peak memory is often not an improvement.
+Task workflows:
 
-7. **No `try/except` around a correctness failure that lets the run continue as a pass.**
-   Failures are data. Record them; they are the critic's training signal and the most
-   valuable thing in the ledger after the wins.
+- `planning`: plans, designs, approaches, and feature planning gates.
+- `initial-build`: clarifies, plans, ratifies, and implements large or greenfield applications through a tracked transient hierarchy.
+- `adding-features`: feature implementation after a user-ratified plan.
+- `debugging`: bugs, failures, regressions, exceptions, and failing checks.
+- `explaining-codebase`: codebase walkthroughs and explanations without edits.
 
-8. **When in doubt about whether something is a legitimate optimization or a benchmark
-   exploit, stop and ask the user.** The heuristic: would this still be a win if the
-   grader changed the input distribution and the shape list without telling you?
+Supporting skills:
 
-## Working style
+- `grill-me`: non-trivial feature, architecture change, cross-context change, ambiguous bug fix.
+- `interview-me`: one-question-at-a-time user interview when `grill-me` leaves unresolved user-judgment decisions.
+- `testing-vertical-slices`: feature/bug behavior implementation.
+- `improving-architecture`: shallow modules, unclear boundaries, recurring coupling.
+- `tracking-entropy`: maintainability review, post-run cleanup, hotspots, refactoring priority.
+- `frontend-design`: distinctive, intentional visual design for new UI or UI reshaping.
 
-- Prefer editing one component and running its acceptance test to broad refactors.
-- Every milestone in `docs/02-milestones.md` has an acceptance gate. Run it before
-  claiming the milestone.
-- Write the *why* in comments for anything measurement-related. Six weeks from now the
-  reason a `torch.cuda.synchronize()` is on a particular line will not be obvious.
-- Keep run artifacts under `ledger/artifacts/<candidate_id>/`. Never in the source tree.
-- Long autotuning runs go through `scripts/run-loop.sh` with output to `ledger/logs/`,
-  not interactively.
+When using a skill, follow its required inputs/outputs exactly.
 
-## Environment
+Do not use sub-agents unless the user explicitly asks for sub-agents, parallel agents, reviewer agents, or competing agent implementations.
 
-- WSL2, Ubuntu, NVIDIA GPU. Native PowerShell is not supported by any of this.
-- Python 3.11+, PyTorch, Triton. Pin versions in `pyproject.toml` once confirmed and
-  record them in every ledger row — a measurement is only meaningful against a toolchain.
-- Lock clocks before any benchmarking session: `sudo nvidia-smi -pm 1` then
-  `sudo nvidia-smi -lgc <clock>`. Record the clock. If you cannot lock clocks (common in
-  WSL), say so explicitly in the report and use minimum-of-N rather than mean.
+## Default Work Loop
 
-## Things that are true and easy to forget
+1. Restate requested behavior and bounded context.
+2. Identify intended public interface and likely files to change.
+3. Add or identify the smallest deterministic test/check for behavior.
+4. Before any meaningful redirect or implementation, state success checks: expected artifact change, narrow command, broader command, generated output or browser evidence when applicable, and one user-visible behavior.
+5. For non-trivial work with multiple viable implementation paths, present the options and wait for user approval unless the user explicitly allowed you to choose.
+6. Before coding, state commit boundaries: one purpose, expected files, and validating check command per boundary.
+7. Implement one internal feature slice.
+8. Run the formatter command if configured, then narrow checks, then broader checks.
+9. Repair from actual tool output.
+10. Update glossary/design-tree/architecture/ADR files if design knowledge changed.
 
-- `triton.testing.do_bench(fn, warmup=25, rep=100)` — those are **milliseconds of budget,
-  not iteration counts**. It flushes L2 between reps. `do_bench_cudagraph` does **not**
-  flush L2 and amortizes launch overhead into the graph; the two are not comparable.
-- `torch.cuda.get_device_properties(0).multi_processor_count` (torch) vs
-  `triton.runtime.driver.active.utils.get_device_properties(0)['multiprocessor_count']`
-  (triton) — different spellings, same number.
-- Kernel launch overhead is 1–5 µs. If the kernel runs in less than about 20 µs, you are
-  measuring the launch.
-- `shared_memory_per_block_optin` is the real budget and requires
-  `cudaFuncSetAttribute` equivalent; the default 48 KB limit is not what you have.
+For feature implementation, an approved plan is mandatory. If no approved plan exists, produce the plan first, present it to the user, and stop. Do not implement until the user ratifies the plan.
+
+Feature slices are internal bookkeeping. Do not ask the user to manage slice IDs or ledgers. Use `.beryl/agent/session-state.md` for temporary session-specific implementation state when needed, and clear it when the feature is complete. Store only durable decisions in canonical files.
+
+For post-run cleanup prompts, do not implement new features. Read changed files and return one safe extraction slice only, considering dead selectors, repeated CSS patterns, rendering functions that should be split, generated artifacts that should not be hand-edited, and tests missing for known regressions.
+
+## Engineering Rules
+
+- Prefer existing project patterns over new abstractions.
+- Keep public interfaces small and explicit.
+- Do not import internals from another bounded context.
+- Keep external systems behind adapters.
+- Use terms from `.beryl/agent/ubiquitous-language.md`.
+- Do not weaken tests to make implementation pass.
+- Do not edit unrelated files.
+- Do not store secrets in repo files, prompts, or logs.
+- Do not let temporary implementation notes accumulate in canonical agent files.
+- Keep session debugging history bounded in `.beryl/agent/session-state.md`; summarize failures, cap entries, and clear resolved errors.
+
+Before deleting or consolidating root planning or documentation files, list every file, what is preserved, what is lost, and where replacement content lives, then wait for explicit approval.
+
+The completed initial-build hierarchy is a narrow exception: after every node
+and required check passes and durable context has been promoted, delete only
+`.beryl/agent/hierarchy.md` as specified by the `initial-build` workflow. Do not
+extend this exception to other planning or documentation files.
+
+## Browser Verification Rule
+
+- For web app, HTML, or CSS tasks, prefer **Microsoft Playwright MCP** as the browser tool.
+- Use browser state/tool output (for example accessibility snapshots and DOM state) as the source of truth for UI verification.
+- Do not mark browser-related work complete until the behavior is confirmed through Playwright MCP checks.
+
+For static-site changes, source inspection is not enough. Verify affected generated output such as `dist` HTML, sitemap, robots, search index, feeds, copied assets, and browser behavior when relevant.
+
+## Verification
+
+Run checks required by `.beryl/agent/testing-policy.md` and local project tooling.
+
+Final response must include:
+
+- What changed.
+- Map each changed file to the intended commit boundary.
+- Flag any changed file that does not belong to a stated commit boundary.
+- Checks run.
+- Checks skipped or unavailable.
+- Design files/ADR updates.
+- Whether temporary session state was cleared or why it remains.
