@@ -238,6 +238,24 @@ class BenchLedger:
 # Derived views. Pure functions. Delete and rebuild at will.
 # ======================================================================================
 
+def _padding_of(row: dict) -> float:
+    """Padding ratio a row was measured at.
+
+    Rows written before 2026-08-29 predate the field and were all measured at 0.0 --
+    which is exactly the untested-default problem finding 11 describes, so defaulting to
+    0.0 here is recording history accurately rather than guessing.
+    """
+    if row.get("padding_ratio") is not None:
+        return float(row["padding_ratio"])
+    note = row.get("notes") or ""
+    if "padding_ratio=" in note:
+        try:
+            return float(note.split("padding_ratio=")[1].split()[0])
+        except (ValueError, IndexError):
+            pass
+    return 0.0
+
+
 def best_per_config(ledger: BenchLedger) -> dict[int, dict]:
     """Fastest passing candidate per config id."""
     best: dict[int, dict] = {}
@@ -262,8 +280,12 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
         lambda: {"measured": 0, "passed": 0, "speedups": {}, "failures": []}
     )
     for r in ledger.clean_rows():
-        key = (r["commit_sha"], r.get("candidate") or "")
-        # baseline rows are kept in the board as a visible 1.000 reference line
+        # Padding is part of the measurement CONDITION, not a detail. v8 was measured at
+        # two padding levels; without it in the key both runs collapse onto one row and
+        # last-write-wins silently reports whichever ran last. A score is only meaningful
+        # against the conditions that produced it.
+        pad = _padding_of(r)
+        key = (r["commit_sha"], r.get("candidate") or "", pad)
         agg = per[key]
         agg["measured"] += 1
         ok = r.get("status") == "ok" and (r.get("correctness") or {}).get("passed")
@@ -276,11 +298,12 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
             agg["failures"].append({"config_id": r["config_id"], "status": r.get("status")})
 
     out = []
-    for (sha, cand), agg in per.items():
+    for (sha, cand, pad), agg in per.items():
         out.append({
             "commit_sha": sha,
             "short_sha": sha[:8],
             "candidate": cand,
+            "padding_ratio": pad,
             "configs_measured": agg["measured"],
             "configs_passed": agg["passed"],
             "weighted_score": weighted_score(agg["speedups"]),
@@ -376,9 +399,10 @@ if __name__ == "__main__":
         sys.exit(0)
 
     print("\n=== scoreboard (score -> commit) ===")
-    print(f"{'sha':<10} {'candidate':<28} {'cfgs':>5} {'pass':>5} {'score':>7}")
+    print(f"{'sha':<10} {'candidate':<24} {'pad':>5} {'cfgs':>5} {'pass':>5} {'score':>7}")
     for e in scoreboard(led):
-        print(f"{e['short_sha']:<10} {e['candidate'][:28]:<28} "
+        print(f"{e['short_sha']:<10} {e['candidate'][:24]:<24} "
+              f"{e['padding_ratio']:>5.2f} "
               f"{e['configs_measured']:>5} {e['configs_passed']:>5} "
               f"{e['weighted_score']:>7.3f}")
 
