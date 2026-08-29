@@ -167,7 +167,8 @@ class BenchLedger:
                timing: Optional[dict] = None, correctness: Optional[dict] = None,
                memory: Optional[dict] = None, env: Optional[dict] = None,
                config: Optional[dict] = None, notes: str = "",
-               ts: Optional[str] = None) -> dict:
+               ts: Optional[str] = None,
+               provenance_override: Optional[dict] = None) -> dict:
         """Build a row with git provenance filled in, then append it.
 
         `ts` is a parameter rather than a call to now() so that a caller replaying a
@@ -187,7 +188,7 @@ class BenchLedger:
             "memory": memory,
             "env": env,
             "notes": notes,
-            **provenance(self.repo),
+            **(provenance_override or provenance(self.repo)),
         }
         return self.append(row)
 

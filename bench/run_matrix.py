@@ -75,46 +75,11 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict
 
     out: dict = {"config_id": config_id, "candidate": candidate_name}
 
-    torch.manual_seed(SEED)
-    baseline = ref.BaselineTransformer(tcfg)
-    cand_cls = REGISTRY[candidate_name].build(ref.BaselineTransformer)
-    candidate = cand_cls(tcfg)
-    # Weights are copied on CPU in fp32, BEFORE .to(device) -- which is why every
-    # candidate builds its low-precision cache lazily on first forward.
-    ref.copy_model_weights(baseline, candidate)
-    baseline = baseline.to(device=device, dtype=dtype).eval()
-    candidate = candidate.to(device=device, dtype=dtype).eval()
+    def make_input(seed):
+        return ref.generate_random_case(tcfg, device, dtype, seed=seed,
+                                        padding_ratio=0.0, input_scale=1.0)
 
-    # -- correctness first, and only then timing ------------------------------------
-    trials, worst_abs, worst_rel, failed = [], 0.0, 0.0, 0
-    with torch.inference_mode():
-        for t in range(ACCURACY_TRIALS):
-            x, mask = ref.generate_random_case(
-                tcfg, device, dtype, seed=SEED + t, padding_ratio=0.0, input_scale=1.0)
-            expected = baseline(x, mask)
-            got = candidate(x, mask)
-            res = ref.compare_outputs(expected, got, rtol=RTOL, atol=ATOL)
-            trials.append({"passed": bool(res.passed), "max_abs": float(res.max_abs_error),
-                           "max_rel": float(res.max_relative_error), "failed": int(res.failed_elements)})
-            worst_abs = max(worst_abs, float(res.max_abs_error))
-            worst_rel = max(worst_rel, float(res.max_relative_error))
-            failed += int(res.failed_elements)
-            del x, mask, expected, got
-    passed = all(t["passed"] for t in trials)
-    out["correctness"] = {"passed": passed, "max_abs": worst_abs, "max_rel": worst_rel,
-                          "failed_elements": failed, "trials": len(trials)}
-
-    if not passed:
-        out["status"] = "incorrect"
-        return out
-
-    # -- timing, arms interleaved ----------------------------------------------------
-    # Clocks cannot be locked under WSL, so the defence against drift is interleaving:
-    # if the GPU boosts or throttles mid-run, both arms feel it equally.
-    x, mask = ref.generate_random_case(
-        tcfg, device, dtype, seed=SEED + 100000, padding_ratio=0.0, input_scale=1.0)
-
-    def median_ms(model, n: int) -> dict:
+    def median_ms(model, x, mask, n):
         with torch.inference_mode():
             for _ in range(20):
                 model(x, mask)
@@ -126,31 +91,77 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300) -> dict
                 model(x, mask)
                 ends[i].record()
             torch.cuda.synchronize()
-        vals = sorted(s.elapsed_time(e) for s, e in zip(starts, ends))
-        return {"median_ms": vals[len(vals) // 2], "min_ms": vals[0],
-                "p90_ms": vals[int(0.9 * (len(vals) - 1))], "n": n}
+        vals = sorted(a.elapsed_time(b) for a, b in zip(starts, ends))
+        return vals[len(vals) // 2]
 
-    # Scale the sample count down on the slow configs; 300 samples of a 460 ms forward
-    # is two and a half minutes per arm for no extra confidence.
-    probe = median_ms(baseline, 3)["median_ms"]
+    # ORDER MATTERS, and it is the fix for a measurement bug we made and caught:
+    # holding both models resident inflated config 6's baseline 4.1x (446 -> 1851 ms)
+    # because 18.4 GB of reserved memory on a 16 GB card spills to host over PCIe.
+    # So each arm is timed while it is the ONLY model on the device.
+    #
+    # The cost is losing cross-arm interleaving, which is our defence against thermal
+    # drift on a card whose clocks cannot be locked. That trade is deliberate: the
+    # memory-pressure distortion is 410%, drift between two adjacent measurements is a
+    # few percent, and `interleaved: False` is recorded so nobody has to guess.
+    torch.manual_seed(SEED)
+    baseline = ref.BaselineTransformer(tcfg).to(device=device, dtype=dtype).eval()
+
+    xt, mt = make_input(SEED + 100000)
+    probe = median_ms(baseline, xt, mt, 3)
     n = max(11, min(samples, int(2000.0 / max(probe, 0.05))))
 
     torch.cuda.reset_peak_memory_stats()
-    b1 = median_ms(baseline, n)
-    c1 = median_ms(candidate, n)
-    b2 = median_ms(baseline, n)
-    c2 = median_ms(candidate, n)
-    base_ms = min(b1["median_ms"], b2["median_ms"])
-    cand_ms = min(c1["median_ms"], c2["median_ms"])
+    base_ms = min(median_ms(baseline, xt, mt, n), median_ms(baseline, xt, mt, n))
+    base_peak = torch.cuda.max_memory_allocated() / 1e6
+
+    # Now build the candidate and check correctness -- both models resident, which is
+    # unavoidable here, but correctness is not timed so pressure cannot distort it.
+    torch.manual_seed(SEED)
+    fresh_baseline = ref.BaselineTransformer(tcfg)
+    cand_cls = REGISTRY[candidate_name].build(ref.BaselineTransformer)
+    candidate = cand_cls(tcfg)
+    ref.copy_model_weights(fresh_baseline, candidate)   # CPU, fp32, before .to()
+    fresh_baseline = fresh_baseline.to(device=device, dtype=dtype).eval()
+    candidate = candidate.to(device=device, dtype=dtype).eval()
+
+    trials, worst_abs, worst_rel, failed = [], 0.0, 0.0, 0
+    with torch.inference_mode():
+        for t in range(ACCURACY_TRIALS):
+            x, mask = make_input(SEED + t)
+            expected = fresh_baseline(x, mask)
+            got = candidate(x, mask)
+            res = ref.compare_outputs(expected, got, rtol=RTOL, atol=ATOL)
+            trials.append({"passed": bool(res.passed),
+                           "max_abs": float(res.max_abs_error),
+                           "max_rel": float(res.max_relative_error),
+                           "failed": int(res.failed_elements)})
+            worst_abs = max(worst_abs, float(res.max_abs_error))
+            worst_rel = max(worst_rel, float(res.max_relative_error))
+            failed += int(res.failed_elements)
+            del x, mask, expected, got
+    passed = all(t["passed"] for t in trials)
+    out["correctness"] = {"passed": passed, "max_abs": worst_abs, "max_rel": worst_rel,
+                          "failed_elements": failed, "trials": len(trials)}
+    if not passed:
+        out["status"] = "incorrect"
+        return out
+
+    # Free every baseline before timing the candidate, for the same reason as above.
+    del baseline, fresh_baseline
+    torch.cuda.empty_cache()
+
+    torch.cuda.reset_peak_memory_stats()
+    cand_ms = min(median_ms(candidate, xt, mt, n), median_ms(candidate, xt, mt, n))
+    cand_peak = torch.cuda.max_memory_allocated() / 1e6
 
     out["status"] = "ok"
     out["timing"] = {
         "baseline_ms": base_ms, "candidate_ms": cand_ms,
         "speedup": base_ms / cand_ms, "method": "cuda_event",
-        "samples": n, "reduction": "median", "blocks": "ABAB interleaved",
-        "clocks_locked": False,
+        "samples": n, "reduction": "median", "interleaved": False,
+        "arms_isolated": True, "clocks_locked": False,
     }
-    out["memory"] = {"peak_MB": torch.cuda.max_memory_allocated() / 1e6}
+    out["memory"] = {"peak_MB": cand_peak, "baseline_peak_MB": base_peak}
     return out
 
 
@@ -180,6 +191,8 @@ def main() -> int:
     ap.add_argument("--ids", type=int, nargs="*", default=None)
     ap.add_argument("--samples", type=int, default=300)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--json-out", action="store_true",
+                    help="emit one __ROW__ json line per config, for the search loop")
     ap.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--id", type=int, help=argparse.SUPPRESS)
     args = ap.parse_args()
@@ -215,6 +228,10 @@ def main() -> int:
         env["triton"] = None
 
     led = BenchLedger(repo=str(REPO))
+    # Provenance is captured ONCE, here, and stamped on every row of this run. Calling
+    # provenance() per row means a file edited while the run is in flight silently
+    # changes the sha partway through -- the rows stop describing one tree state.
+    run_prov = dict(prov)
     print(f"{'#':>3} {'status':<10} {'baseline':>10} {'cand':>10} {'speedup':>8}  max_abs")
     speedups = {}
     for cid in ids:
@@ -228,10 +245,14 @@ def main() -> int:
               f"{t.get('candidate_ms', float('nan')):>10.3f} "
               f"{(sp or float('nan')):>8.2f}  {c.get('max_abs', '-')}")
         if not args.dry_run:
-            led.record(config_id=cid, status=r["status"], candidate=args.candidate,
-                       timing=r.get("timing"), correctness=r.get("correctness"),
-                       memory=r.get("memory"), env=env,
-                       config=BY_ID[cid].to_dict(), notes=r.get("notes", ""))
+            row = led.record(config_id=cid, status=r["status"], candidate=args.candidate,
+                             timing=r.get("timing"), correctness=r.get("correctness"),
+                             memory=r.get("memory"), env=env,
+                             config=BY_ID[cid].to_dict(), notes=r.get("notes", ""),
+                             provenance_override=run_prov)
+        if args.json_out:
+            print("__ROW__" + json.dumps({"config_id": cid, "status": r["status"],
+                                          "timing": r.get("timing")}))
 
     if speedups:
         from bench.matrix import weighted_score

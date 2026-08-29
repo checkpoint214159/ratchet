@@ -37,6 +37,16 @@ def _v2(baseline_cls):
     return build(baseline_cls)
 
 
+def _v3(baseline_cls):
+    from .v3_chunked import build
+    return build(baseline_cls)
+
+
+def _v4(baseline_cls):
+    from .v4_tunable import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -49,5 +59,17 @@ REGISTRY: dict[str, CandidateSpec] = {
         summary="v1 plus: q/k/v kept in fp16 and the all-True mask elided, so "
                 "FlashAttention finally qualifies. 5.64x geomean; the only variant "
                 "that can run config 14 at all.",
+    ),
+    "v3_chunked": CandidateSpec(
+        name="v3_chunked", generation=3, parent="v2_fp16_flash", build=_v3,
+        summary="v2 plus batch chunking sized from the measured L2 capacity, aimed at "
+                "configs 6 and 13 (93.4% of all baseline time). Falls through to plain "
+                "v2 wherever the whole batch already fits the residency target.",
+    ),
+    "v4_tunable": CandidateSpec(
+        name="v4_tunable", generation=4, parent="v3_chunked", build=_v4,
+        summary="v3 with its three constants read from the environment, so the search "
+                "loop can evaluate a point without rewriting source. Identical to v3 at "
+                "the defaults.",
     ),
 }

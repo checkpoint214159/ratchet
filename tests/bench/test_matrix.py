@@ -43,3 +43,21 @@ def test_weighted_score_clips_and_penalizes_unmeasured():
     assert weighted_score({1: 100.0}) < weighted_score({i: 2.0 for i in range(1, 15)})
     # An unmeasured config scores 1.0, not "skipped" -- skipping would reward not running.
     assert weighted_score({1: 3.0}) == (3.0 + 13 * 1.0) / 14
+
+
+def test_chunk_solver_is_calibrated_not_hardcoded():
+    # The measured optimum for config 6 on a 48 MB L2 card was 125; the solver must land
+    # near it WITHOUT that number appearing anywhere in the code.
+    from bench.candidates.v3_chunked import solve_chunk
+    L2_48MB = 50_331_648
+    assert 96 <= solve_chunk(10000, 128, 128, L2_48MB) <= 160
+
+    # And it must respond to the device, not ignore it: 4x the cache should raise the
+    # chunk roughly 4x. A solver that does not move with L2 is a hardcoded table.
+    small = solve_chunk(10000, 128, 128, L2_48MB)
+    large = solve_chunk(10000, 128, 128, L2_48MB * 4)
+    assert large > 3 * small
+
+    # Never chunk beyond the batch, never to zero.
+    assert solve_chunk(8, 128, 128, L2_48MB) == 8
+    assert solve_chunk(10000, 100000, 1024, L2_48MB) >= 1
