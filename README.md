@@ -2,15 +2,12 @@
 
 Ratchet is a research-driven transformer optimization environment. It preserves every
 validated experiment in an append-only catalogue and turns the important evidence into a
-concise LaTeX research paper. The current checked-in state is **literature-only**: Intel
-XPU is unavailable (`ENV-0001`), so `EXP-0001` is a verified no-run event—not a kernel,
-benchmark, correctness, or speedup result.
+concise LaTeX research paper.
 
 ## Fast, reproducible autoresearch setup
 
 Requirements: Linux or WSL2, Python 3.10+, Git, [uv](https://docs.astral.sh/uv/), and
-[Tectonic](https://tectonic-typesetting.github.io/) with its local bundle available. A
-GPU is **not** required for this verification path.
+[Tectonic](https://tectonic-typesetting.github.io/) with its local bundle available.
 
 ```bash
 git clone https://github.com/checkpoint214159/ratchet.git && cd ratchet
@@ -38,30 +35,11 @@ Open `research/paper/latest.pdf` after a successful run for the current research
 the reviewed literature, `EVT-000001` no-run evidence, its traceable future hypothesis,
 and the boundary against empirical claims.
 
-## When Intel Arc/XPU is available
-
-Do not force a different backend through the current controller. First run:
-
-```bash
-.venv/bin/python -m ratchet.backends --backend xpu
-```
-
-A successful availability probe is **not** performance qualification. It starts the
-separate, user-ratified FG-01 hardware hierarchy that must validate allocation, SDPA,
-compilation, synchronization, event timing, memory observation, the authoritative
-correctness matrix, and the documented steady-state methodology before any empirical
-experiment can enter the catalogue.
-
-CUDA and ROCm/HIP adapters are deliberately isolated and have analogous future probes:
-`--backend cuda` and `--backend hip`. They remain untuned fallbacks until separately
-qualified evidence exists.
-
 ## Research workflow
 
 1. Add a durable human idea, constraint, priority, redirect, or reviewed literature input
    through the append-only planning queue—not by editing historic events.
-2. Define a finite, canonical, scoreless parametric or architectural search plan. Search
-   stays planning-only behind FG-01.
+2. Define a finite, canonical, scoreless parametric or architectural search plan.
 3. On qualified hardware, isolate a candidate worktree, validate correctness first, then
    measure synchronized steady-state execution and append immutable evidence.
 4. Regenerate the paper. The catalogue contains every result; the paper selectively
@@ -126,13 +104,13 @@ PY
 
 The five kinds are the five ways you can steer:
 
-| Kind | Use it to | Extra field |
-| --- | --- | --- |
-| `IDEA` | open a new research question | — |
-| `CONSTRAINT` | forbid an outcome you consider invalid | — |
-| `PRIORITY` | reorder what is investigated first | `priority` |
-| `LITERATURE` | attach reviewed sources to an idea | `literature_keys` |
-| `REDIRECT` | retire an idea in favour of another | `redirect_to` |
+| Kind           | Use it to                              | Extra field         |
+| -------------- | -------------------------------------- | ------------------- |
+| `IDEA`       | open a new research question           | —                  |
+| `CONSTRAINT` | forbid an outcome you consider invalid | —                  |
+| `PRIORITY`   | reorder what is investigated first     | `priority`        |
+| `LITERATURE` | attach reviewed sources to an idea     | `literature_keys` |
+| `REDIRECT`   | retire an idea in favour of another    | `redirect_to`     |
 
 Rules the queue enforces for you, so a mistake fails loudly instead of quietly:
 
