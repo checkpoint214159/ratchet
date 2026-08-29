@@ -227,3 +227,31 @@ imported cleanly, and returned `None` — surfacing three commits later as an op
 Never auto-resolve a conflict in executable code by concatenation. A guard test now
 asserts every registered candidate actually builds and names a parent that exists —
 which is the kind of invariant that should have existed before the first fork, not after.
+
+## L15 — L11 was right for the wrong reason: max-autotune was DISABLED (2026-08-29)
+
+Every compiled run prints `Not enough SMs to use max_autotune_gemm mode`. **Inductor
+disables GEMM autotuning on this 66-SM card.** So v9a and v9b landing 0.3% apart did not
+show "autotuning buys nothing" — it showed the two modes had silently collapsed into
+nearly the same thing.
+
+The action survives (use `reduce-overhead`, cheaper for identical results) but the
+generalization does not: on a datacenter GPU with enough SMs, max-autotune would actually
+autotune and that sibling comparison must be re-run. **A null explained by "it does
+nothing" transfers; a null explained by "it was disabled" does not.**
+
+Correct the record rather than quietly keeping the convenient conclusion.
+
+## L16 — Validate a replaced protocol against the original (2026-08-29)
+
+Our timing loop deliberately diverges from the benchmark's: we isolate each arm
+(finding 05), it keeps both resident. The graded number comes from theirs and the two had
+never been compared.
+
+They agree — 0.5% to 6.7% across configs 1, 6, 12, 13, with config 6's baseline at
+448.9 ms (theirs) vs 448.4 ms (ours). The spill that motivated our divergence does not
+reproduce under v9a, whose peak memory is far lower than the candidate that triggered it.
+
+**Rule: when you replace a harness's protocol with your own, you owe a comparison against
+the original.** Ours diverged for a defensible reason and happened to agree; that was not
+knowable without running it. `bench/end_to_end.py` now does this on demand.
