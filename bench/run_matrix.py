@@ -52,7 +52,7 @@ def load_reference():
 # ======================================================================================
 
 def measure_one(config_id: int, candidate_name: str, samples: int = 300,
-                padding: float = 0.0) -> dict:
+                padding: float = 0.0, dtype_name: str = "float32") -> dict:
     import torch
 
     sys.path.insert(0, str(REPO))
@@ -62,7 +62,8 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
     ref = load_reference()
     cfg = BY_ID[config_id]
     device = torch.device("cuda")
-    dtype = torch.float32
+    dtype = {"float32": torch.float32, "float16": torch.float16,
+             "bfloat16": torch.bfloat16}[dtype_name]
 
     torch.set_float32_matmul_precision("high")     # TF32 on, for BOTH arms
     torch.backends.cuda.matmul.allow_tf32 = True
@@ -75,7 +76,8 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
     tcfg.validate()
 
     out: dict = {"config_id": config_id, "candidate": candidate_name,
-                 "padding_ratio": padding}
+                 "padding_ratio": padding,
+                 "dtype": dtype_name}
 
     def make_input(seed):
         return ref.generate_random_case(tcfg, device, dtype, seed=seed,
@@ -171,12 +173,13 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
 # Parent process
 # ======================================================================================
 
-def run_child(config_id: int, candidate: str, padding: float = 0.0) -> dict:
+def run_child(config_id: int, candidate: str, padding: float = 0.0,
+              dtype_name: str = "float32") -> dict:
     """One config in its own process. An OOM or a crash is a result, not an exception."""
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--child",
          "--id", str(config_id), "--candidate", candidate,
-         "--padding", str(padding)],
+         "--padding", str(padding), "--dtype", dtype_name],
         capture_output=True, text=True, cwd=str(REPO), timeout=3600,
     )
     for line in proc.stdout.splitlines():
@@ -193,6 +196,9 @@ def main() -> int:
     ap.add_argument("--candidate", required=True)
     ap.add_argument("--ids", type=int, nargs="*", default=None)
     ap.add_argument("--samples", type=int, default=300)
+    ap.add_argument("--dtype", default="float32",
+                    choices=["float32", "float16", "bfloat16"],
+                    help="never varied before 2026-08-29; the benchmark supports all three")
     ap.add_argument("--padding", type=float, default=0.0,
                     help="padding_ratio; every measurement before 2026-08-29 used 0.0, "
                          "which is the ONLY value where the all-True mask fast path exists")
@@ -206,7 +212,7 @@ def main() -> int:
     if args.child:
         try:
             print("__RESULT__" + json.dumps(measure_one(args.id, args.candidate,
-                                                        args.samples, args.padding)))
+                                                        args.samples, args.padding, args.dtype)))
         except Exception:
             traceback.print_exc()
             return 1
@@ -247,7 +253,7 @@ def main() -> int:
     print(f"{'#':>3} {'status':<10} {'baseline':>10} {'cand':>10} {'speedup':>8}  max_abs")
     speedups = {}
     for cid in ids:
-        r = run_child(cid, args.candidate, args.padding)
+        r = run_child(cid, args.candidate, args.padding, args.dtype)
         t, c = r.get("timing") or {}, r.get("correctness") or {}
         sp = t.get("speedup")
         if sp:
@@ -261,7 +267,7 @@ def main() -> int:
                              timing=r.get("timing"), correctness=r.get("correctness"),
                              memory=r.get("memory"), env=env,
                              config=BY_ID[cid].to_dict(),
-                             notes=(f"padding_ratio={args.padding} " + r.get("notes", "") + (
+                             notes=(f"padding_ratio={args.padding} dtype={args.dtype} " + r.get("notes", "") + (
                                  f" params={json.dumps(tuned_params)}" if tuned_params else "")
                              ).strip(),
                              provenance_override=run_prov)
