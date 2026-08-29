@@ -7,14 +7,21 @@ import path from "node:path";
 
 const pexec = promisify(execFile);
 
-export const REPO = path.resolve(new URL("../..", import.meta.url).pathname);
-export const RESULTS = path.join(REPO, "bench", "results.jsonl");
+export const REPO = path.resolve(process.env.RATCHET_REPO || new URL("../..", import.meta.url).pathname);
+// RATCHET_RESULTS exists so the parser can be exercised against a scratch copy
+// without ever touching the real append-only ledger.
+export const RESULTS = process.env.RATCHET_RESULTS || path.join(REPO, "bench", "results.jsonl");
 export const FINDINGS = path.join(REPO, "docs", "findings");
 
 // The correctness budget the project locks (CLAUDE.md rule 1). Not configurable here.
 export const MAX_ABS_BUDGET = 2e-3;
 export const SCORE_CAP = 3.0;
-const RUNNER_PATTERNS = ["run_matrix.py", "loop.py", "probe_config14.py"];
+const RUNNERS = "run_matrix|loop|probe_config14";
+// Must look like an actual interpreter invocation, not merely a shell line that mentions
+// the file (an agent typing `./scripts/run-loop.sh run_matrix.py` is not a running loop).
+const RUNNER_SCRIPT_RE = new RegExp(String.raw`(?:^|/)python[\d.]*\s+(?:-\S+\s+)*(?:\S*/)?(${RUNNERS})\.py(?:\s|$)`);
+const RUNNER_MODULE_RE = new RegExp(String.raw`(?:^|/)python[\d.]*\s+(?:-\S+\s+)*-m\s+(?:[\w.]+\.)?(${RUNNERS})(?:\s|$)`);
+const SHELL_RE = /^(?:\S*\/)?(?:ba|z|k|da)?sh\b/;
 
 async function git(args) {
   const { stdout } = await pexec("git", args, { cwd: REPO, maxBuffer: 16 * 1024 * 1024 });
@@ -95,15 +102,28 @@ async function pyJson(code) {
 }
 
 let STATIC = null;
+let CAND_AT = 0;
+const CAND_TTL_MS = 30000;
+
 export async function loadStatic() {
-  if (STATIC) return STATIC;
-  const out = { matrix: [], candidates: [], errors: [] };
-  try { out.matrix = await pyJson(PY_MATRIX); }
-  catch (e) { out.errors.push("matrix: " + (e.stderr || e.message)); }
-  try { out.candidates = await pyJson(PY_CANDIDATES); }
-  catch (e) { out.errors.push("candidates: " + (e.stderr || e.message)); }
-  STATIC = out;
-  return out;
+  if (!STATIC) {
+    STATIC = { matrix: [], candidates: [], errors: [] };
+    // The matrix is the 14 announced competition configs: genuinely static, read once.
+    try { STATIC.matrix = await pyJson(PY_MATRIX); }
+    catch (e) { STATIC.errors.push("matrix: " + (e.stderr || e.message)); }
+  }
+  // The candidate registry GROWS while the loop runs, so it is refreshed on a slow
+  // timer rather than pinned at server start.
+  if (Date.now() - CAND_AT > CAND_TTL_MS) {
+    CAND_AT = Date.now();
+    try {
+      STATIC.candidates = await pyJson(PY_CANDIDATES);
+      STATIC.errors = STATIC.errors.filter((e) => !e.startsWith("candidates:"));
+    } catch (e) {
+      if (!STATIC.candidates.length) STATIC.errors.push("candidates: " + (e.stderr || e.message));
+    }
+  }
+  return STATIC;
 }
 
 // ---------------------------------------------------------------------------
@@ -240,10 +260,10 @@ async function runningProcesses() {
       if (!m) continue;
       const [, pid, etimes, args] = m;
       if (Number(pid) === process.pid) continue;
-      if (/\bps\b .*-eo/.test(args)) continue;
-      const pat = RUNNER_PATTERNS.find((p) => args.includes(p));
-      if (!pat) continue;
-      hits.push({ pid: Number(pid), elapsed_s: Number(etimes), runner: pat, cmd: args.slice(0, 220) });
+      if (SHELL_RE.test(args.trim())) continue;          // shell wrappers, not the runner
+      const hit = RUNNER_SCRIPT_RE.exec(args) || RUNNER_MODULE_RE.exec(args);
+      if (!hit) continue;
+      hits.push({ pid: Number(pid), elapsed_s: Number(etimes), runner: hit[1] + ".py", cmd: args.slice(0, 220) });
     }
     return hits;
   } catch {
@@ -342,13 +362,17 @@ export async function snapshot() {
       groups.set(key, {
         key, commit_sha: r.commit_sha, short_sha: (r.commit_sha || "").slice(0, 8),
         candidate: r.candidate || "", padding_ratio: pad, branch: r.branch,
-        configs_measured: 0, configs_passed: 0,
+        rows: 0, seen: new Set(), seen_passed: new Set(),
         speedups: {}, speedups_compiled: {}, per_config: {}, failures: [],
         latest_ts: r.ts,
       });
     }
     const g = groups.get(key);
-    g.configs_measured++;
+    // Rows, not configs: a parameter sweep writes many rows for the same config at one
+    // commit. The matrix has 14 configs, so "configs measured" must be DISTINCT ids,
+    // last-write-wins per config, with the raw row count kept alongside it.
+    g.rows++;
+    g.seen.add(r.config_id);
     if (String(r.ts) > String(g.latest_ts)) g.latest_ts = r.ts;
     const ok = isOk(r);
     const spc = vsCompiled(r);
@@ -365,15 +389,22 @@ export async function snapshot() {
       peak_MB: r.memory?.peak_MB ?? null, ts: r.ts,
     };
     if (ok) {
-      g.configs_passed++;
+      g.seen_passed.add(r.config_id);
       if (Number.isFinite(r.timing?.speedup)) g.speedups[r.config_id] = r.timing.speedup;
       if (Number.isFinite(spc)) g.speedups_compiled[r.config_id] = spc;
     } else {
+      g.seen_passed.delete(r.config_id);
       g.failures.push({ config_id: r.config_id, status: r.status });
     }
   }
-  const scoreboard = [...groups.values()].map((g) => ({
+  const scoreboard = [...groups.values()].map(({ seen, seen_passed, ...g }) => ({
     ...g,
+    configs_measured: seen.size,
+    configs_passed: seen_passed.size,
+    sweep: g.rows > seen.size,
+    // last-write-wins per config, so the failure list is derived from the final state
+    failures: Object.values(g.per_config).filter((c) => !c.passed)
+      .map((c) => ({ config_id: c.config_id, status: c.status })),
     geomean: geomean(Object.values(g.speedups)),
     geomean_compiled: geomean(Object.values(g.speedups_compiled)),
     weighted_score: weightedScore(g.speedups, matrixIds),
@@ -381,12 +412,19 @@ export async function snapshot() {
   })).sort((a, b) => b.weighted_score - a.weighted_score);
 
   // ---- heatmap: one lane per (candidate, padding), newest commit wins -------
+  // One lane per (candidate, padding). Where a candidate has several groups at that
+  // padding -- a full matrix sweep plus a one-config re-probe, say -- the lane shows the
+  // MOST COMPLETE run, then the most recent, so a single follow-up row cannot blank out
+  // an otherwise fully measured candidate.
   const laneBest = new Map();
   for (const g of scoreboard) {
     if (g.candidate === "baseline") continue;
     const lane = `${g.candidate}|${g.padding_ratio}`;
     const prev = laneBest.get(lane);
-    if (!prev || String(g.latest_ts) > String(prev.latest_ts)) laneBest.set(lane, g);
+    const better = !prev
+      || g.configs_measured > prev.configs_measured
+      || (g.configs_measured === prev.configs_measured && String(g.latest_ts) > String(prev.latest_ts));
+    if (better) laneBest.set(lane, g);
   }
   const regByName = new Map(stat.candidates.map((c) => [c.name, c]));
   const heatmap = {
@@ -418,7 +456,18 @@ export async function snapshot() {
     }))
     .sort((a, b) => (a.ts < b.ts ? 1 : -1));
 
-  const newest = rows.reduce((acc, r) => (r.ts && (!acc || r.ts > acc) ? r.ts : acc), null);
+  // Newest by parsed instant, not string order: rows may carry different UTC offsets.
+  // Some seed rows are stamped in the future; that is reported, not silently clamped.
+  const nowMs = Date.now();
+  let newest = null, newestMs = -Infinity;
+  let newestPast = null, newestPastMs = -Infinity, futureRows = 0;
+  for (const r of rows) {
+    const t = Date.parse(r.ts);
+    if (!Number.isFinite(t)) continue;
+    if (t > newestMs) { newestMs = t; newest = r.ts; }
+    if (t > nowMs + 2000) { futureRows++; continue; }
+    if (t > newestPastMs) { newestPastMs = t; newestPast = r.ts; }
+  }
   const running = await runningProcesses();
   const findings = readFindings();
 
@@ -432,6 +481,8 @@ export async function snapshot() {
     parse: { rows: parsed.lines, torn_tail: parsed.tornTail, malformed: parsed.malformed, error: parsed.error },
     file: fileStat,
     newest_row_ts: newest,
+    newest_past_row_ts: newestPast,
+    future_rows: futureRows,
     running,
     git: {
       head: gitS.head, dirty: gitS.dirty, dirty_files: gitS.dirtyFiles.slice(0, 40),
