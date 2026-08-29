@@ -62,6 +62,11 @@ def _v7(baseline_cls):
     return build(baseline_cls)
 
 
+def _v8(baseline_cls):
+    from .v8_padfast import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -106,5 +111,12 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "cached fp16 norm weights, attacking the 9.7-16.8% of kernel time in "
                 "native_layer_norm plus 2.5-9.6% in add. Expected to pay on the "
                 "bandwidth-bound configs (6, 13) and not on the launch-bound ones.",
+    ),
+    "v8_padfast": CandidateSpec(
+        name="v8_padfast", generation=8, parent="v6_fp16_gelu", build=_v8,
+        summary="Takes the fp16 flash path even when the input is padded, on the proof "
+                "that a right-padded causal key mask is redundant. Fixes the blind spot "
+                "that halved every speedup at padding_ratio>0. Guarded: the prefix shape "
+                "is verified at prime time, else it falls back to v6's slow path.",
     ),
 }
