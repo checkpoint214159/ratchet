@@ -44,8 +44,16 @@ from collections import deque
 from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
+try:                                    # package import
+    from .matrix import weighted_score
+except ImportError:                     # run directly as `python3 bench/ledger.py`
+    from matrix import weighted_score
+
 SCHEMA = 1
 DEFAULT_PATH = "bench/results.jsonl"
+
+# Reserved candidate name: rows measuring the unmodified reference implementation.
+BASELINE = "baseline"
 
 _REQUIRED = ("ts", "commit_sha", "config_id", "status")
 
@@ -244,6 +252,7 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
     )
     for r in ledger.clean_rows():
         key = (r["commit_sha"], r.get("candidate") or "")
+        # baseline rows are kept in the board as a visible 1.000 reference line
         agg = per[key]
         agg["measured"] += 1
         ok = r.get("status") == "ok" and (r.get("correctness") or {}).get("passed")
@@ -255,7 +264,6 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
         else:
             agg["failures"].append({"config_id": r["config_id"], "status": r.get("status")})
 
-    from bench.matrix import weighted_score
     out = []
     for (sha, cand), agg in per.items():
         out.append({
@@ -287,6 +295,11 @@ def clade_stats(ledger: BenchLedger, repo: Optional[str] = None
     """
     own: dict[str, tuple[int, int]] = {}
     for r in ledger.clean_rows():
+        # Baseline rows are the reference a candidate is scored AGAINST, not candidates.
+        # Counting them here would book a guaranteed failure per config (speedup is 1.0
+        # by definition) and drag every commit's clade posterior toward zero.
+        if r.get("candidate") == BASELINE:
+            continue
         sha = r["commit_sha"]
         s, f = own.get(sha, (0, 0))
         ok = (r.get("status") == "ok"

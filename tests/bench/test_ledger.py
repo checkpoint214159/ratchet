@@ -77,3 +77,15 @@ def test_provenance_reports_the_real_head():
     p = provenance()
     assert p["commit_sha"] == head_sha() and len(p["commit_sha"]) == 40
     assert isinstance(p["dirty"], bool)
+
+
+def test_baseline_rows_are_not_clade_failures(tmp_path):
+    # A baseline row has speedup 1.0 by definition. Counting it as a candidate failure
+    # would book one guaranteed loss per config and drag every posterior toward zero.
+    led = BenchLedger(tmp_path / "r.jsonl")
+    row = _row("e" * 40, 1, 1.0)
+    row["candidate"] = "baseline"
+    led.append(row)
+    led.append(_row("e" * 40, 1, 2.0))          # a real candidate win
+    s, f = clade_stats(led, repo=None)["e" * 40]
+    assert (s, f) == (1, 0)
