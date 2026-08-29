@@ -278,3 +278,32 @@ subtracts, and it found inert complexity in one pass.
 **Make ablation a scheduled step, not an afterthought.** Every ~3 generations, re-test the
 inherited stack against the current frontier. Otherwise the submission ships its most
 sophisticated-looking component doing nothing, and the report credits it.
+
+## L18 — The lean frontier matches the fat one (2026-08-29)
+
+v11 (chunking removed) measures **10.073x vs eager / 2.514x vs the compiled baseline**,
+zero losses, against v9a's 10.630x / 2.678x. Inside the noise floor on a matrix-wide
+basis, so the g10 ablation's verdict holds across all 13 configs rather than only the 4 it
+was measured on.
+
+The frontier is now **five components instead of six** at no measurable cost: fused
+Q|K|V, fp16-with-fp32-accumulate, flash via SDPA, the right-padding proof, and
+compilation. Each has a measurement behind it; none is inherited on faith.
+
+**First generation that improved by removing something** — and it only happened because
+the ablation was run on principle rather than on suspicion. Nothing in the loop's own
+signal would have flagged chunking: it was passing, correct, and sitting inside the best
+candidate.
+
+## L19 — The dirty-tree rule caught me again, and it was right (2026-08-29)
+
+The first v11 run produced 13 rows and **all 13 were discarded**: the dashboard's files
+were sitting uncommitted, so `is_dirty()` marked every row and `clean_rows()` filtered
+them out. I only noticed because a downstream ZeroDivisionError had no rows to divide.
+
+The rule is correct and stays. What is missing is a **pre-flight**: `run_matrix.py` warns
+about a dirty tree but proceeds anyway, so a 10-minute run can be spent producing rows
+that cannot count. It should refuse by default and require an explicit override.
+
+Second time this has bitten (the first was the v2 run in the same session). A warning that
+is routinely ignored is not a guardrail.
