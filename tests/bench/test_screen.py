@@ -106,3 +106,29 @@ def test_run_matrix_never_times_an_incorrect_candidate():
     timing = src.index("cand_ms = min(median_ms")
     assert gate < timing, "correctness gate must precede timing"
     assert "return out" in src[gate:timing], "the gate must RETURN, not fall through"
+
+
+def test_a_refusal_is_not_a_rejection():
+    """THE DEFECT, pinned. `run_matrix` refuses outright on a dirty tree (exit 2) or a
+    contended GPU (exit 3) and emits no rows; the screen used to map that to REJECT with
+    the detail "incomplete screen". A candidate would then be recorded as measured and
+    beaten when in fact another agent simply held the GPU lock -- which happened to
+    v21_double_buffered on 2026-08-30.
+
+    L38's shape: a check that reports something other than what it observed.
+    """
+    v, geo, detail = decide({}, [], COMPILED, parent_geo=2.0,
+                            refusal="REFUSING: the GPU lock is held")
+    assert v == "NOT_MEASURED", "a refusal is being reported as a verdict on the candidate"
+    assert geo is None
+    assert "not a verdict" in detail and "lock is held" in detail
+
+
+def test_a_partial_screen_is_still_a_reject():
+    """The new NOT_MEASURED path must not swallow the case it was NOT written for: some
+    configs measured, others missing, is a candidate that crashed somewhere."""
+    partial = _ms(2.0)
+    partial.pop(SCREEN_IDS[0])
+    assert decide(partial, [], COMPILED, parent_geo=1.0)[0] == "REJECT"
+    assert decide({}, [{"config_id": 2, "status": "crash", "correct": None}],
+                  COMPILED, parent_geo=1.0)[0] == "REJECT"
