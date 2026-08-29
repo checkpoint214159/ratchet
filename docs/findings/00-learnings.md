@@ -307,3 +307,33 @@ that cannot count. It should refuse by default and require an explicit override.
 
 Second time this has bitten (the first was the v2 run in the same session). A warning that
 is routinely ignored is not a guardrail.
+
+## L20 — Dispatch cost is per-call and fixed; regimes derived from shape mispredict it (2026-08-29)
+
+Config 2 was CPU-dispatch-bound, not GPU-bound: 232 us CPU vs 126 us GPU, with
+**TorchDynamo cache lookup at 22.5 us every call** against ~1.2 us of arithmetic. Moving
+graph ownership from Inductor to us (compile in default mode, capture the compiled
+callable ourselves) reclaims it: **2.514x -> 2.712x vs the compiled baseline, +7.9%,
+zero losses.**
+
+The gain is entirely in configs 3 (+87.3%) and 2 (+40.6%). Everything else is inside the
+noise floor — the exact signature of a fixed per-call cost.
+
+**The durable lesson is the mispredict.** Our `launch_bound` regime groups configs 2, 3, 4
+and 12. v12 transformed 2 and 3 and did nothing for 4 and 12. The label groups by shape;
+the real predicate is **call duration relative to a fixed dispatch cost**, and 4 and 12 do
+enough work that 22 us stops mattering.
+
+Regimes derived from shape parameters are a reporting convenience. Where they disagree
+with measured time, the measurement wins — and the labels should carry the caveat rather
+than be quietly redrawn to fit the result.
+
+## L21 — "Two mechanisms must not nest" was right but under-specified (2026-08-29)
+
+v9a removed our CUDA graph to avoid nesting with Inductor's. Correct — but it silently
+chose *which* mechanism to keep, and the one it kept sits behind a per-call guard check.
+Inverting ownership (keep ours, drop Inductor's) obeys the same non-nesting rule and is
+7.9% faster.
+
+**When a constraint admits two solutions, measure both.** v9a treated "do not nest" as
+determining the answer when it only narrowed it to two.

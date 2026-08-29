@@ -95,6 +95,12 @@ def _v11(baseline_cls):
     return build(baseline_cls)
 
 
+
+def _v12(baseline_cls):
+    from .v12_graph_over_compile import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -180,5 +186,12 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "ablation showed it subsumed by the compiler, reduce-overhead instead of "
                 "max-autotune. Five remaining components, each with a measurement behind "
                 "it and none inherited on faith.",
+    ),
+    "v12_graph_over_compile": CandidateSpec(
+        name="v12_graph_over_compile", generation=12, parent="v11_lean", build=_v12,
+        summary="Compile for fusion (default mode, no Inductor cudagraphs) then capture "
+                "the compiled callable in our own static-buffer graph, so the steady "
+                "state is one replay with no Dynamo guard evaluation. Motivated by "
+                "config 2 profiling: 22.5us/call of Dynamo cache lookup on a ~97us call.",
     ),
 }
