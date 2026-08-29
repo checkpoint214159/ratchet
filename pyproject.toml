@@ -39,6 +39,10 @@ runtime = [
 ]
 
 [tool.pytest.ini_options]
+# importlib mode is required, not preferred: a `tests` package installed in system
+# dist-packages shadows this repo's tests/ under the default prepend mode, so
+# `from tests.fixtures import ...` resolves to the wrong package and collection fails.
+addopts = "--import-mode=importlib"
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
