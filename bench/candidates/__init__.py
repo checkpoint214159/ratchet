@@ -69,6 +69,7 @@ def _v8(baseline_cls):
 
 def _v9a(baseline_cls):
     from .v9_compiled_core import build
+    return build(baseline_cls)
 def _v9b(baseline_cls):
     from .v9b_reduce_overhead import build
     return build(baseline_cls)

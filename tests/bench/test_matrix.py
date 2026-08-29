@@ -61,3 +61,18 @@ def test_chunk_solver_is_calibrated_not_hardcoded():
     # Never chunk beyond the batch, never to zero.
     assert solve_chunk(8, 128, 128, L2_48MB) == 8
     assert solve_chunk(10000, 100000, 1024, L2_48MB) >= 1
+
+
+def test_every_registered_candidate_actually_builds():
+    # A merge-conflict resolution once dropped `return build(baseline_cls)` from one
+    # builder. The function stayed syntactically valid, imported fine, and returned None
+    # -- failing only at call time, inside a subprocess, as an opaque TypeError.
+    from bench.candidates import REGISTRY
+
+    class Dummy:
+        pass
+
+    for name, spec in REGISTRY.items():
+        assert spec.build(Dummy) is not None, f"{name}.build() returned None"
+        assert spec.parent is None or spec.parent in REGISTRY, \
+            f"{name} names parent {spec.parent!r} which is not registered"
