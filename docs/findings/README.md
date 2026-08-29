@@ -21,6 +21,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [09](09-config-14-runs.md) | Config 14 runs in 3.18 GB where the reference OOMs -- with a stated limit | 2026-08-29 |
 | [10](10-layernorm-fusion-buys-nothing.md) | LayerNorm downcast fusion: +2.0% (below noise) and fails config 6 | 2026-08-29 |
 | [11](11-the-padding-blind-spot.md) | Every prior number used padding=0; v8 recovers the padded path with a proof | 2026-08-29 |
+| [18](18-lineage-invariant-sweep.md) | Sweeping the lineage for staleness found 3 bugs the accuracy suite could not see | 2026-08-29 |
 | [17](17-the-empty-graph.md) | v12 could replay an empty graph and return stale output; v13 verifies or falls back | 2026-08-29 |
 | [16](16-dynamo-guard-cost.md) | Dynamo guards cost 22.5us/call; reclaiming them is +7.9%, and our regime labels mispredicted | 2026-08-29 |
 | [15](15-ablating-the-inherited-stack.md) | Chunking is now dead weight; fp16 cache is worth up to 5x | 2026-08-29 |
