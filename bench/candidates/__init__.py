@@ -118,6 +118,11 @@ def _v15(baseline_cls):
     return build(baseline_cls)
 
 
+def _v16(baseline_cls):
+    from .v16_ffn_megakernel import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -226,6 +231,15 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "fusion. Measured 1.58x on config 6's FFN pattern in isolation. Re-asks "
                 "v9b's question -- is max-autotune worth it? -- with the autotuner "
                 "actually enabled, which it was not when v9b answered no.",
+    ),
+    "v16_ffn_megakernel": CandidateSpec(
+        name="v16_ffn_megakernel", generation=16, parent="v9b_reduce_overhead", build=_v16,
+        summary="THE FIRST HAND-WRITTEN KERNEL. One Triton kernel for the whole FFN "
+                "block -- both GEMMs, GELU and the fp32 residual -- with the intermediate "
+                "held in registers. Possible only because ffn_dim == d_model makes both "
+                "weight matrices 64 KB, inside the measured 99 KB opt-in smem. Inductor "
+                "structurally cannot do this: it fuses elementwise into GEMM, never GEMM "
+                "into GEMM. Op-level 2.2x-4.6x AND more accurate than the fp16 path.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
