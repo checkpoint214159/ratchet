@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 
 class OptimizedSelfAttention(nn.Module):
-    """Shape-aware optimized self-attention with fast scaled dot-product paths."""
+    """Shape-aware optimized self-attention with fast scaled dot-product paths and fused QKV projection."""
 
     def __init__(self, d_model: int, num_heads: int) -> None:
         super().__init__()
@@ -30,13 +30,40 @@ class OptimizedSelfAttention(nn.Module):
         self.v_proj = nn.Linear(d_model, d_model, bias=True)
         self.out_proj = nn.Linear(d_model, d_model, bias=True)
 
-    def _split_heads(self, x: torch.Tensor) -> torch.Tensor:
-        batch, seq_len, _ = x.shape
-        return (
-            x.view(batch, seq_len, self.num_heads, self.head_dim)
-            .transpose(1, 2)
-            .contiguous()
+        self._packed_weight: Optional[torch.Tensor] = None
+        self._packed_bias: Optional[torch.Tensor] = None
+        self._pack_ptrs: Optional[Tuple[int, int, int]] = None
+
+    def _get_packed_qkv(
+        self, x: torch.Tensor
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        current_ptrs = (
+            self.q_proj.weight.data_ptr(),
+            self.k_proj.weight.data_ptr(),
+            self.v_proj.weight.data_ptr(),
         )
+        if (
+            self._packed_weight is not None
+            and self._packed_weight.device == x.device
+            and self._packed_weight.dtype == x.dtype
+            and self._pack_ptrs == current_ptrs
+        ):
+            return self._packed_weight, self._packed_bias
+
+        packed_w = torch.cat(
+            [self.q_proj.weight, self.k_proj.weight, self.v_proj.weight], dim=0
+        )
+        packed_b = (
+            torch.cat(
+                [self.q_proj.bias, self.k_proj.bias, self.v_proj.bias], dim=0
+            )
+            if self.q_proj.bias is not None
+            else None
+        )
+        self._packed_weight = packed_w
+        self._packed_bias = packed_b
+        self._pack_ptrs = current_ptrs
+        return packed_w, packed_b
 
     def forward(
         self,
@@ -46,9 +73,13 @@ class OptimizedSelfAttention(nn.Module):
     ) -> torch.Tensor:
         batch, seq_len, _ = x.shape
 
-        q = self._split_heads(self.q_proj(x))
-        k = self._split_heads(self.k_proj(x))
-        v = self._split_heads(self.v_proj(x))
+        # Fused QKV linear projection: 1 single GEMM instead of 3
+        packed_w, packed_b = self._get_packed_qkv(x)
+        qkv = F.linear(x, packed_w, packed_b)
+        qkv = qkv.view(batch, seq_len, 3, self.num_heads, self.head_dim).permute(
+            2, 0, 3, 1, 4
+        )
+        q, k, v = qkv.unbind(0)
 
         # Dynamic shape dispatch and masking logic
         if valid_token_mask is None or valid_token_mask.all():
@@ -96,7 +127,7 @@ class OptimizedSelfAttention(nn.Module):
 
 
 class OptimizedTransformerBlock(nn.Module):
-    """Fused transformer block with pre-LayerNorm, SDPA, and exact GELU FFN."""
+    """Fused transformer block with pre-LayerNorm, fused QKV SDPA, and exact GELU FFN."""
 
     def __init__(self, d_model: int, num_heads: int, ffn_dim: int) -> None:
         super().__init__()

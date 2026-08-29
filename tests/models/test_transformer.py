@@ -80,6 +80,7 @@ def test_optimized_self_attention_matches_baseline(causal: bool, padding_ratio: 
         TransformerConfig(batch_size=1, seq_len=32, d_model=64, num_heads=2, ffn_dim=128, num_layers=2, causal=False),
         TransformerConfig(batch_size=2, seq_len=127, d_model=128, num_heads=4, ffn_dim=256, num_layers=2, causal=True),
         TransformerConfig(batch_size=4, seq_len=64, d_model=256, num_heads=8, ffn_dim=512, num_layers=3, causal=False),
+        TransformerConfig(batch_size=2, seq_len=1, d_model=128, num_heads=4, ffn_dim=256, num_layers=2, causal=False),
     ],
 )
 def test_full_optimized_transformer_matches_baseline_across_shapes(config: TransformerConfig):
@@ -115,3 +116,38 @@ def test_full_optimized_transformer_matches_baseline_across_shapes(config: Trans
             f"Failed shape {config} trial {trial}: "
             f"max_abs={result.max_abs_error}, max_rel={result.max_relative_error}"
         )
+
+
+def test_user_optimized_transformer_matches_benchmark_contract():
+    from benchmarks.reference.torch_transformer_benchmark import UserOptimizedTransformer
+
+    config = TransformerConfig(
+        batch_size=2,
+        seq_len=64,
+        d_model=128,
+        num_heads=4,
+        ffn_dim=256,
+        num_layers=2,
+        causal=True,
+    )
+    baseline = BaselineTransformer(config).eval()
+    user_opt = UserOptimizedTransformer(config).eval()
+    _copy_weights(baseline, user_opt)
+
+    device = torch.device("cpu")
+    x, valid_mask = generate_random_case(
+        config=config,
+        device=device,
+        dtype=torch.float32,
+        seed=777,
+        padding_ratio=0.3,
+        input_scale=1.0,
+    )
+
+    with torch.inference_mode():
+        ref = baseline(x, valid_mask)
+        opt = user_opt(x, valid_mask)
+
+    res = compare_outputs(ref, opt, rtol=0.02, atol=0.002)
+    assert res.passed, f"UserOptimizedTransformer failed contract: max_abs={res.max_abs_error}"
+
