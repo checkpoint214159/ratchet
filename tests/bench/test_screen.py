@@ -79,3 +79,30 @@ def test_screen_results_never_enter_the_measurement_ledger():
     from bench.ledger import DEFAULT_PATH
     assert SCREEN_LOG.name != str(DEFAULT_PATH)
     assert "screen" in SCREEN_LOG.name
+
+
+def test_row_payload_carries_correctness_so_the_screen_can_see_it():
+    """The __ROW__ line omitted correctness, so every screened candidate hard-rejected.
+
+    status=="ok" already implies correctness passed (run_matrix returns "incorrect"
+    before it ever times a candidate), but an invariant no consumer can observe is one
+    no consumer can enforce.
+    """
+    import subprocess, sys, json
+    from pathlib import Path
+    repo = Path(__file__).resolve().parent.parent.parent
+    src = (repo / "bench" / "run_matrix.py").read_text()
+    emit = src[src.index('print("__ROW__"'):src.index('print("__ROW__"') + 400]
+    assert '"correctness"' in emit, "__ROW__ must carry correctness"
+
+
+def test_run_matrix_never_times_an_incorrect_candidate():
+    """CLAUDE.md rule 3, pinned at the source: a failed correctness check must return
+    before the timing block, not merely be recorded alongside it."""
+    from pathlib import Path
+    repo = Path(__file__).resolve().parent.parent.parent
+    src = (repo / "bench" / "run_matrix.py").read_text()
+    gate = src.index('out["status"] = "incorrect"')
+    timing = src.index("cand_ms = min(median_ms")
+    assert gate < timing, "correctness gate must precede timing"
+    assert "return out" in src[gate:timing], "the gate must RETURN, not fall through"

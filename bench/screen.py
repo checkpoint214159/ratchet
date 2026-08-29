@@ -98,6 +98,8 @@ def run_screen(candidate: str, allow_dirty: bool = False) -> dict:
         r = json.loads(line[len("__ROW__"):])
         rows.append(r)
         ms = (r.get("timing") or {}).get("candidate_ms")
+        # status "ok" already implies correctness passed -- run_matrix returns "incorrect"
+        # before timing -- but assert it rather than trusting it.
         correct = (r.get("correctness") or {}).get("passed")
         if r.get("status") == "ok" and correct and ms:
             speedups[r["config_id"]] = ms

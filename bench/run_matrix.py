@@ -289,8 +289,14 @@ def main() -> int:
                              ).strip(),
                              provenance_override=run_prov)
         if args.json_out:
+            # Carry correctness too. status=="ok" already IMPLIES it passed (an
+            # incorrect candidate returns status "incorrect" before it is ever timed),
+            # but leaving it out makes the guarantee invisible to every consumer, and
+            # bench/screen.py cannot state the rule it is enforcing. The tolerance margin
+            # is also worth seeing downstream -- it is thinner than it looks (L26).
             print("__ROW__" + json.dumps({"config_id": cid, "status": r["status"],
-                                          "timing": r.get("timing")}))
+                                          "timing": r.get("timing"),
+                                          "correctness": r.get("correctness")}))
 
     if speedups:
         from bench.matrix import weighted_score
