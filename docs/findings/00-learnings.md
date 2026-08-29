@@ -337,3 +337,33 @@ Inverting ownership (keep ours, drop Inductor's) obeys the same non-nesting rule
 
 **When a constraint admits two solutions, measure both.** v9a treated "do not nest" as
 determining the answer when it only narrowed it to two.
+
+## L22 — Our own objective function had saturated, and inverted the ranking (2026-08-29)
+
+The scoreboard ranked **v9b / v11 / v9a above v12**, when v12 is measurably the best
+candidate (2.712x vs compiled against v11's 2.514x). Not a tie -- an inversion, in the
+one table whose entire job is mapping score to commit.
+
+Two causes, both self-inflicted:
+
+1. **The 3.0 clip was chosen when speedups were 1-2x.** By generation 12, **17 of 18**
+   config speedups exceeded it, so every candidate from v3 onward scored 2.79-2.82 and
+   the number carried no information at all.
+2. **It scored against EAGER**, which finding 12 had already established is the wrong
+   reference — and nothing propagated that correction into the objective.
+
+Fixed: score against the compiled baseline, read from `baseline_compiled` ledger rows
+rather than a constant. The cap now bites on 4 of 13 configs instead of 17 of 18, and the
+board orders correctly. The saturated eager number is kept in a labelled column rather
+than dropped, so the failure stays visible.
+
+**Two general lessons:**
+
+*A clipped objective silently stops discriminating once the population outgrows the clip.*
+Nothing errors; the number just becomes a constant. Any capped metric needs a periodic
+check that its inputs still straddle the cap.
+
+*A correction is not applied until it reaches every consumer.* Finding 12 established the
+right baseline four generations ago. The scoreboard kept using the wrong one because
+nobody asked what else read that number. **When a finding invalidates an input, grep for
+every consumer of it.**
