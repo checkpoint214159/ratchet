@@ -550,3 +550,27 @@ the invariant sweep did not. Fixed with `torch._dynamo.reset()` in the fixture.
 Twin of [L24] ("correct because of how the harness calls it is not correct"): *green
 because of how the test was run* is not green. See docs/findings/24.
 
+
+## L38 — Verify that a check can FAIL before trusting that it passed (2026-08-30)
+
+Built a contention guard so several agents could share one GPU without corrupting each
+other's timings. The lock file works. The `nvidia-smi` foreign-process check **does not**:
+with a process holding a 16 MB CUDA tensor and confirmed alive, two identical trials seven
+seconds apart gave `"893453, [N/A]"` (detected) and `""` (not detected). A clean report
+from it means nothing.
+
+This is [L36] one level up, written less than an hour after L36 itself. There the lesson
+was "a test can pass because its subject was never built"; here a GUARD passes because its
+sensor saw nothing. **A guard is only evidence if it is capable of firing — test it against
+a condition you deliberately created**, not against the quiet case you hope for.
+
+Consequence: **the v15 sweep overlapped research agent C, which was benchmarking Triton
+kernels on the same GPU** (v15 15:57-16:00 UTC, agent C finished 16:01). Finding 22's
+quantitative conclusion — that lifting the 68-SM veto buys nothing — rests on margins
+(-1.4% geomean, +2.4% on config 6) that a co-resident benchmark can manufacture. Its
+MECHANISM argument stands (read from profiles), but the number is provisional until
+re-measured under the lock. v16 and v17 sweeps were clean.
+
+Corollary: every tool that measures must take the lock, and subagents must either take it
+or not measure. See docs/findings/26.
+

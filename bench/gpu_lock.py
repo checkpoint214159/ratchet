@@ -18,11 +18,29 @@ routinely ignored is not a guardrail. This applies the same standard to a hazard
 corrupts numbers instead of discarding them -- which is worse, because a discarded row is
 visibly absent and a corrupted one is not.
 
-TWO CHECKS, DELIBERATELY DIFFERENT
-----------------------------------
-  * A lock file, for OUR tools -- cooperative, and it tells you which pid holds it.
-  * A foreign-process check via nvidia-smi, for everything else. A subagent's throwaway
-    probe script knows nothing about our lock, and that is exactly the case that bit us.
+TWO CHECKS, AND ONE OF THEM DOES NOT WORK HERE
+----------------------------------------------
+  * **The lock file is the real mechanism.** Cooperative, names the holding pid, reclaims
+    a lock whose owner died. Every tool in this repo that measures must take it.
+
+  * The nvidia-smi foreign-process check is **BEST EFFORT AND UNRELIABLE ON WSL2.**
+    Measured directly: with a process holding a 16 MB CUDA tensor and confirmed alive,
+    two identical trials seven seconds apart gave
+
+        trial 1   nvidia-smi -> "893453, [N/A]"     detected
+        trial 2   nvidia-smi -> ""                  NOT detected
+
+    Same command, same kind of holder, opposite answers. Under WSL2 the compute-apps
+    query reports intermittently (and always with used_memory as [N/A]).
+
+    **So a clean report from this check means nothing.** It is kept because a positive
+    result is still true -- if it names a process, that process is really there -- and a
+    subagent's throwaway probe knows nothing about our lock file. But it must never be
+    read as evidence that the GPU is free. That inversion is L36: a check that cannot
+    observe converts absence of visibility into positive evidence.
+
+CONSEQUENCE FOR EXISTING ROWS. Any sweep run while a research agent was probing may be
+contended and is not re-derivable after the fact. See finding 26.
 
 The lock is advisory: `--allow-contended` exists because a capability probe (does this
 shape OOM?) is not a timing measurement and does not need the GPU to itself.
@@ -42,6 +60,9 @@ LOCK_PATH = Path(os.environ.get("RATCHET_GPU_LOCK", "/tmp/ratchet-gpu.lock"))
 
 def foreign_cuda_processes() -> list[tuple[int, str]]:
     """(pid, used_memory) for every CUDA process that is not us or our children.
+
+    BEST EFFORT ONLY -- see the module docstring. An empty list does NOT mean the GPU is
+    free; under WSL2 this query reports intermittently. A non-empty list IS trustworthy.
 
     Returns [] when nvidia-smi is unavailable rather than raising: on a machine without
     it the guard simply cannot help, and refusing to run would be worse than proceeding.
