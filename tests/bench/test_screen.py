@@ -106,3 +106,23 @@ def test_run_matrix_never_times_an_incorrect_candidate():
     timing = src.index("cand_ms = min(median_ms")
     assert gate < timing, "correctness gate must precede timing"
     assert "return out" in src[gate:timing], "the gate must RETURN, not fall through"
+
+
+def test_a_blocked_run_is_not_a_rejected_candidate():
+    """run_matrix REFUSES (exit 3, message on stdout) when the tree is dirty or another
+    process holds the GPU lock. It has then measured nothing, and folding that into
+    REJECT wrote a verdict about the candidate for a condition of the harness -- which is
+    exactly what happened to v23's first screen. L38: a guard's refusal must be
+    distinguishable from the failure it guards against."""
+    verdict, geo, detail = decide({}, [], {2: 1.0, 7: 1.0, 8: 1.0, 10: 1.0}, None,
+                                  returncode=3)
+    assert verdict == "BLOCKED"
+    assert geo is None
+    assert "nothing was measured" in detail
+
+
+def test_a_real_failure_is_still_a_reject_even_when_the_exit_code_is_nonzero():
+    verdict, _, detail = decide({}, [{"config_id": 7, "status": "incorrect"}],
+                                {2: 1.0, 7: 1.0, 8: 1.0, 10: 1.0}, None, returncode=1)
+    assert verdict == "REJECT"
+    assert "failures" in detail

@@ -112,12 +112,28 @@ def run_screen(candidate: str, allow_dirty: bool = False) -> dict:
                              "status": r.get("status"),
                              "correct": correct})
     return {"rows": rows, "ms": speedups, "failures": failures,
-            "stderr": proc.stderr[-2000:] if proc.returncode else ""}
+            "returncode": proc.returncode,
+            # run_matrix prints its REFUSALS (dirty tree, GPU lock held) to STDOUT and
+            # exits non-zero. Carrying only stderr made a blocked run look like a silent
+            # one -- see `decide`.
+            "stderr": proc.stderr[-2000:] if proc.returncode else "",
+            "stdout_tail": proc.stdout[-2000:] if proc.returncode else ""}
 
 
 def decide(ms: dict[int, float], failures: list, compiled: dict[int, float],
-           parent_geo: float | None) -> tuple[str, float | None, str]:
-    """(verdict, screen_geomean, detail). Pure, so the policy is testable without a GPU."""
+           parent_geo: float | None, returncode: int = 0) -> tuple[str, float | None, str]:
+    """(verdict, screen_geomean, detail). Pure, so the policy is testable without a GPU.
+
+    BLOCKED IS NOT REJECT. `run_matrix` refuses outright when the tree is dirty or when
+    another process holds the GPU lock -- it exits 3 having measured nothing. Folding
+    that into REJECT recorded a *candidate* verdict for a *harness* condition: the log
+    said the candidate lost when it had never been run. Same shape as L38 -- a guard
+    whose refusal cannot be told apart from the thing it guards against.
+    """
+    if returncode != 0 and not ms and not failures:
+        return "BLOCKED", None, (f"run_matrix refused or crashed (exit {returncode}) "
+                                 f"without producing a row; nothing was measured and "
+                                 f"nothing about the candidate is known")
     # CORRECTNESS IS NOT A TIEBREAK. Any failure on any screen config is a hard reject,
     # before a single timing number is looked at (CLAUDE.md rule 3).
     if failures:
@@ -148,7 +164,8 @@ def main() -> int:
     res = run_screen(args.candidate, args.allow_dirty)
 
     par = parent_screen_geomean(led, args.parent) if args.parent else None
-    verdict, geo, detail = decide(res["ms"], res["failures"], compiled, par)
+    verdict, geo, detail = decide(res["ms"], res["failures"], compiled, par,
+                                  res["returncode"])
 
     prov = provenance()
     rec = {"ts": datetime.now(timezone.utc).isoformat(), "candidate": args.candidate,
@@ -164,6 +181,8 @@ def main() -> int:
     print(f"  parent         : {args.parent}")
     print(f"  VERDICT        : {verdict}")
     print(f"  {detail}")
+    if res["stdout_tail"]:
+        print(f"\n  stdout tail:\n{res['stdout_tail']}")
     if res["stderr"]:
         print(f"\n  stderr tail:\n{res['stderr']}")
     return 0 if verdict == "PROMOTE" else 1
