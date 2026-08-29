@@ -476,3 +476,24 @@ Two things make it worth having anyway:
 **The lesson for the loop:** a candidate that measures flat is not automatically a failure.
 Ask what it was built to change, and whether the measured set can even exercise it. Judging
 v14 by its geomean would discard the one component that handles the shape nothing else can.
+
+## L29 — CORRECTION to L28, and the noise floor is wider than 3% (2026-08-29)
+
+L28 claimed v14 measured "identically to v13 (2.70x vs 2.71x)". **That number was wrong —
+written before the run finished.** The measured aggregate was **2.605x vs 2.711x, -3.9%**,
+which is outside the 3% floor I had been treating as decisive.
+
+Re-measuring five configs resolved it: per-config deltas were **+6.8%, 0.0%, -0.4%,
+-5.6%, 0.0%** — mixed, averaging near zero. So v14 really is equivalent to v13, and the
+-3.9% aggregate was variance.
+
+**But that means the 3% noise floor is too tight.** It came from L11, estimated from
+accidental replicates in the search loop over four configs. Observed here on short configs:
+**±7% run to run on identical code.** Every "above the noise floor" judgement this session
+that rested on a 3-5% margin should be re-read with that in mind — the +7.9% for v12 and
+the +7.7% for v6 survive it; a 4% claim would not.
+
+**Two rules from this.** Estimate the floor per-config rather than globally, since short
+configs vary far more than long ones. And never write a measured number into a commit
+message before the measurement has actually returned — I did exactly that, and it went into
+the permanent record.
