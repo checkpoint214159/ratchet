@@ -595,3 +595,35 @@ Also today: v15 re-measured on an idle GPU gives **2.634x against the contended 
 ("+2.4% worse on config 6") was contamination and is actually -1.4% better. A result can be
 right for the wrong reason, and re-running is the only way to tell. See docs/findings/27.
 
+
+## L40 — Writing down a lesson is not the same as building the thing it demands (2026-08-30)
+
+**The user looked at the dashboard and asked why it showed one long lineage instead of
+branching paths.** It was not a rendering problem. Measured: every candidate has exactly
+`generation - 1` git ancestors -- a perfectly linear chain across eighteen generations.
+
+The cause was my own branching discipline: each candidate branch was cut from `ben`'s tip
+(to inherit the latest harness), and every candidate is merged back INTO `ben`, so each new
+branch inherited every earlier candidate. The spurs in `git log --graph` are decorative;
+`merge-base --is-ancestor` says it is a line.
+
+**This is [L1], rebuilt by the person who wrote L1** -- which named this exact degeneracy
+on day one and said "branch first". I branched, in a form satisfying the words and none of
+the mechanism. Finding 21's fix to the clade *criterion* then masked it by pushing the age
+correlation to -0.158.
+
+Impact so far: the same top-3 nodes, reordered (v9b/v8/v9a either way), so no expansion
+went to the wrong place. Luck, not design; the dilution grows every generation.
+
+Fix: CMP now reads the registry's declared parents (`clade_stats_by_candidate`,
+`sample_candidate`), and `tests/bench/test_lineage_topology.py` enforces from gen 19 that a
+candidate's candidate-ancestors equal its declared ancestors -- i.e. it was cut from its
+parent, not from the trunk.
+
+**Every structural claim needs an executable check.** The ones that have them -- oracle
+manifest, append-only ledger, tolerance lock -- have never silently broken. The ones living
+only in prose -- "git is the tree", "the premises in matrix.py are true" ([L35]) -- have
+both now been found false by someone LOOKING rather than by the system noticing. Third
+member of the [L36]/[L38] family in two days: an assurance nobody arranged to be capable of
+failing. See docs/findings/28.
+

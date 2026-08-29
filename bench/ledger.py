@@ -357,6 +357,103 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
     return out
 
 
+def declared_lineage() -> dict[str, Optional[str]]:
+    """candidate -> declared parent, from the registry.
+
+    THE LINEAGE SOURCE OF TRUTH. `bench/README.md` says "git branches are the
+    evolutionary tree", and that was the intent, but it is not what the repository
+    actually contains (finding 28): every candidate branch was cut from `ben`'s tip,
+    and since every candidate is merged INTO `ben`, each new branch inherited every
+    earlier candidate. Measured, each candidate has exactly `generation - 1` git
+    ancestors -- a perfectly linear chain, which is the L1 degeneracy the whole method
+    was supposed to escape.
+
+    The registry records what actually descends from what: v15 and v16 are siblings off
+    v9b, v17 recombines v16 into v13. Git ancestry cannot express that here because the
+    topology was built wrong, so CMP reads the registry.
+    """
+    from bench.candidates import REGISTRY
+    return {name: spec.parent for name, spec in REGISTRY.items()}
+
+
+def candidate_descendants(name: str) -> set[str]:
+    """Forward reachability over the DECLARED lineage, including `name` itself."""
+    lineage = declared_lineage()
+    children: dict[str, list[str]] = {}
+    for child, parent in lineage.items():
+        if parent:
+            children.setdefault(parent, []).append(child)
+    seen, queue = {name}, deque([name])
+    while queue:
+        cur = queue.popleft()
+        for c in children.get(cur, ()):
+            if c not in seen:
+                seen.add(c)
+                queue.append(c)
+    return seen
+
+
+def clade_stats_by_candidate(ledger: BenchLedger) -> dict[str, tuple[int, int]]:
+    """CMP over the declared lineage, keyed by CANDIDATE rather than commit.
+
+    Same two bars as clade_stats (finding 21): a row is a success if it beats the
+    compiled baseline AND improves on its declared parent's best for that config by more
+    than CLADE_NOISE. The difference is whose subtree it is pooled into.
+    """
+    compiled = compiled_baseline_ms(ledger)
+    lineage = declared_lineage()
+
+    best: dict[str, dict[int, float]] = {}
+    for r in ledger.clean_rows():
+        if r.get("candidate") in (BASELINE, BASELINE_COMPILED) or r.get("status") != "ok":
+            continue
+        if "padding_ratio=0.0" not in (r.get("notes") or ""):
+            continue
+        ms = (r.get("timing") or {}).get("candidate_ms")
+        if not ms or not (r.get("correctness") or {}).get("passed"):
+            continue
+        cfg = best.setdefault(r["candidate"], {})
+        if r["config_id"] not in cfg or ms < cfg[r["config_id"]]:
+            cfg[r["config_id"]] = ms
+
+    own: dict[str, tuple[int, int]] = {}
+    for name, per_cfg in best.items():
+        parent = lineage.get(name)
+        w = f = 0
+        for cid, ms in per_cfg.items():
+            cb = compiled.get(cid)
+            pms = best.get(parent, {}).get(cid) if parent else None
+            if cb and ms < cb and (pms is None or ms < pms * (1.0 - CLADE_NOISE)):
+                w += 1
+            else:
+                f += 1
+        own[name] = (w, f)
+
+    pooled: dict[str, tuple[int, int]] = {}
+    for name in own:
+        w = f = 0
+        for d in candidate_descendants(name):
+            dw, df = own.get(d, (0, 0))
+            w, f = w + dw, f + df
+        pooled[name] = (w, f)
+    return pooled
+
+
+def sample_candidate(ledger: BenchLedger, rng: Optional[random.Random] = None
+                     ) -> Optional[str]:
+    """Thompson sampling over the DECLARED-lineage CMP. Returns a candidate name."""
+    rng = rng or random.Random()
+    stats = clade_stats_by_candidate(ledger)
+    if not stats:
+        return None
+    best_name, best_draw = None, -1.0
+    for name, (s, f) in stats.items():
+        draw = rng.betavariate(1 + s, 1 + f)
+        if draw > best_draw:
+            best_name, best_draw = name, draw
+    return best_name
+
+
 def clade_stats(ledger: BenchLedger, repo: Optional[str] = None
                 ) -> dict[str, tuple[int, int]]:
     """Pooled (successes, failures) over each commit's entire descendant subtree.
