@@ -89,3 +89,15 @@ def test_baseline_rows_are_not_clade_failures(tmp_path):
     led.append(_row("e" * 40, 1, 2.0))          # a real candidate win
     s, f = clade_stats(led, repo=None)["e" * 40]
     assert (s, f) == (1, 0)
+
+
+def test_writing_the_ledger_does_not_dirty_the_run():
+    # Self-contamination bug: the ledger is a tracked file, so recording a measurement
+    # dirtied the tree and stamped every LATER run dirty, excluding it from its own
+    # clade statistics. Appended data is not changed source.
+    import subprocess
+    from bench.ledger import is_dirty, DEFAULT_PATH
+    porcelain = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"],
+                               capture_output=True, text=True).stdout
+    if DEFAULT_PATH.split("/")[-1] in porcelain and len(porcelain.strip().splitlines()) == 1:
+        assert not is_dirty(), "a modified ledger alone must not mark the tree dirty"

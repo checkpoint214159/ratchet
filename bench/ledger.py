@@ -77,12 +77,22 @@ def current_branch(cwd: Optional[str] = None) -> str:
 
 
 def is_dirty(cwd: Optional[str] = None) -> bool:
-    """Any staged or unstaged change to tracked files.
+    """Any staged or unstaged change to tracked files, EXCEPT the ledger itself.
 
     Untracked files are deliberately ignored: scratch output next to the repo does not
     change what the measured code was.
+
+    The ledger exclusion is not a convenience, it fixes a self-contamination bug. The
+    ledger is a tracked file, so the act of recording a measurement dirties the tree --
+    and every subsequent run in the same session was then stamped `dirty=True` and
+    excluded from its own clade statistics. A run recording results is not a run whose
+    code changed. Appended data is not source.
     """
-    return bool(_git("status", "--porcelain", "--untracked-files=no", cwd=cwd))
+    out = _git("status", "--porcelain", "--untracked-files=no", cwd=cwd)
+    changed = [ln for ln in out.splitlines()
+               if ln.strip() and not ln.split(maxsplit=1)[-1].strip().endswith(
+                   DEFAULT_PATH.split("/")[-1])]
+    return bool(changed)
 
 
 def provenance(cwd: Optional[str] = None) -> dict:
