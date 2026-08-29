@@ -57,6 +57,19 @@ and required check passes and durable context has been promoted, delete only
 `.beryl/agent/hierarchy.md` as specified by the `initial-build` workflow. Do not
 extend this exception to other planning or documentation files.
 
+## Experiment Workspace Safety
+
+- Use only the project-owned `ExperimentWorkspaceManager` for experiment branches and
+  worktrees; `.beryl/driver` worktrees are agent infrastructure, not experiment provenance.
+- Worktree roots must be explicit external directories. Never use the repository, its
+  ancestors or descendants, a symlink, or a caller-supplied branch/path fragment.
+- Finalize only clean descendant commits, and consolidate only revalidated provenance from
+  one exact base/protocol through the generated integration ref.
+- Never check out, reset, clean, restore, rebase, force-remove, delete branches, fetch, push,
+  or mutate remotes through the experiment workspace adapter.
+- Cleanup requires a verified successful consolidation and retains every source/integration
+  branch. Ambiguous, dirty, stale, conflicting, or unconsolidated state must be preserved.
+
 ## Post-Run Cleanup Review
 
 After a long product run, if the user asks for cleanup or extraction review:

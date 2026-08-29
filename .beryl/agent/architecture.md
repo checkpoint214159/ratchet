@@ -108,6 +108,16 @@ Archive writes use a process lock and a validated, fsync'd recovery journal span
 content-addressed target and manifest. Recovery accepts only the recorded before or after
 state and verifies the completed archive before removing the journal.
 
+Experiment workspaces are local Git adapters, not execution sandboxes. They derive branch
+and direct-child external worktree paths from validated experiment/protocol/lane identity,
+bind the protocol bytes and base commit, and finalize only a clean descendant whose actual
+changed paths match immutable provenance. Consolidation revalidates every source and creates
+only a deterministic integration ref through compare-and-create; it never updates the user
+branch or source refs. Cleanup requires a still-valid successful consolidation, re-derived
+integration commit, matching live refs/heads, a clean registered worktree, and an unchanged
+external-root inode. It removes without force and always retains branches. No workspace
+lifecycle operation appends catalogue evidence or executes a candidate.
+
 ## No-Accelerator Execution
 
 This build is unconditionally literature-only after the recorded XPU availability

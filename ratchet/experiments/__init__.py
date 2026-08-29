@@ -16,10 +16,21 @@ from .schema import (
     validate_event_payload,
     validate_provisional_environment,
 )
+from .workspaces import (
+    ConsolidationResult,
+    ExperimentWorkspace,
+    ExperimentWorkspaceLifecycle,
+    ExperimentWorkspaceManager,
+    ExperimentWorkspaceSpec,
+    WorkspaceCleanupResult,
+    WorkspaceLifecycleError,
+    WorkspaceProvenance,
+)
 
 __all__ = [
     "ArchiveIntegrityError",
     "CatalogueProjection",
+    "ConsolidationResult",
     "EMPIRICAL_EVENT",
     "EnvironmentArtifact",
     "EnvironmentId",
@@ -27,9 +38,16 @@ __all__ = [
     "ExperimentCatalogue",
     "ExperimentEvent",
     "ExperimentId",
+    "ExperimentWorkspace",
+    "ExperimentWorkspaceLifecycle",
+    "ExperimentWorkspaceManager",
+    "ExperimentWorkspaceSpec",
     "FileExperimentArchive",
     "NO_RUN_EVENT",
     "SCHEMA_VERSION",
+    "WorkspaceCleanupResult",
+    "WorkspaceLifecycleError",
+    "WorkspaceProvenance",
     "validate_event_payload",
     "validate_provisional_environment",
 ]

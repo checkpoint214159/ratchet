@@ -341,11 +341,21 @@
 - Deliverable: Safe branch/worktree lifecycle bound to experiment provenance.
 - Acceptance checks:
   - two isolated dry-run worktrees and conflict-safe consolidation
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/agent-rules.md`
   - `.beryl/agent/architecture.md`
-- Evidence: none
+- Evidence: The project-owned workspace manager derives exact experiment/protocol/lane
+  branches and external direct-child paths, binds protocol bytes at an immutable base commit,
+  and finalizes clean descendant provenance with actual changed paths. Local no-remote tests
+  create two isolated worktrees, consolidate disjoint commits deterministically through an
+  atomic generated integration ref, retain sources, and prove sorted conflict refusal. Safety
+  regressions cover malformed identity, path/ref/root races, symlinks, false provenance,
+  stale or forged integration, dirty/unconsolidated cleanup, command allowlisting, and no
+  force/network/destructive Git operations. `pytest tests/experiments/test_workspaces.py -q`
+  passed 32 tests with Ruff, manifest, and `./.beryl/scripts/check.sh` on 2026-08-29;
+  architecture and slice reviews approved. No archive event, remote mutation, candidate,
+  accelerator, framework, or empirical work was performed.
 
 ### IB-17 — Autoresearch controller
 - Parent: IB-14
