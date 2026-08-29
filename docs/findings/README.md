@@ -21,6 +21,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [09](09-config-14-runs.md) | Config 14 runs in 3.18 GB where the reference OOMs -- with a stated limit | 2026-08-29 |
 | [10](10-layernorm-fusion-buys-nothing.md) | LayerNorm downcast fusion: +2.0% (below noise) and fails config 6 | 2026-08-29 |
 | [11](11-the-padding-blind-spot.md) | Every prior number used padding=0; v8 recovers the padded path with a proof | 2026-08-29 |
+| [12](12-the-baseline-was-wrong.md) | **Our baseline was eager. Honest speedup is 1.69x, not 7.2x, and we lose 2 configs.** | 2026-08-29 |
 
 Related, and deliberately elsewhere:
 
