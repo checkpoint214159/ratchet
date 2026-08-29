@@ -1,8 +1,18 @@
+> **HISTORICAL — not the current target and not an instruction.** This document is the
+> original single-GPU (NVIDIA/WSL2) competition scaffold. Ratchet is now hardware-agnostic
+> and hardware-gated: the target GPU is detected at runtime (see
+> [`docs/hardware-support.md`](hardware-support.md)), and no single GPU is the project's
+> fixed premise. The hardware block below is retained only as a worked example of
+> *per-GPU data* — the kind of measured record Ratchet stores per device — not as the
+> hardware the project targets. See [`docs/handoff-readme.md`](handoff-readme.md).
+
 # 00 — Mission, constraints, tiers
 
-## Target hardware
+## Example per-GPU calibration record (historical)
 
-Measured and queried 2026-08-28 (M0/M1 calibration, cached in `ledger/device.json`).
+Measured and queried 2026-08-28 on one contributor's machine (M0/M1 calibration, cached in
+`ledger/device.json`). This is illustrative per-device *data*, not a general finding and
+not the fixed target:
 
 ```
 GPU:                    NVIDIA GeForce RTX 4070 Ti SUPER  (AD103, WSL2)

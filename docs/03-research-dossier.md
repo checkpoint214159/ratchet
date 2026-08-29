@@ -1,3 +1,9 @@
+> **HISTORICAL — NVIDIA/Triton competition scaffold. Not current, not an instruction.**
+> Ratchet is now hardware-agnostic and hardware-gated (see `docs/hardware-support.md`).
+> Single-GPU details below (e.g. `sm_120`, `wgmma`, A100/H100 tile budgets) are retained
+> as historical design material, never as a general finding or a fixed target. See
+> `docs/handoff-readme.md`.
+
 # 03 — Research dossier
 
 Papers and open implementations, with what to take from each and where the claim is soft.
