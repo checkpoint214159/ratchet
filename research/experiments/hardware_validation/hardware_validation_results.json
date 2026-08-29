@@ -1,0 +1,46 @@
+{
+  "experiment": "hardware_aware_validation",
+  "hardware": {
+    "device": "NVIDIA GeForce RTX 4060",
+    "compute_capability": [
+      8,
+      9
+    ],
+    "sm_count": 20,
+    "shared_memory_kb": 99
+  },
+  "constraints_extracted": 4,
+  "configuration_space": {
+    "total": 192,
+    "valid": 38,
+    "invalid": 154,
+    "failure_rate_pct": 80.20833333333334
+  },
+  "failure_breakdown": {
+    "Register spill expected (high tile \u00d7 warp product)": 102,
+    "Shared memory exceeded (99 KB budget)": 52
+  },
+  "efficiency": {
+    "space_reduction_pct": 80.20833333333334,
+    "efficiency_gain_x": 5.052631578947368,
+    "evaluations_saved_per_200": 160.41666666666666
+  },
+  "constraint_details": [
+    {
+      "name": "shared_memory_capacity",
+      "configs_eliminated": 52
+    },
+    {
+      "name": "max_threads_per_cta",
+      "configs_eliminated": 0
+    },
+    {
+      "name": "max_warps_per_block",
+      "configs_eliminated": 0
+    },
+    {
+      "name": "register_pressure",
+      "configs_eliminated": 102
+    }
+  ]
+}

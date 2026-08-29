@@ -1,0 +1,40 @@
+{
+  "experiment": "failure_aware_search_space_pruning",
+  "timestamp": "1788009735.8315358",
+  "baseline": {
+    "method": "baseline",
+    "budget": 200,
+    "configs_evaluated": 268,
+    "configs_compiled": 186,
+    "compile_failure_rate": 0.30597014925373134,
+    "best_speedup": 1.6832185192523776,
+    "best_config": {
+      "BLOCK_M": 128,
+      "BLOCK_N": 64,
+      "num_warps": 8,
+      "num_stages": 3
+    },
+    "evaluations_wasted": 82
+  },
+  "pruned": {
+    "method": "pruned",
+    "budget": 200,
+    "configs_evaluated": 243,
+    "configs_compiled": 243,
+    "compile_failure_rate": 0.0,
+    "best_speedup": 1.5332185192523777,
+    "best_config": {
+      "BLOCK_M": 64,
+      "BLOCK_N": 64,
+      "num_warps": 4,
+      "num_stages": 3
+    },
+    "evaluations_wasted": 0
+  },
+  "metrics": {
+    "failure_reduction_pct": 100.0,
+    "speedup_quality_change": -0.1499999999999999,
+    "efficiency_baseline": 0.006280666116613349,
+    "efficiency_pruned": 0.006309541231491266
+  }
+}

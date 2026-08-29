@@ -1,0 +1,12 @@
+{
+  "device": "NVIDIA GeForce RTX 4060",
+  "compute_capability": [
+    8,
+    9
+  ],
+  "sm_count": 20,
+  "shared_memory_per_block_kb": 99,
+  "max_threads_per_block": 1024,
+  "max_warps_per_block": 32,
+  "memory_bandwidth_gb_s": 288.0
+}
