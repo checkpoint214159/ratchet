@@ -16,6 +16,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [05](05-two-measurement-artifacts.md) | Two harness bugs that produced plausible wrong numbers | 2026-08-29 |
 | [06](06-the-search-found-noise.md) | The first search run improved by 2.7% -- inside its own 3% noise floor | 2026-08-29 |
 | [07](07-environment-gaps.md) | pytest import shadowing, and git 2.34 vs the 2.38 merge-tree the workspaces need | 2026-08-29 |
+| [08](08-the-fp32-residual-is-load-bearing.md) | fp16 residual stream is 1.4x faster and fails 11/13 configs | 2026-08-29 |
 
 Related, and deliberately elsewhere:
 
