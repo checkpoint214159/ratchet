@@ -57,6 +57,11 @@ def _v6(baseline_cls):
     return build(baseline_cls)
 
 
+def _v7(baseline_cls):
+    from .v7_fused_norm import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -94,5 +99,12 @@ REGISTRY: dict[str, CandidateSpec] = {
         summary="v3 with exactly one non-accumulating round-trip removed: GELU runs in "
                 "fp16 instead of upcast-gelu-downcast. Tests the distinction v5 "
                 "established -- the residual accumulates, an elementwise op does not.",
+    ),
+    "v7_fused_norm": CandidateSpec(
+        name="v7_fused_norm", generation=7, parent="v6_fp16_gelu", build=_v7,
+        summary="v6 with the LayerNorm downcast folded into the norm's own epilogue via "
+                "cached fp16 norm weights, attacking the 9.7-16.8% of kernel time in "
+                "native_layer_norm plus 2.5-9.6% in add. Expected to pay on the "
+                "bandwidth-bound configs (6, 13) and not on the launch-bound ones.",
     ),
 }
