@@ -41,10 +41,29 @@ from dataclasses import dataclass, asdict
 #
 # We take the d_model reading because the FFN Dim column carries the same values, and an
 # FFN hidden size is conventionally expressed in model dims, not per-head dims. Under our
-# reading head_dim spans 8..256, and the two head_dim=8 rows (#7, #11) are the awkward
-# ones: cuDNN and FlashAttention typically support {32, 64, 128, 256} and may silently
-# fall back to a slow path there. That is a dispatch branch, and possibly the one place a
-# hand-written Triton kernel genuinely earns its keep.
+# reading head_dim spans 8..256.
+#
+# CORRECTED 2026-08-30 (finding 23). This comment previously claimed that "cuDNN and
+# FlashAttention typically support {32, 64, 128, 256} and may silently fall back to a slow
+# path" at head_dim=8, and that claim steered the project's sense of where the prize was
+# for a week. It is FALSE. Measured directly, every backend accepts head_dim=8:
+#
+#     head_dim     flash   mem_eff     cudnn      math
+#            8        ok        ok        ok        ok
+#           16        ok        ok        ok        ok
+#           32        ok        ok        ok        ok
+#           64        ok        ok        ok        ok
+#          128        ok        ok        ok        ok
+#          256        ok        ok   REFUSES        ok
+#
+# The refusal is at head_dim=256, on the OPPOSITE end of the range -- which is config 8
+# (d_model 1024, 4 heads), not configs 7 and 11.
+#
+# head_dim=8 is still the most interesting region, for a better-founded reason: sm_89's
+# tensor-core instruction is m16n8k16, so `tl.dot` requires K>=16 and a 128x128 score
+# matrix at head_dim=8 leaves the vendor kernel's tiling mismatched to the hardware.
+# Padding D to 16 INSIDE a kernel is free; padding it in HBM is exact but measured
+# 1.2-2.7x SLOWER, so that variant is closed without spending a generation on it.
 # --------------------------------------------------------------------------------------
 DIM_COLUMN_READING = "d_model"
 
