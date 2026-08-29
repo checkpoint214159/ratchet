@@ -118,3 +118,16 @@ def test_scoreboard_separates_padding_conditions(tmp_path):
     assert len(board) == 2, "each padding condition is its own scoreboard entry"
     assert {round(e["padding_ratio"], 2) for e in board} == {0.0, 0.5}
     assert board[0]["weighted_score"] > board[1]["weighted_score"]
+
+
+def test_scoreboard_counts_configs_not_rows(tmp_path):
+    # A parameter sweep revisits the same config many times. Counting rows reported
+    # "56 configs measured" on a 14-config matrix -- a number that cannot exist.
+    led = BenchLedger(tmp_path / "r.jsonl")
+    for _ in range(8):
+        for cfg in (1, 2):
+            led.append(_row("a" * 40, cfg, 2.0))
+    e = scoreboard(led)[0]
+    assert e["configs_measured"] == 2, "distinct configs, not rows"
+    assert e["rows"] == 16
+    assert e["is_sweep"] is True

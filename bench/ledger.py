@@ -276,8 +276,9 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
     ledger exists in this shape -- score maps to sha, and sha maps to source.
     """
     from collections import defaultdict
-    per: dict[tuple[str, str], dict] = defaultdict(
-        lambda: {"measured": 0, "passed": 0, "speedups": {}, "failures": []}
+    per: dict[tuple[str, str, float], dict] = defaultdict(
+        lambda: {"rows": 0, "configs": set(), "passed": set(),
+                 "speedups": {}, "failures": []}
     )
     for r in ledger.clean_rows():
         # Padding is part of the measurement CONDITION, not a detail. v8 was measured at
@@ -287,10 +288,14 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
         pad = _padding_of(r)
         key = (r["commit_sha"], r.get("candidate") or "", pad)
         agg = per[key]
-        agg["measured"] += 1
+        # ROWS and CONFIGS are different numbers, and conflating them was a real bug: a
+        # parameter sweep revisits the same config many times, so counting rows reported
+        # "56 configs measured" on a 14-config matrix.
+        agg["rows"] += 1
+        agg["configs"].add(r["config_id"])
         ok = r.get("status") == "ok" and (r.get("correctness") or {}).get("passed")
         if ok:
-            agg["passed"] += 1
+            agg["passed"].add(r["config_id"])
             sp = (r.get("timing") or {}).get("speedup")
             if sp is not None:
                 agg["speedups"][r["config_id"]] = sp
@@ -304,8 +309,10 @@ def scoreboard(ledger: BenchLedger) -> list[dict]:
             "short_sha": sha[:8],
             "candidate": cand,
             "padding_ratio": pad,
-            "configs_measured": agg["measured"],
-            "configs_passed": agg["passed"],
+            "configs_measured": len(agg["configs"]),
+            "configs_passed": len(agg["passed"]),
+            "rows": agg["rows"],
+            "is_sweep": agg["rows"] > len(agg["configs"]),
             "weighted_score": weighted_score(agg["speedups"]),
             "speedups": agg["speedups"],
             "failures": agg["failures"],

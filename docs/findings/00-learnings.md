@@ -174,3 +174,28 @@ run each.
 **Note the asymmetry worth carrying:** a null result between siblings is still a
 promotion — not of speed, but of the cheaper option. Equivalence is actionable when the
 two arms have different costs.
+
+## L12 — Three bugs found by building a second view of the same data (2026-08-29)
+
+A live dashboard was built over `bench/results.jsonl`. Reading the same rows through a
+different lens immediately exposed three defects the ledger's own CLI had been hiding:
+
+1. **`scoreboard()` counted ROWS, not distinct configs.** A v4 parameter sweep reported
+   "56 configs measured" on a **14-config matrix** — a number that cannot exist. It
+   actually touched 4 distinct configs. Fixed, with a regression test, and a `rows` /
+   `is_sweep` field added so a sweep is visibly a sweep.
+
+2. **27 ledger rows are stamped ~5.5 hours in the FUTURE.** My ingest script hardcoded
+   `ts="2026-08-29T17:30:00+00:00"` instead of the real measurement time, so "time since
+   newest row" read `0s` forever — **a stale ledger that looks permanently fresh**. The
+   rows are append-only and stay; consumers must compute age from the newest *non-future*
+   row. Never hand-write a timestamp again: pass the real one or let the ledger stamp it.
+
+3. **`git add -A` in the loop swept a subagent's in-progress files into a commit.** The
+   loop must commit named paths, not the whole tree, or it silently captures concurrent
+   work that was never reviewed.
+
+**The general lesson, and the reason this is a learning rather than a changelog:** every
+one of these survived because the ledger was only ever read through the one CLI that wrote
+it. A second independent consumer of the same data found three defects in an afternoon.
+Build the second reader earlier.
