@@ -25,8 +25,7 @@ from __future__ import annotations
 
 import json
 import os
-import time
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from functools import cache
 from pathlib import Path
 from typing import Optional
@@ -69,7 +68,8 @@ _PEAK_BF16_DENSE_TFLOPS = {
     ("sm_90", "H200"): 989.5,     # same compute die as H100
     ("sm_100", "B200"): 2250.0,   # Blackwell datacenter
     ("sm_120", "5090"): 209.5,    # RTX Blackwell whitepaper, FP32-accumulate row
-    ("sm_120", "5080"): 000.0,    # TODO: fill from whitepaper before relying on it
+    # Parts without a cited whitepaper figure are deliberately absent: a missing key
+    # degrades loudly (see _peak_tflops) instead of a zero that silently mis-routes.
 }
 
 _L2_FLUSH_FLOOR_BYTES = 256 * 1024 * 1024  # never flush with less than this
@@ -372,7 +372,7 @@ if __name__ == "__main__":
     print(p.to_json())
     print()
     print(f"ridge point: {p.ridge_point_flop_per_byte:.0f} FLOP/B")
-    print(f"  a kernel below this is memory bound and no amount of tuning will help;")
-    print(f"  raise arithmetic intensity instead. See docs/01-architecture.md.")
+    print("  a kernel below this is memory bound and no amount of tuning will help;")
+    print("  raise arithmetic intensity instead. See docs/01-architecture.md.")
     for n in p.notes:
         print(f"  NOTE: {n}")

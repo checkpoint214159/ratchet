@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import statistics
 import time
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass
 from typing import Callable, Optional
 
 import torch

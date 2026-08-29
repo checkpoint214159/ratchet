@@ -138,9 +138,11 @@ def generate(shape: Shape, seed: int, distribution: str = "standard",
         big = torch.finfo(dt).max ** 0.5
         q, k, v = q * big * 0.5, k * big * 0.5, v
     elif distribution == "with_nan":
-        q = q.clone(); q[0, 0, 0, 0] = float("nan")
+        q = q.clone()
+        q[0, 0, 0, 0] = float("nan")
     elif distribution == "with_inf":
-        k = k.clone(); k[0, 0, 0, 0] = float("inf")
+        k = k.clone()
+        k[0, 0, 0, 0] = float("inf")
     elif distribution == "noncontiguous":
         # A transposed view. Kernels that assume contiguity fail here, and they should:
         # real callers pass views constantly.

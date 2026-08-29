@@ -7,14 +7,37 @@ scripts/check-oracle.sh enforces this with a checksum manifest. It is detection,
 prevention -- a determined process could rewrite both -- but it converts a silent
 catastrophe into a loud one, which is the realistic goal.
 """
-from .device import DeviceProfile, calibrate, smem_at_least          # noqa: F401
-from .inputs import (Shape, CORRECTNESS_SHAPES, BENCHMARK_SHAPES,    # noqa: F401
-                     DISTRIBUTIONS, generate, correctness_suite,
-                     iter_correctness_cases)
-from .correctness import (REL_TOL, ABS_TOL, CorrectnessResult,       # noqa: F401
-                          DeterministicContext, check_all, check_tolerance,
-                          check_nonfinite, check_determinism)
-from .reference import (reference_fp32, reference_fp64,              # noqa: F401
-                        baseline_family, best_baseline)
-from .timing import (TimingStats, MethodDescriptor, get_timer,       # noqa: F401
-                     cross_check, annotate_launch_domination, L2Flusher)
+from .correctness import (  # noqa: F401
+                     ABS_TOL,
+                     REL_TOL,
+                     CorrectnessResult,
+                     DeterministicContext,
+                     check_all,
+                     check_determinism,
+                     check_nonfinite,
+                     check_tolerance,
+)
+from .device import DeviceProfile, calibrate, smem_at_least  # noqa: F401
+from .inputs import (  # noqa: F401
+                     BENCHMARK_SHAPES,
+                     CORRECTNESS_SHAPES,
+                     DISTRIBUTIONS,
+                     Shape,
+                     correctness_suite,
+                     generate,
+                     iter_correctness_cases,
+)
+from .reference import (  # noqa: F401
+                     baseline_family,
+                     best_baseline,
+                     reference_fp32,
+                     reference_fp64,
+)
+from .timing import (  # noqa: F401
+                     L2Flusher,
+                     MethodDescriptor,
+                     TimingStats,
+                     annotate_launch_domination,
+                     cross_check,
+                     get_timer,
+)

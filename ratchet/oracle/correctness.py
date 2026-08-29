@@ -25,7 +25,6 @@ from typing import Optional
 
 import torch
 
-
 # ======================================================================================
 # LOCKED. From the TechJam problem statement. Do not widen. Do not parameterize.
 #

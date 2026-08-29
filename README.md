@@ -8,15 +8,24 @@ benchmark, correctness, or speedup result.
 
 ## Fast, reproducible autoresearch setup
 
-Requirements: Linux or WSL2, Python 3.10+, Git, and [Tectonic](https://tectonic-typesetting.github.io/)
-with its local bundle available. A GPU is **not** required for this verification path.
+Requirements: Linux or WSL2, Python 3.10+, Git, [uv](https://docs.astral.sh/uv/), and
+[Tectonic](https://tectonic-typesetting.github.io/) with its local bundle available. A
+GPU is **not** required for this verification path.
 
 ```bash
 git clone https://github.com/checkpoint214159/ratchet.git && cd ratchet
-python3 -m venv .venv
-.venv/bin/pip install -e '.[dev]'
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -e '.[dev]'
 chmod +x scripts/verify-autoresearch.sh
 ./scripts/verify-autoresearch.sh
+```
+
+The default install is **CPU-only**: it carries no `torch`/`triton`, so the verification
+path stays dependency-light. Install the vendor framework with the separate `runtime`
+extra only on a machine that intends to qualify a backend:
+
+```bash
+uv pip install --python .venv/bin/python -e '.[dev,runtime]'
 ```
 
 That single verification command is the supported low-friction entry point. It verifies

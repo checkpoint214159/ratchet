@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON="${RATCHET_PYTHON:-${ROOT}/.venv/bin/python}"
 
 if [[ ! -x "${PYTHON}" ]]; then
-  printf 'ERROR: create .venv with `python3 -m venv .venv` and install `.[dev]`.\n' >&2
+  printf 'ERROR: create .venv with `uv venv --python 3.12 .venv` and `uv pip install --python .venv/bin/python -e ".[dev]"`.\n' >&2
   exit 2
 fi
 

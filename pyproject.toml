@@ -3,25 +3,39 @@
 # not), and (b) record the pinned toolchain, per CLAUDE.md: a measurement is only
 # meaningful against a toolchain, and these versions are stamped into every ledger
 # row by the oracle.
+# This project is import-via-source-root (`pythonpath = ["."]` for pytest) AND an
+# editable install target: `uv pip install -e '.[dev]'` installs the dev toolchain and
+# the `ratchet` package. Package discovery is pinned explicitly so the build never
+# guesses. A measurement is only meaningful against a toolchain, so runtime framework
+# versions are pinned in the `runtime` extra and stamped into every ledger row.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "ratchet"
 version = "0.1.0"
 description = "Agentic GPU kernel optimization harness (TikTok TechJam 2026)"
 requires-python = ">=3.10"
-# Framework packages must be installed for the selected vendor runtime; dependency
-# presence alone is never treated as hardware availability or backend qualification.
-dependencies = [
-    "torch==2.8.0",
-    "triton==3.4.0",
-    "pytest>=8",
-    "pytest-testmon>=2",
-]
+# The default install carries no GPU framework: the reproducible verification path
+# (archive verify + paper build + deterministic checks) is CPU-only and must not pull
+# torch/triton. Vendor frameworks live in the `runtime` extra and are installed only
+# on a machine that intends to qualify a backend. Framework *presence* is still never
+# treated as hardware availability or backend qualification.
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
     "pytest==9.1.1",
     "pytest-testmon==2.2.0",
     "ruff==0.16.5",
+]
+# Vendor runtime for empirical work on qualified hardware. Pinned so a measurement is
+# meaningful against a known toolchain; the exact wheel per vendor (CUDA/ROCm/XPU) is
+# selected by the operator's index, not assumed here.
+runtime = [
+    "torch==2.8.0",
+    "triton==3.4.0",
 ]
 
 [tool.pytest.ini_options]
@@ -30,6 +44,9 @@ testpaths = ["tests"]
 markers = [
     "gpu: requires the legacy CUDA oracle and a CUDA-capable PyTorch runtime",
 ]
+
+[tool.setuptools.packages.find]
+include = ["ratchet*"]
 
 [tool.ruff]
 target-version = "py310"
@@ -41,7 +58,6 @@ include = [
 ]
 extend-exclude = [
     ".beryl",
-    "ratchet/oracle",
     "tests/golden",
     "benchmarks/reference/torch_transformer_benchmark.py",
 ]
