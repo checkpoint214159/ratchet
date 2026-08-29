@@ -133,6 +133,11 @@ def _v18(baseline_cls):
     return build(baseline_cls)
 
 
+def _v20(baseline_cls):
+    from .v20_headmajor_qkv import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -269,6 +274,14 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "one variable, and the graded harness allocates its timing input OUTSIDE "
                 "it -- we were fast only because the accuracy tests run first. Reports "
                 "capture_source so the degradation is observable instead of silent.",
+    ),
+    "v20_headmajor_qkv": CandidateSpec(
+        name="v20_headmajor_qkv", generation=20, parent="v18_capture_insurance", build=_v20,
+        summary="SIBLING of v19 off v18. A fused QKV GEMM that scatters straight into "
+                "head-major buffers, so flash reads contiguously instead of through a "
+                "stride jumping by 3*D. The tax is 1.78x of attention at config 6 and "
+                "cannot be repacked away (.contiguous() costs more than it saves). Tuned "
+                "kernel beats cuBLAS+strided by 1.163x on the segment.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
