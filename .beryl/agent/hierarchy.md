@@ -402,11 +402,19 @@
   - complete immutable event with environment, intended protocol, and unavailable reason
   - timing, memory, correctness, speedup, profile, trace, counter, and current-best fields
     are absent
-- Status: pending
+- Status: complete
 - Canonical context targets:
   - `.beryl/agent/project-brief.md`
   - `.beryl/agent/design-tree.md`
-- Evidence: No synthetic or historical measurement may substitute for the missing run.
+- Evidence: Controller commit `705b9dded51b566fe0b0626f5690dd15632aeec5`
+  prepared and the Experiments boundary appended `EVT-000001` / `EXP-0001` at
+  `2026-08-29T09:27:27+08:00`. Archive verification yields projection
+  `b0e7dab98d49ca07c2f6b667e8158aaabd65a881e91a7f299dd1f28594149f02`
+  with exactly one no-run event. It binds `ENV-0001`, the evaluator digest, first default
+  configuration, first active human idea, and `PROTO-INTEL-0001`; the candidate state is
+  `not_generated`. Correctness, compilation, timing, memory, comparison, speedup, profile,
+  trace, counter, workspace, execution-result, and current-best fields are absent. No
+  synthetic or historical measurement substituted for the unavailable Intel run.
 
 ### IB-20 — Research synthesis
 - Parent: IB-09

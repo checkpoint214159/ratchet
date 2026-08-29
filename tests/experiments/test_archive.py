@@ -158,14 +158,24 @@ def _append_in_process(root: str, digest: str, event_id: str, result: object) ->
         result.put(("ok", event_id))
 
 
-def test_checked_in_environment_is_immutable_provenance_not_an_event():
+def test_checked_in_environment_is_immutable_provenance_for_the_no_run_event():
     manifest = json.loads((ARCHIVE / "manifest.json").read_text())
     digest = manifest["artifacts"][0]
     artifact = ARCHIVE / "artifacts" / f"{digest}.json"
 
     validate_provisional_environment(json.loads(artifact.read_text()))
 
-    assert manifest["events"] == []
+    assert manifest["events"] == [
+        {
+            "event_id": "EVT-000001",
+            "event_kind": "no_run",
+            "experiment_id": "EXP-0001",
+            "payload_digest": (
+                "fbc33306d01a6fdcaeb2fde33de4716426186f6033b1945a411ac8b2c927ee53"
+            ),
+            "sequence": 0,
+        }
+    ]
     assert sha256(artifact.read_bytes()).hexdigest() == digest
     assert artifact.read_bytes() == ENV.read_bytes()
 

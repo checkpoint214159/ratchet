@@ -136,7 +136,9 @@ def test_prepare_returns_stable_valid_canonical_no_run_bytes_without_archive_mut
     assert "PyTorch is not installed" in payload["stop_reason"]
     validate_event_payload(payload)
     assert _archive_bytes() == before
-    assert json.loads((ARCHIVE / "manifest.json").read_text())["events"] == []
+    events = json.loads((ARCHIVE / "manifest.json").read_text())["events"]
+    assert [event["event_id"] for event in events] == ["EVT-000001"]
+    assert [event["event_kind"] for event in events] == ["no_run"]
 
 
 @pytest.mark.parametrize(

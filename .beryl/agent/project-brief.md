@@ -86,3 +86,9 @@ claim may be made in this build. The system, literature survey, and paper are bu
 through a no-run gate: the environment observation and stop decision are facts, while
 timing, correctness, memory, and speedup fields remain absent. Synthetic fixtures never
 enter the production catalogue.
+
+The first controller pass is recorded as `EXP-0001` / `EVT-000001`. It stopped at
+`ENV-0001` because PyTorch XPU was unavailable, generated no candidate, and contains no
+correctness, compilation, timing, memory, profile, trace, counter, comparison, speedup,
+or current-best result. Its intended future protocol remains `PROTO-INTEL-0001` behind
+FG-01.

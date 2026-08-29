@@ -30,6 +30,7 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | Bottleneck evidence | Keep source observations separate from explicitly unmeasured project hypotheses until qualified profiling exists | 2026-08-29 | — |
 | First future Intel protocol | Compare definition-only compiled and eager full-workload arms only after FG-01 qualification | 2026-08-29 | — |
 | Current autoresearch controller | Validate the exact unavailable environment first and prepare one canonical no-run event without executing or mutating the archive | 2026-08-29 | — |
+| First autoresearch record | Append prepared `EVT-000001` as no-run evidence only; preserve absent result fields rather than zeros or synthetic substitutes | 2026-08-29 | — |
 
 ## Pressure Points
 
