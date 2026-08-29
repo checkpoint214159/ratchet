@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ratchet — autoresearch loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23151C24'/%3E%3Cpath d='M3 11h2V7h2v4h2V5h2v6h2' stroke='%236B5CA5' stroke-width='1.6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header id="status" class="statusbar" aria-live="polite">
+  <div class="sb-load">connecting…</div>
+</header>
+
+<nav class="tabs" id="tabs" role="tablist"></nav>
+
+<main id="main">
+  <section id="view-tree"       class="view"></section>
+  <section id="view-scoreboard" class="view" hidden></section>
+  <section id="view-heatmap"    class="view" hidden></section>
+  <section id="view-baselines"  class="view" hidden></section>
+  <section id="view-failures"   class="view" hidden></section>
+  <section id="view-learnings"  class="view" hidden></section>
+</main>
+
+<aside id="drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <div id="drawer-title"></div>
+    <button id="drawer-close" class="btn" aria-label="close detail">close</button>
+  </div>
+  <div id="drawer-body" class="drawer-body"></div>
+</aside>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
