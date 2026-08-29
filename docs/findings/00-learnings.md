@@ -574,3 +574,24 @@ re-measured under the lock. v16 and v17 sweeps were clean.
 Corollary: every tool that measures must take the lock, and subagents must either take it
 or not measure. See docs/findings/26.
 
+
+## L39 — Some fixes are invisible to the measurement that ranks them (2026-08-30)
+
+v18 removes a **2.25x** silent loss (graph capture fails when the caller allocates its
+input outside `inference_mode`, which is what the graded harness does at line 529). On the
+standard sweep it measures **2.765x against v17's 2.759x -- identical**, because our
+harness runs accuracy tests first and so always exercises the masked path.
+
+**A search that promotes strictly on measured score would rank this "no change, why
+bother" and discard it.** The evidence has to come from a dedicated experiment holding one
+variable, plus a test pinning the parent's degradation so the insurance cannot rot.
+
+Consequence for spec 07: A3 (time-to-signal) and the stage-1 screen both assume the sweep
+can SEE the effect. For a robustness proposal that assumption is false and the proposal
+needs a bespoke falsifier, not a screen verdict. The rubric does not distinguish these yet.
+
+Also today: v15 re-measured on an idle GPU gives **2.634x against the contended 2.618x** --
+0.6% on the geomean, 3.7% on config 6. Finding 22's CONCLUSION stands; its per-config claim
+("+2.4% worse on config 6") was contamination and is actually -1.4% better. A result can be
+right for the wrong reason, and re-running is the only way to tell. See docs/findings/27.
+

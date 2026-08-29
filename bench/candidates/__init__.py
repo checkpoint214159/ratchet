@@ -128,6 +128,11 @@ def _v17(baseline_cls):
     return build(baseline_cls)
 
 
+def _v18(baseline_cls):
+    from .v18_capture_insurance import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -255,6 +260,15 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "config ids -- and selects exactly the three configs where g16 measured "
                 "a win. Expected geomean gain ~1.3%, INSIDE the noise floor; the "
                 "defensible claim is per-config, on the matrix's largest shape.",
+    ),
+    "v18_capture_insurance": CandidateSpec(
+        name="v18_capture_insurance", generation=18, parent="v17_dispatched_megakernel",
+        build=_v18,
+        summary="Graph capture no longer depends on whether the CALLER allocated its "
+                "input inside inference_mode. Measured 0.267ms vs 0.601ms (2.25x) on that "
+                "one variable, and the graded harness allocates its timing input OUTSIDE "
+                "it -- we were fast only because the accuracy tests run first. Reports "
+                "capture_source so the degradation is observable instead of silent.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
