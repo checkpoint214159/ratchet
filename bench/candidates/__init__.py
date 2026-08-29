@@ -89,6 +89,12 @@ def _v10c(baseline_cls):
     from .v10_ablation import build_no_fp16
     return build_no_fp16(baseline_cls)
 
+
+def _v11(baseline_cls):
+    from .v11_lean import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -167,5 +173,12 @@ REGISTRY: dict[str, CandidateSpec] = {
         name="v10c_no_fp16", generation=10, parent="v9a_compiled_core", build=_v10c,
         summary="Ablation: v9a in pure fp32, no fp16 weight cache. Does our hand-rolled "
                 "mixed precision still beat the compiler's own choice?",
+    ),
+    "v11_lean": CandidateSpec(
+        name="v11_lean", generation=11, parent="v9a_compiled_core", build=_v11,
+        summary="The frontier with dead weight removed: chunking deleted after the g10 "
+                "ablation showed it subsumed by the compiler, reduce-overhead instead of "
+                "max-autotune. Five remaining components, each with a measurement behind "
+                "it and none inherited on faith.",
     ),
 }
