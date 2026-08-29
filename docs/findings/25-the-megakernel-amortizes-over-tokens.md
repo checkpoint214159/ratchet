@@ -74,3 +74,38 @@ We had the number needed to predict this before running the sweep: weight bytes,
 bytes per token, and measured bandwidth. The sweep confirmed a crossover we could have
 stated in advance, and the four configs below it cost a full 112-second measurement to learn
 something arithmetic.
+
+---
+
+## Addendum, same day — v17 confirms the crossover
+
+`v17_dispatched_megakernel` (gen 17, parent v13, a recombination merge) applies the g16
+kernel only above the amortization threshold. Measured:
+
+    cfg  6   70.558 -> 65.034 ms   -7.8%   FUSED
+    cfg  7    0.125 ->  0.114 ms   -9.0%   FUSED
+    cfg 13    3.362 ->  3.272 ms   -2.7%   FUSED
+    all ten other configs                  v13 path, all within noise
+
+    geomean vs compiled   v13 2.711x  ->  v17 2.758x   (+1.7%)
+    TOTAL wall time       v13 82.6 ms ->  v17 77.0 ms  (-6.9%)
+
+**The prediction stated in v17's docstring before the sweep ran was "roughly 2.745x, and
+that is inside the noise floor". It measured 2.758x.** Two forward predictions in two
+generations (L33's dilution factor, then this) have now landed, which is a different
+epistemic position from the first fourteen generations, where every number was a surprise.
+
+### How to report this honestly
+
+  * The **geomean gain is +1.7%, inside the +/-7% noise floor.** It is not a geomean win
+    and must not be quoted as one.
+  * The **per-config wins on 6 and 7 (-7.8%, -9.0%) are at or beyond the noise boundary**
+    and are supported by a mechanism with a derived crossover, not by a lucky draw.
+  * The **total-wall-time reduction of 6.9%** is the number with real content, because
+    config 6 alone is 85% of the matrix's wall time. Which of these three framings counts
+    depends on an objective the organizers have not published, and the report must give
+    all three rather than pick the flattering one.
+
+v17 is the new frontier and is merged. It is the first frontier advance since generation
+12, and the first one in this project's history that came from a kernel we wrote rather
+than from arranging kernels somebody else wrote.
