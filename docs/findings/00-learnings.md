@@ -255,3 +255,26 @@ reproduce under v9a, whose peak memory is far lower than the candidate that trig
 **Rule: when you replace a harness's protocol with your own, you owe a comparison against
 the original.** Ours diverged for a defensible reason and happened to agree; that was not
 knowable without running it. `bench/end_to_end.py` now does this on demand.
+
+## L17 — Loops add; only ablation subtracts (2026-08-29)
+
+Ablating v9a's nine inherited generations under compilation:
+
+| removed | worst-case cost of removal | verdict |
+|---|---|---|
+| L2 batch chunking (v3) | +5.8%, and **−0.3% on config 6** | **subsumed by the compiler** |
+| fused Q\|K\|V (v1) | +20% on the launch-bound configs | still pays |
+| fp16 weight cache (v1/v6) | **+395% on config 13** | essential |
+
+**Chunking is dead weight.** It took config 6 from 3.21x to 5.72x when v3 added it — real
+at the time — but Inductor now manages the working set and the win is gone, including on
+the exact config it was built for.
+
+The structural lesson: **an evolutionary loop only ever adds.** Nine generations stacked
+nine justifications, each valid when written, and nothing in the loop's design would ever
+revisit one after the world changed underneath it. Ablation is the only mechanism that
+subtracts, and it found inert complexity in one pass.
+
+**Make ablation a scheduled step, not an afterthought.** Every ~3 generations, re-test the
+inherited stack against the current frontier. Otherwise the submission ships its most
+sophisticated-looking component doing nothing, and the report credits it.
