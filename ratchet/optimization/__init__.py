@@ -15,6 +15,12 @@ from .controller import (
     PreparedNoRunEvent,
     RepositoryAutoresearchInputs,
 )
+from .critic import (
+    CriticDecision,
+    CriticEpoch,
+    CriticState,
+    dormant_critic_decision,
+)
 from .human_queue import (
     FileHumanResearchQueue,
     HumanInputKind,
@@ -24,6 +30,23 @@ from .human_queue import (
     HumanQueueItem,
     HumanQueueProjection,
     HumanResearchQueue,
+)
+from .scout import ScoutIntent, ScoutIntentState, ScoutProposal, assess_scout_proposal
+from .search import (
+    SearchAxis,
+    SearchCache,
+    SearchDefinition,
+    SearchFamily,
+    SearchInfeasibility,
+    SearchKind,
+    SearchPlan,
+    SearchPoint,
+    SearchProposal,
+    mark_considered,
+    mark_infeasible,
+    next_search_point,
+    plan_random_ablation,
+    plan_search,
 )
 
 
@@ -64,6 +87,9 @@ __all__ = [
     "AutoresearchOutcome",
     "AutoresearchRequest",
     "ControllerState",
+    "CriticDecision",
+    "CriticEpoch",
+    "CriticState",
     "HumanInputKind",
     "HumanInputRecord",
     "HumanInputSubmission",
@@ -78,4 +104,23 @@ __all__ = [
     "NoRunAutoresearchController",
     "PreparedNoRunEvent",
     "RepositoryAutoresearchInputs",
+    "SearchAxis",
+    "SearchCache",
+    "SearchDefinition",
+    "SearchFamily",
+    "SearchInfeasibility",
+    "SearchKind",
+    "SearchPlan",
+    "SearchPoint",
+    "SearchProposal",
+    "ScoutIntent",
+    "ScoutIntentState",
+    "ScoutProposal",
+    "assess_scout_proposal",
+    "dormant_critic_decision",
+    "mark_considered",
+    "mark_infeasible",
+    "next_search_point",
+    "plan_random_ablation",
+    "plan_search",
 ]

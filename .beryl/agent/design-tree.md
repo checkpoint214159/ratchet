@@ -31,6 +31,9 @@ rebuildable projection. Vendor optimization is specialized; research memory is s
 | First future Intel protocol | Compare definition-only compiled and eager full-workload arms only after FG-01 qualification | 2026-08-29 | — |
 | Current autoresearch controller | Validate the exact unavailable environment first and prepare one canonical no-run event without executing or mutating the archive | 2026-08-29 | — |
 | First autoresearch record | Append prepared `EVT-000001` as no-run evidence only; preserve absent result fields rather than zeros or synthetic substitutes | 2026-08-29 | — |
+| Search mechanics | Use finite canonical planning-only parametric and architectural spaces, exact-plan scoreless caches, and deterministic random-order ablations; FG-01 gates all execution and synthetic objectives remain test-only | 2026-08-29 | — |
+| No-run paper synthesis | Render verified no-run provenance and a cited FG-01 hypothesis while separately retaining zero empirical events and rejecting empirical claims | 2026-08-29 | — |
+| Critic and scout before measurement | Keep a candidate-held-out immutable critic epoch dormant without empirical evidence; permit only citation-resolved FG-01-gated scout intents | 2026-08-29 | — |
 
 ## Pressure Points
 
