@@ -209,6 +209,9 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--allow-dirty", action="store_true",
                     help="measure anyway on a dirty tree; rows will not count")
+    ap.add_argument("--allow-contended", action="store_true",
+                    help="measure anyway while another CUDA process is resident. Correct "
+                         "for a capability probe (does this shape OOM?), never for timing.")
     ap.add_argument("--json-out", action="store_true",
                     help="emit one __ROW__ json line per config, for the search loop")
     ap.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
@@ -245,6 +248,17 @@ def main() -> int:
                       cwd=str(REPO), capture_output=True, text=True).stdout.rstrip())
         return 2
 
+    # One GPU, several agents. Two processes on it do not give two independent
+    # measurements, they give two wrong ones -- finding 05, where a co-resident model
+    # inflated a baseline 4.1x. REFUSE rather than warn, matching the dirty-tree rule.
+    from bench.gpu_lock import contention_report, gpu_lock
+    _contention = contention_report()
+    if _contention and not args.allow_contended:
+        print(f"REFUSING: {_contention}\n"
+              f"Wait for it to finish, or pass --allow-contended if this run is a "
+              f"capability probe rather than a timing measurement.")
+        return 3
+
     props = torch.cuda.get_device_properties(0)
     env = {"device": props.name, "cc": f"sm_{props.major}{props.minor}",
            "torch": torch.__version__, "cuda": torch.version.cuda,
@@ -266,37 +280,40 @@ def main() -> int:
     # provenance() per row means a file edited while the run is in flight silently
     # changes the sha partway through -- the rows stop describing one tree state.
     run_prov = dict(prov)
+    _lock = gpu_lock(f"run_matrix {args.candidate}") if not args.allow_contended \
+        else __import__("contextlib").nullcontext()
     print(f"{'#':>3} {'status':<10} {'baseline':>10} {'cand':>10} {'speedup':>8}  max_abs")
     speedups = {}
-    for cid in ids:
-        r = run_child(cid, args.candidate, args.padding, args.dtype, args.input_scale)
-        t, c = r.get("timing") or {}, r.get("correctness") or {}
-        sp = t.get("speedup")
-        if sp:
-            speedups[cid] = sp
-        print(f"{cid:>3} {r['status']:<10} "
-              f"{t.get('baseline_ms', float('nan')):>10.3f} "
-              f"{t.get('candidate_ms', float('nan')):>10.3f} "
-              f"{(sp or float('nan')):>8.2f}  {c.get('max_abs', '-')}")
-        if not args.dry_run:
-            row = led.record(config_id=cid, status=r["status"], candidate=args.candidate,
-                             timing=r.get("timing"), correctness=r.get("correctness"),
-                             memory=r.get("memory"), env=env,
-                             config=BY_ID[cid].to_dict(),
-                             notes=(f"padding_ratio={args.padding} dtype={args.dtype} "
-                                    f"input_scale={args.input_scale} " + r.get("notes", "") + (
-                                 f" params={json.dumps(tuned_params)}" if tuned_params else "")
-                             ).strip(),
-                             provenance_override=run_prov)
-        if args.json_out:
-            # Carry correctness too. status=="ok" already IMPLIES it passed (an
-            # incorrect candidate returns status "incorrect" before it is ever timed),
-            # but leaving it out makes the guarantee invisible to every consumer, and
-            # bench/screen.py cannot state the rule it is enforcing. The tolerance margin
-            # is also worth seeing downstream -- it is thinner than it looks (L26).
-            print("__ROW__" + json.dumps({"config_id": cid, "status": r["status"],
-                                          "timing": r.get("timing"),
-                                          "correctness": r.get("correctness")}))
+    with _lock:
+        for cid in ids:
+            r = run_child(cid, args.candidate, args.padding, args.dtype, args.input_scale)
+            t, c = r.get("timing") or {}, r.get("correctness") or {}
+            sp = t.get("speedup")
+            if sp:
+                speedups[cid] = sp
+            print(f"{cid:>3} {r['status']:<10} "
+                  f"{t.get('baseline_ms', float('nan')):>10.3f} "
+                  f"{t.get('candidate_ms', float('nan')):>10.3f} "
+                  f"{(sp or float('nan')):>8.2f}  {c.get('max_abs', '-')}")
+            if not args.dry_run:
+                row = led.record(config_id=cid, status=r["status"], candidate=args.candidate,
+                                 timing=r.get("timing"), correctness=r.get("correctness"),
+                                 memory=r.get("memory"), env=env,
+                                 config=BY_ID[cid].to_dict(),
+                                 notes=(f"padding_ratio={args.padding} dtype={args.dtype} "
+                                        f"input_scale={args.input_scale} " + r.get("notes", "") + (
+                                     f" params={json.dumps(tuned_params)}" if tuned_params else "")
+                                 ).strip(),
+                                 provenance_override=run_prov)
+            if args.json_out:
+                # Carry correctness too. status=="ok" already IMPLIES it passed (an
+                # incorrect candidate returns status "incorrect" before it is ever timed),
+                # but leaving it out makes the guarantee invisible to every consumer, and
+                # bench/screen.py cannot state the rule it is enforcing. The tolerance margin
+                # is also worth seeing downstream -- it is thinner than it looks (L26).
+                print("__ROW__" + json.dumps({"config_id": cid, "status": r["status"],
+                                              "timing": r.get("timing"),
+                                              "correctness": r.get("correctness")}))
 
     if speedups:
         from bench.matrix import weighted_score
