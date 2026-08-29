@@ -52,7 +52,8 @@ def load_reference():
 # ======================================================================================
 
 def measure_one(config_id: int, candidate_name: str, samples: int = 300,
-                padding: float = 0.0, dtype_name: str = "float32") -> dict:
+                padding: float = 0.0, dtype_name: str = "float32",
+                input_scale: float = 1.0) -> dict:
     import torch
 
     sys.path.insert(0, str(REPO))
@@ -81,7 +82,7 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
 
     def make_input(seed):
         return ref.generate_random_case(tcfg, device, dtype, seed=seed,
-                                        padding_ratio=padding, input_scale=1.0)
+                                        padding_ratio=padding, input_scale=input_scale)
 
     def median_ms(model, x, mask, n):
         with torch.inference_mode():
@@ -174,12 +175,13 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
 # ======================================================================================
 
 def run_child(config_id: int, candidate: str, padding: float = 0.0,
-              dtype_name: str = "float32") -> dict:
+              dtype_name: str = "float32", input_scale: float = 1.0) -> dict:
     """One config in its own process. An OOM or a crash is a result, not an exception."""
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--child",
          "--id", str(config_id), "--candidate", candidate,
-         "--padding", str(padding), "--dtype", dtype_name],
+         "--padding", str(padding), "--dtype", dtype_name,
+         "--input-scale", str(input_scale)],
         capture_output=True, text=True, cwd=str(REPO), timeout=3600,
     )
     for line in proc.stdout.splitlines():
@@ -196,6 +198,8 @@ def main() -> int:
     ap.add_argument("--candidate", required=True)
     ap.add_argument("--ids", type=int, nargs="*", default=None)
     ap.add_argument("--samples", type=int, default=300)
+    ap.add_argument("--input-scale", type=float, default=1.0,
+                    help="never varied before 2026-08-29; scales the input distribution")
     ap.add_argument("--dtype", default="float32",
                     choices=["float32", "float16", "bfloat16"],
                     help="never varied before 2026-08-29; the benchmark supports all three")
@@ -214,7 +218,8 @@ def main() -> int:
     if args.child:
         try:
             print("__RESULT__" + json.dumps(measure_one(args.id, args.candidate,
-                                                        args.samples, args.padding, args.dtype)))
+                                                        args.samples, args.padding, args.dtype,
+                                                        args.input_scale)))
         except Exception:
             traceback.print_exc()
             return 1
@@ -264,7 +269,7 @@ def main() -> int:
     print(f"{'#':>3} {'status':<10} {'baseline':>10} {'cand':>10} {'speedup':>8}  max_abs")
     speedups = {}
     for cid in ids:
-        r = run_child(cid, args.candidate, args.padding, args.dtype)
+        r = run_child(cid, args.candidate, args.padding, args.dtype, args.input_scale)
         t, c = r.get("timing") or {}, r.get("correctness") or {}
         sp = t.get("speedup")
         if sp:
@@ -278,7 +283,8 @@ def main() -> int:
                              timing=r.get("timing"), correctness=r.get("correctness"),
                              memory=r.get("memory"), env=env,
                              config=BY_ID[cid].to_dict(),
-                             notes=(f"padding_ratio={args.padding} dtype={args.dtype} " + r.get("notes", "") + (
+                             notes=(f"padding_ratio={args.padding} dtype={args.dtype} "
+                                    f"input_scale={args.input_scale} " + r.get("notes", "") + (
                                  f" params={json.dumps(tuned_params)}" if tuned_params else "")
                              ).strip(),
                              provenance_override=run_prov)
