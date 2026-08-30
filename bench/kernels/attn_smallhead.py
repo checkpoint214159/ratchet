@@ -55,6 +55,7 @@ output store drops them. Nothing here is an approximation of anything.
 from __future__ import annotations
 
 import math
+from typing import NamedTuple
 
 import torch
 import triton
@@ -266,35 +267,72 @@ def padded_head_dim(head_dim: int, bitwidth: int = 16) -> int:
     return max(head_dim, min_dot_k(bitwidth))
 
 
+class Plan(NamedTuple):
+    """Everything about a launch that is a function of the SHAPE, resolved once.
+
+    THIS SPLIT IS NOT TIDINESS, IT IS THE DIFFERENCE BETWEEN A 1.6x WIN AND A 2.2x LOSS.
+    The candidate's `_core` runs inside `torch.compile`. The first version of this file
+    resolved the plan inside the launch wrapper, which meant `min_dot_k()` -- a try/except
+    around an import, a locally defined class, and `torch.cuda.get_device_capability()` --
+    executed in Dynamo's traced region. Dynamo cannot trace that, dropped the whole frame
+    to eager, and **Inductor's fused LayerNorm kernels disappeared**: profiled on config 7,
+    `triton_per_fused_*` was replaced by 9 calls to ATen's `vectorized_layer_norm_kernel`
+    at 151 us, turning a 1.63x attention win into a 2.18x end-to-end LOSS.
+
+    So: everything that queries the device or the compiler happens at prime time, and the
+    traced region sees plain ints and a tensor allocation. `_ffn_block` was safe by
+    accident (its wrapper does nothing but arithmetic); this one had to be made safe on
+    purpose. Generalises: a hand-written kernel dropped into a compiled region must be
+    audited for what its LAUNCH WRAPPER does, not only for what the kernel does.
+    """
+    dp: int                 # head_dim padded to the mma contraction floor
+    bm: int
+    bn: int
+    num_warps: int
+    num_stages: int
+    qk_scale: float         # head_dim**-0.5, folded with log2(e) for the exp2 softmax
+
+
+def plan_for(head_dim: int, seq_len: int,
+             tile: tuple[int, int, int, int] = DEFAULT_TILE) -> Plan:
+    """Resolve a launch plan. Call this OUTSIDE any traced or captured region."""
+    bm, bn, warps, stages = clamp_tile(tile, seq_len)
+    return Plan(padded_head_dim(head_dim), bm, bn, warps, stages,
+                float(head_dim) ** -0.5 * math.log2(math.e))
+
+
 def smallhead_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
-                        tile: tuple[int, int, int, int] = DEFAULT_TILE
-                        ) -> torch.Tensor:
+                        plan: Plan) -> torch.Tensor:
     """Causal attention over [Z, H, S, hd] fp16 inputs -> [Z, S, H*hd] fp16 TOKEN-MAJOR.
 
     The returned layout is deliberately not SDPA's: the caller wants `[Z, S, d_model]` for
     the output projection, and producing it here costs one different address computation
-    instead of a whole extra pass over memory.
+    instead of a whole extra pass over memory. (It saves nothing -- see the module
+    docstring -- but it costs nothing either.)
 
     q/k/v may be arbitrary strided views (they are, in this lineage: a `[Z,S,3D]` GEMM
     output split and transposed), so the strides are passed rather than assumed. Only the
     head-dim axis is required to be unit-stride, which the split/view/transpose preserves.
+
+    Nothing in this function may query the device or the compiler: it is traced. See Plan.
     """
     z, h, s, d = q.shape
-    assert k.shape == q.shape and v.shape == q.shape, "q/k/v must share a shape"
-    assert q.stride(-1) == 1 and k.stride(-1) == 1 and v.stride(-1) == 1
-    dp = padded_head_dim(d)
-
-    bm, bn, warps, stages = clamp_tile(tile, s)
     out = torch.empty((z, s, h * d), device=q.device, dtype=q.dtype)
-
-    _attn_fwd_smallhead[(triton.cdiv(s, bm), z * h)](
+    _attn_fwd_smallhead[(triton.cdiv(s, plan.bm), z * h)](
         q, k, v, out,
         q.stride(0), q.stride(1), q.stride(2),
         k.stride(0), k.stride(1), k.stride(2),
         v.stride(0), v.stride(1), v.stride(2),
-        s,
-        float(d) ** -0.5 * math.log2(math.e),
-        H=h, D=d, DP=dp, BM=bm, BN=bn,
-        num_warps=warps, num_stages=stages,
+        s, plan.qk_scale,
+        H=h, D=d, DP=plan.dp, BM=plan.bm, BN=plan.bn,
+        num_warps=plan.num_warps, num_stages=plan.num_stages,
     )
     return out
+
+
+def attend(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
+           tile: tuple[int, int, int, int] = DEFAULT_TILE) -> torch.Tensor:
+    """Plan-and-launch, for tests and probes. NOT for use inside a compiled region."""
+    assert k.shape == q.shape and v.shape == q.shape, "q/k/v must share a shape"
+    assert q.stride(-1) == 1 and k.stride(-1) == 1 and v.stride(-1) == 1
+    return smallhead_attention(q, k, v, plan_for(q.shape[-1], q.shape[-2], tile))

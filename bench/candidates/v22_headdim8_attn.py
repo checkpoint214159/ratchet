@@ -31,20 +31,45 @@ mma-bound: the mma at DP=16 accounts for ~7 us of cfg 11's 42 us. The pad was ne
 whole cost, and the proposals' 1.79x / 1.49x "reported potential" is not reachable by
 this mechanism.
 
-END TO END IT IS SMALL, AND THE ARITHMETIC IS HERE SO NOBODY HAS TO GUESS (L33).
-Attention's in-graph share, from the v13 profiler table in proposal B-04: cfg 7 46.8 us of
-124.9 us (37.5%); cfg 11 162.7 us of 362.5 us (44.9%). At 1.40x on that share:
+IN THE MODEL it does better than that on attention and much less than that end to end.
+Torch profiler, config 7's real shape, inside the compiled + graph-captured core (a
+DIAGNOSTIC profile, not a sweep row):
 
-    cfg 7    124.9 -> ~113 us    ~1.10x on the config
-    cfg 11   362.5 -> ~321 us    ~1.13x on the config
-    13-config geomean                     ~ +1.7%      inside the +/-7% noise floor (L29)
-    matrix.weighted_score (cap 3.0)       ~ +0.7%      cfg 11 is already capped at 6.24x,
-                                                       so its gain scores exactly ZERO
+    v18   flash_fwd_kernel      45.2 us / call (4 layers)   total device time 99.7 us
+    v22   _attn_fwd_smallhead   27.4 us / call (4 layers)   total device time 80.6 us
+                                ^^^^^ 1.65x on attention          ^^^^^ 1.24x on the config
 
-**So: the mechanism is real and the aggregate value is not measurable by one sweep.** The
+Attention is 45% of config 7's device time, so 1.65x on it is 1.24x on the config -- and
+that is the whole of it. Configs 7 and 11 are two of the CHEAPEST rows in the matrix
+(~4-6 s of a 112 s sweep), so ([L33]) the diluted value is:
+
+    13-config geomean                     ~ +3%       inside the +/-7% noise floor ([L29])
+    matrix.weighted_score (cap 3.0)       ~ +1%       config 11 already sits at 6.24x,
+                                                      above the cap, so its gain scores
+                                                      exactly ZERO
+
+**So: the mechanism is real and the aggregate value is not resolvable by one sweep.** The
 defensible claim is per-config and op-level, in the same shape as v17's (finding 25). This
 is a report artefact -- "we beat the vendor kernel in the one regime where the hardware
 says we should" -- not a frontier move, and it should be judged as one.
+
+THE FIRST VERSION OF THIS CANDIDATE LOST 2.18x ON CONFIG 7, AND EVERY TEST WAS GREEN
+------------------------------------------------------------------------------------
+Worth reading before writing the next hand-written kernel. The launch wrapper resolved its
+tile plan at the call site, which meant `min_dot_k()` -- an import inside a try/except plus
+a locally defined class plus `torch.cuda.get_device_capability()` -- ran inside Dynamo's
+traced region. Dynamo could not trace it, dropped the WHOLE frame to eager, and Inductor's
+fused LayerNorms became 9 eager `vectorized_layer_norm_kernel` launches costing 151 us.
+Correctness passed, `graph_verified` was still True, `capture_source` still reported a
+successful capture -- the CUDA graph faithfully captured an eager op sequence. Only the
+screen and then a profile found it.
+
+The plan is now resolved in `_prime` and the traced region sees plain ints.
+`tests/bench/test_v22_headdim8_attn.py::test_inductor_still_fuses_around_the_hand_written
+_kernel` asserts a `triton_*` LayerNorm kernel is present and an ATen one is not, so the
+regression cannot come back silently. **A hand-written kernel dropped into a compiled
+region must be audited for what its LAUNCH WRAPPER does, not only for what the kernel
+does.**
 
 WHERE THE REST OF THE HEADROOM ACTUALLY IS
 ------------------------------------------
@@ -81,7 +106,7 @@ import torch
 import torch.nn.functional as F
 
 from .v18_capture_insurance import build as build_v18
-from ..kernels.attn_smallhead import DEFAULT_TILE, applicable, clamp_tile, smallhead_attention
+from ..kernels.attn_smallhead import DEFAULT_TILE, applicable, plan_for, smallhead_attention
 from ..kernels.ffn_fused import fused_ffn
 
 
@@ -92,6 +117,7 @@ def build(baseline_cls):
         smallhead_attn_used: bool = False
         smallhead_attn_reason: str = "undecided"
         attn_tile: tuple[int, int, int, int] = DEFAULT_TILE
+        attn_plan = None
 
         def _prime(self, mask):
             super()._prime(mask)
@@ -103,7 +129,13 @@ def build(baseline_cls):
             # config rather than on that fact.
             ok = ok and bool(cfg.causal)
             self.smallhead_attn_used = ok
-            self.attn_tile = clamp_tile(DEFAULT_TILE, cfg.seq_len)
+            # RESOLVED HERE, NOT AT THE CALL SITE. `plan_for` queries the Triton backend
+            # and the device; doing that inside `_core` puts an untraceable import and a
+            # locally defined class in Dynamo's path, which drops the WHOLE frame to eager
+            # and costs Inductor's fused LayerNorms -- measured at 2.18x on config 7
+            # before this was hoisted. See attn_smallhead.Plan.
+            self.attn_plan = plan_for(a.head_dim, cfg.seq_len, DEFAULT_TILE) if ok else None
+            self.attn_tile = DEFAULT_TILE
             self.smallhead_attn_reason = (
                 f"smallhead: head_dim {a.head_dim} below the mma contraction floor"
                 if ok else
@@ -119,7 +151,7 @@ def build(baseline_cls):
             zero = self._needs_zeroing
             # v17 gates its FFN megakernel on `_nomask`; keep exactly that condition.
             use_ffn = bool(getattr(self, "fused_ffn_used", False)) and self._nomask
-            tile = self.attn_tile
+            plan = self.attn_plan
 
             for layer, cached, ffn_t in zip(self.layers, self._cache, self._ffn_t):
                 a = layer.attention
@@ -133,7 +165,7 @@ def build(baseline_cls):
                 v = v.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
 
                 # Returns [b, s, d_model] token-major already, so no transpose/reshape.
-                ctx = smallhead_attention(q, k, v, tile)
+                ctx = smallhead_attention(q, k, v, plan)
 
                 o = F.linear(ctx, out_w, out_b).float()
                 if zero:

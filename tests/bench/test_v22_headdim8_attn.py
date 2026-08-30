@@ -23,9 +23,9 @@ pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUD
 
 from bench.candidates import REGISTRY
 from bench.kernels import attn_smallhead
-from bench.kernels.attn_smallhead import (DEFAULT_TILE, TILING, applicable, clamp_tile,
-                                          min_dot_k, padded_head_dim,
-                                          smallhead_attention)
+from bench.kernels.attn_smallhead import (DEFAULT_TILE, TILING, applicable, attend,
+                                          clamp_tile, min_dot_k, padded_head_dim,
+                                          plan_for, smallhead_attention)
 from bench.matrix import MATRIX
 
 ATOL, RTOL = 2e-3, 2e-2
@@ -165,7 +165,7 @@ def test_kernel_matches_fp32_attention(shape):
     v = c.view(z, s, h, d).transpose(1, 2)
     want = torch.nn.functional.scaled_dot_product_attention(
         q.float(), k.float(), v.float(), is_causal=True).transpose(1, 2).reshape(z, s, dm)
-    got = smallhead_attention(q, k, v)
+    got = attend(q, k, v)
     assert got.shape == want.shape, "the kernel returns token-major [Z, S, H*hd]"
     assert _within_locked_tolerance(got, want), (
         f"{_failed_elements(got, want)} failed elements")
@@ -186,7 +186,7 @@ def test_every_swept_tile_is_correct_not_just_the_shipped_one():
     want = torch.nn.functional.scaled_dot_product_attention(
         q.float(), k.float(), v.float(), is_causal=True).transpose(1, 2).reshape(z, s, dm)
     for tile in TILING:
-        got = smallhead_attention(q, k, v, tile)
+        got = attend(q, k, v, tile)
         assert _within_locked_tolerance(got, want), f"tile {tile} is wrong"
 
 
@@ -198,7 +198,7 @@ def test_the_causal_triangle_is_skipped_exactly():
     q = torch.randn(z, h, s, d, device="cuda", dtype=torch.float16)
     k = torch.randn_like(q)
     v = torch.randn_like(q)
-    got = smallhead_attention(q, k, v)
+    got = attend(q, k, v)
     assert torch.allclose(got[0, 0].float(), v[0, 0, 0].float(), atol=2e-3), (
         "the first query attends to exactly one key, so its output IS that value vector")
 
@@ -214,28 +214,72 @@ def _cfg(ref, **kw):
     return ref.TransformerConfig(**base)
 
 
-@pytest.mark.gpu
-def test_matches_the_baseline_where_the_kernel_fires(monkeypatch):
-    """Config 11's shape (head_dim 8), at a smaller batch so the test stays cheap.
+def _cuda_kernels(model, x, mask=None) -> set:
+    """The names of the CUDA kernels one call actually launches.
 
-    Counts calls into the kernel rather than trusting the flag: L36's rule is that a test
-    must assert the mechanism it is testing actually ran.
+    This is the L36 assertion, and it is done with the profiler rather than by wrapping
+    the call site ON PURPOSE: a monkeypatched wrapper is a new closure Dynamo has to guard
+    on, which forces a recompile every call and blows the cache limit. Instrumenting a
+    compiled region changes it. Ask the device what ran instead.
     """
+    from torch.profiler import ProfilerActivity, profile
+    with torch.no_grad():
+        for _ in range(3):
+            model(x, mask) if mask is not None else model(x)
+        torch.cuda.synchronize()
+        with profile(activities=[ProfilerActivity.CUDA]) as prof:
+            model(x, mask) if mask is not None else model(x)
+            torch.cuda.synchronize()
+    return {e.key for e in prof.key_averages() if e.device_time_total > 0}
+
+
+@pytest.mark.gpu
+def test_matches_the_baseline_where_the_kernel_fires():
+    """Config 11's shape (head_dim 8), at a smaller batch so the test stays cheap."""
     ref = _ref()
     cfg = _cfg(ref, batch_size=8, d_model=128, num_heads=16)
-    calls = []
-    real = smallhead_attention
-    monkeypatch.setattr("bench.candidates.v22_headdim8_attn.smallhead_attention",
-                        lambda *a, **kw: (calls.append(1), real(*a, **kw))[1])
     base, cand = _build(CANDIDATE, cfg, ref)
     x = torch.randn(cfg.batch_size, cfg.seq_len, cfg.d_model, device="cuda")
     with torch.no_grad():
         want, got = base(x), cand(x)
     assert cand.smallhead_attn_used is True, cand.smallhead_attn_reason
-    assert calls, "the flag says the kernel fired but the kernel was never called"
     assert _within_locked_tolerance(got, want), (
         f"{_failed_elements(got, want)} failed elements, "
         f"max_abs {(got.float()-want.float()).abs().max():.3e}")
+
+    names = _cuda_kernels(cand, x)
+    assert any("_attn_fwd_smallhead" in n for n in names), (
+        f"the flag says the kernel fired but no such kernel ran: {sorted(names)}")
+    assert not any("flash_fwd_kernel" in n for n in names), (
+        "the vendor kernel is still running -- SDPA was not actually replaced")
+
+
+@pytest.mark.gpu
+def test_inductor_still_fuses_around_the_hand_written_kernel():
+    """THE BUG THAT COST THIS CANDIDATE ITS FIRST SCREEN, pinned so it cannot come back.
+
+    Resolving the launch plan inside `_core` put an import, a try/except and a locally
+    defined class in Dynamo's traced region. Dynamo dropped the whole frame to eager, and
+    Inductor's fused LayerNorm kernels were replaced by 9 eager
+    `vectorized_layer_norm_kernel` calls at 151 us -- a 1.63x win on attention became a
+    2.18x LOSS on config 7, with every correctness test still green and
+    `graph_verified` still True.
+
+    So: assert the COMPILER still ran, not just that the answer is right. A `triton_*_fused
+    _*` LayerNorm kernel is Inductor's signature; ATen's `vectorized_layer_norm_kernel` is
+    the signature of the failure.
+    """
+    ref = _ref()
+    cfg = _cfg(ref, batch_size=64, d_model=32, num_heads=4, ffn_dim=32)
+    _, cand = _build(CANDIDATE, cfg, ref)
+    x = torch.randn(cfg.batch_size, cfg.seq_len, cfg.d_model, device="cuda")
+    names = _cuda_kernels(cand, x)
+    assert any(n.startswith("triton_") and "layer_norm" in n for n in names), (
+        f"Inductor is no longer fusing the LayerNorms -- the frame fell back to eager. "
+        f"kernels: {sorted(names)}")
+    assert not any("vectorized_layer_norm_kernel" in n for n in names), (
+        f"eager ATen LayerNorm is running, i.e. the compiled region was lost. "
+        f"kernels: {sorted(names)}")
 
 
 @pytest.mark.gpu
@@ -254,22 +298,23 @@ def test_matches_the_baseline_on_the_narrow_model_shape():
 
 
 @pytest.mark.gpu
-def test_the_fallback_path_is_taken_and_is_correct(monkeypatch):
+def test_the_fallback_path_is_taken_and_is_correct():
     """head_dim 32: the vendor kernel's tiles already fit the hardware, so we decline and
     v18's path must run UNTOUCHED. A dispatch is only trustworthy if its off-branch is."""
     ref = _ref()
     cfg = _cfg(ref, batch_size=8, d_model=128, num_heads=4)
-    calls = []
-    real = smallhead_attention
-    monkeypatch.setattr("bench.candidates.v22_headdim8_attn.smallhead_attention",
-                        lambda *a, **kw: (calls.append(1), real(*a, **kw))[1])
     base, cand = _build(CANDIDATE, cfg, ref)
     x = torch.randn(cfg.batch_size, cfg.seq_len, cfg.d_model, device="cuda")
     with torch.no_grad():
         want, got = base(x), cand(x)
     assert cand.smallhead_attn_used is False and "declined" in cand.smallhead_attn_reason
-    assert not calls, "the kernel ran on a shape the predicate declined"
+    assert cand.attn_plan is None
     assert _within_locked_tolerance(got, want)
+    names = _cuda_kernels(cand, x)
+    assert not any("_attn_fwd_smallhead" in n for n in names), (
+        "the kernel ran on a shape the predicate declined")
+    assert any("flash_fwd_kernel" in n for n in names), (
+        f"the declined path should be the vendor's: {sorted(names)}")
 
 
 @pytest.mark.gpu
