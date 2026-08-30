@@ -122,6 +122,15 @@ def run_config(config_id: int, arms: list[str], rounds: int, iters: int,
                 "gemm_sites": list(getattr(mdl, "gemm_sites", ()) or ()),
                 "gemm_engaged": getattr(mdl, "gemm_engaged", None),
                 "stream_path": getattr(mdl, "stream_path", None),
+                # WHAT THE ARM ACTUALLY RAN, recorded next to what it measured. [L36]:
+                # a mechanism has to be shown to engage, and until g42 this file could
+                # rank two attention plans without recording which two they were -- so a
+                # row where both arms happened to pick the same tile was indistinguishable
+                # from a row where they differed. Cheap, and it turns "these are controls"
+                # from an assumption into a field.
+                "attn_form": getattr(mdl, "attn_form", None),
+                "attn_tile": list(getattr(mdl, "attn_tile", ()) or ()),
+                "attn_reason": getattr(mdl, "attn_reason", None),
             }
 
     # ------------------------------------------------------------- settle, then time
