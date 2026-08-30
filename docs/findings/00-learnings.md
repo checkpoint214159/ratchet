@@ -765,3 +765,30 @@ every invocation, not just what it varies.** The audit rule (7 for 7 at [L42], n
 been about untested *values* of things the harness varies. This is the other half — a
 dimension the harness never varies at all is not tested, it is assumed, and it does not
 appear in any parameter list to remind you.
+
+## L47 — A cleanup call destroyed a completed measurement (2026-08-30)
+
+The config-14 capability run reached the oracles with everything already established: 32
+sequences of 100,000 tokens computed, peak memory recorded, the causal-prefix check
+passed. It then died on
+
+```python
+torch.cuda.empty_cache()      # AcceleratorError: CUDA error: out of memory
+```
+
+— an unguarded *cleanup* call, on a GPU another agent had filled. The child process
+emitted no `__RESULT__`, so the parent recorded `status="crash"` with a traceback, and
+several minutes of measurement that had already succeeded reached the ledger as nothing.
+
+Two things generalise.
+
+**A measurement pipeline's later stages must not be able to discard its earlier ones.**
+`run_matrix` already gets this right at one level — one config per subprocess, so a
+config that dies does not cost the run — and got it wrong one level down, where an
+eight-stage capability path was one function with one exit. The fix is the same principle
+applied inside: each stage reports its own failure into the row, and the row is returned.
+
+**The dangerous line is rarely the one doing the work.** `empty_cache()` frees memory; it
+reads as incapable of failing, which is why it was the one call not wrapped. Same family
+as [L38] and [L36] — the assurance nobody arranged to be capable of failing — but from
+the other side: the *operation* nobody imagined could fail.
