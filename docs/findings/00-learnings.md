@@ -679,3 +679,52 @@ unchanged. Configs above a millisecond reproduced within 0.6%; every deviation c
 sub-millisecond rows. Direct evidence for [L29]'s floor, and a caution that the geomean
 weights a 0.06 ms config equally with a 57 ms one. See docs/findings/32.
 
+
+
+## L43 — Fusion strands the work that was riding along for free (2026-08-30)
+
+v34 predicted 36 -> 20 kernels per forward at config 2 and the first build measured **24**.
+The four extra were `.float()` on the attention out-projection, one per layer. In the
+parent that cast was invisible: Inductor had fused it into the LayerNorm kernel that
+followed. Moving the residual add and norm2 *into* the megakernel deleted that kernel, and
+the cast — which had never been a kernel in its own right — became one.
+
+Fixed by handing the out-projection over in fp16 and widening inside the megakernel, which
+is bit-identical (it is an fp16 GEMM over fp16 operands, so the value is already fp16) and
+halves that tensor's traffic as well.
+
+**Before claiming a fusion removes N kernels, ask what was fused INTO the thing you are
+removing.** Inductor's pointwise fuser scatters small ops into whatever large kernel is
+adjacent, so deleting a large kernel evicts its lodgers. The count is only knowable by
+counting — which is also why v34 counted before and after rather than reasoning about it
+(L36). See docs/findings/33.
+
+
+## L44 — The optimization worked well enough to invalidate the statistic measuring it (2026-08-30)
+
+Two screens of v34, same commit, same clean tree, gave **+8.1%** and **+0.7%**. Configs 7,
+8 and 10 reproduced to four decimal places in both; only config 2 moved, by 33%.
+
+That contrast is what made it diagnosable: if everything had been noisy the right response
+would have been "wider floor, take more samples", and it would have been wrong.
+**Reproducibility on the arms a change does not touch is a free control, and it separates
+a discrete state difference from variance.** Sampled ten times against the parent's five:
+
+    min-of-N     v34 0.0440-0.0471   v26 0.0604-0.0614    NO OVERLAP, 10/10
+    median       v34 0.0451-0.0666   v26 0.0604-0.0676    overlapping
+
+The cause is not noise and not a bug. v34 removes 16 of 36 kernel nodes and 8.6 us of
+device time from a config that finding 16 measured at **232 us CPU against 126 us GPU**.
+The GPU side shrank; the CPU side (`cudaGraphLaunch`, the memcpys, the output clone) did
+not. The minimum still catches the GPU, but the median now samples the CPU's jitter.
+`run_matrix` scores on a median.
+
+**A speedup can move a config across the CPU/GPU boundary, and the statistic that was
+appropriate on one side is not appropriate on the other.** min-of-N — which this project
+already prescribes for itself because the clocks are unlockable — reports the same result
+ten times where the median cannot decide. Config 2 is one of the four SCREEN configs, so
+every future candidate that shrinks its GPU side inherits an unreadable screen verdict,
+and the screen has no way to distinguish that from a regression.
+
+Companion to [L29] (the floor is per-config, not global): here the floor is not even
+per-config, it is per-*candidate* on the same config. See docs/findings/33.
