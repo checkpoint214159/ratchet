@@ -153,6 +153,11 @@ def _v34(baseline_cls):
     return build(baseline_cls)
 
 
+def _v36(baseline_cls):
+    from .v36_gemm_gelu import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -317,6 +322,22 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "from finding 25's bandwidth crossover and fires exactly where it "
                 "declines (configs 2, 3, 4, 12). Reuses v19's norm-fused megakernel and "
                 "elides a provably-dead mask memcpy. 36 -> 20 kernels.",
+    ),
+    "v36_gemm_gelu": CandidateSpec(
+        name="v36_gemm_gelu", generation=36, parent="v34_launch_bound", build=_v36,
+        summary="THE FIRST HAND-WRITTEN PROJECTION GEMM. Censused at config 9 -- the #1 "
+                "headroom row and one nobody had ever profiled -- the sixteen projection "
+                "GEMMs are 55.0% of device time at 47.3 TFLOP/s, 53.6% of this card's "
+                "measured peak, because cuBLAS selects `ampere_fp16_s1688gemm` at K=128: "
+                "`s1688` is mma.sync.m16n8k8 where sm_89 issues m16n8k16 and tl.dot "
+                "emits it. It does NOT do this at d_model 1024, where it hits 100.4% of "
+                "peak -- the bad selection is specific to narrow K. And the GELU is its "
+                "own kernel on every layer of every config because cuBLAS takes no "
+                "epilogue (finding 39), so it moves into the ffn_in epilogue in the "
+                "exact erf form, applied to the fp32 accumulator before any downcast. "
+                "Each of the four sites is decided by TIMING the vendor against 18 swept "
+                "tiles at prime time and keeping the vendor unless Triton wins by more "
+                "than 10%, so config 8 declines on its own evidence.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
