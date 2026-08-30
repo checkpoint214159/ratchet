@@ -453,7 +453,7 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "exactly ONE shape (config 10, 1.119x over single_tile) and the looped "
                 "form already beats it there, so this fires on ZERO announced configs "
                 "and is byte-identical to v40. It is a guard on the fallback path, "
-                "worth +0.0000 as shipped and ~+0.0036 in the branch where "
+                "worth +0.0000 as shipped and ~+0.0035 in the branch where "
                 "`autotune_looped` declines config 10.",
     ),
     "v14_dispatch": CandidateSpec(

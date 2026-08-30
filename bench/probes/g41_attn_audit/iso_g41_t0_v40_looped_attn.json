@@ -1,0 +1,228 @@
+[
+ {
+  "config_id": 5,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v40_looped_attn": 0.4341759979724884
+  },
+  "min_of_min_rounds": {
+   "v40_looped_attn": 0.43212801218032837
+  },
+  "per_round": {
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.449535995721817,
+     "min": 0.447488009929657
+    },
+    {
+     "round": 1,
+     "median": 0.449535995721817,
+     "min": 0.447488009929657
+    },
+    {
+     "round": 2,
+     "median": 0.4485119879245758,
+     "min": 0.44646400213241577
+    },
+    {
+     "round": 3,
+     "median": 0.4485119879245758,
+     "min": 0.4331519901752472
+    },
+    {
+     "round": 4,
+     "median": 0.4341759979724884,
+     "min": 0.43212801218032837
+    }
+   ]
+  },
+  "correctness": {
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012663602828979492,
+    "launch_reason": "declined: 256 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on ffn_in | qkv: vendor: 24.74 us against the best of 18 tiles at 23.17 us (1.068x, inside the 10% margin) | out: vendor: 10.33 us against the best of 18 tiles at 9.37 us (1.103x, inside the 10% margin) | ffn_in: triton (64, 64, 64, 4, 3) at 11.26 us beats the vendor's 14.88 us decisively (1.322x over 18 tiles); spills=0 regs=96 | ffn_out: vendor: 10.33 us against the best of 18 tiles at 9.37 us (1.103x, inside the 10% margin)",
+    "gemm_sites": [
+     "ffn_in"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 6,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v40_looped_attn": 70.82137680053711
+  },
+  "min_of_min_rounds": {
+   "v40_looped_attn": 65.7807388305664
+  },
+  "per_round": {
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 87.15110397338867,
+     "min": 81.01785278320312
+    },
+    {
+     "round": 1,
+     "median": 81.71315002441406,
+     "min": 80.81919860839844
+    },
+    {
+     "round": 2,
+     "median": 77.0621452331543,
+     "min": 75.38585662841797
+    },
+    {
+     "round": 3,
+     "median": 74.82726669311523,
+     "min": 71.36460876464844
+    },
+    {
+     "round": 4,
+     "median": 70.82137680053711,
+     "min": 65.7807388305664
+    }
+   ]
+  },
+  "correctness": {
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0014469027519226074,
+    "launch_reason": "declined: above the amortization crossover, so the segment is throughput-bound and later waves already hide the launches",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 92.61 us against the best of 18 tiles at 114.33 us (0.810x, inside the 10% margin) [probe M=67584 of 1280000] | out: vendor: 32.17 us against the best of 18 tiles at 31.25 us (1.029x, inside the 10% margin) [probe M=67584 of 1280000]",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 8,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v40_looped_attn": 6.5920000076293945
+  },
+  "min_of_min_rounds": {
+   "v40_looped_attn": 6.574079990386963
+  },
+  "per_round": {
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 6.582272052764893,
+     "min": 6.577151775360107
+    },
+    {
+     "round": 1,
+     "median": 6.601216077804565,
+     "min": 6.578176021575928
+    },
+    {
+     "round": 2,
+     "median": 6.5920000076293945,
+     "min": 6.577151775360107
+    },
+    {
+     "round": 3,
+     "median": 6.598656177520752,
+     "min": 6.577151775360107
+    },
+    {
+     "round": 4,
+     "median": 6.603775978088379,
+     "min": 6.574079990386963
+    }
+   ]
+  },
+  "correctness": {
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012198090553283691,
+    "launch_reason": "declined: d_model=1024 ffn_dim=1024 exceeds 101376 B opt-in smem",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 586.07 us against the best of 18 tiles at 577.38 us (1.015x, inside the 10% margin) | out: vendor: 204.98 us against the best of 18 tiles at 199.09 us (1.030x, inside the 10% margin) | ffn_in: vendor: 222.76 us against the best of 18 tiles at 206.36 us (1.079x, inside the 10% margin) | ffn_out: vendor: 204.98 us against the best of 18 tiles at 199.09 us (1.030x, inside the 10% margin)",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 13,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v40_looped_attn": 3.3085439205169678
+  },
+  "min_of_min_rounds": {
+   "v40_looped_attn": 3.2972800731658936
+  },
+  "per_round": {
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 3.309567928314209,
+     "min": 3.295232057571411
+    },
+    {
+     "round": 1,
+     "median": 3.3259520530700684,
+     "min": 3.31059193611145
+    },
+    {
+     "round": 2,
+     "median": 3.3085439205169678,
+     "min": 3.2972800731658936
+    },
+    {
+     "round": 3,
+     "median": 3.3182719945907593,
+     "min": 3.300352096557617
+    },
+    {
+     "round": 4,
+     "median": 3.3413119316101074,
+     "min": 3.3126399517059326
+    }
+   ]
+  },
+  "correctness": {
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012556910514831543,
+    "launch_reason": "declined: above the amortization crossover, so the segment is throughput-bound and later waves already hide the launches",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 91.02 us against the best of 18 tiles at 110.75 us (0.822x, inside the 10% margin) | out: vendor: 31.64 us against the best of 18 tiles at 30.28 us (1.045x, inside the 10% margin)",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ }
+]

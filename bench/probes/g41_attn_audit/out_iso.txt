@@ -1,0 +1,80 @@
+
+########## trial 0  arm v40_looped_attn ##########
+
+=== config 5 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            434.18     432.13       1.0000x  ffn_in
+
+=== config 6 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn          70821.38   65780.74       1.0000x  -
+
+=== config 8 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn           6592.00    6574.08       1.0000x  -
+
+=== config 13 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn           3308.54    3297.28       1.0000x  -
+
+wrote bench/probes/g41_attn_audit/iso_g41_t0_v40_looped_attn.json
+
+########## trial 0  arm v41_vendor_aware_attn ##########
+
+=== config 5 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      436.22     431.10       1.0000x  ffn_in
+
+=== config 6 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn    68491.26   64623.62       1.0000x  -
+
+=== config 8 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn     6595.58    6572.03       1.0000x  -
+
+=== config 13 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn     3308.54    3297.28       1.0000x  -
+
+wrote bench/probes/g41_attn_audit/iso_g41_t0_v41_vendor_aware_attn.json
+
+########## trial 1  arm v40_looped_attn ##########
+
+=== config 5 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            436.22     434.18       1.0000x  ffn_in
+
+=== config 6 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn          72657.41   67826.69       1.0000x  -
+
+=== config 8 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn           6600.70    6578.18       1.0000x  -
+
+=== config 13 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn           3307.52    3298.30       1.0000x  -
+
+wrote bench/probes/g41_attn_audit/iso_g41_t1_v40_looped_attn.json
+
+########## trial 1  arm v41_vendor_aware_attn ##########
+
+=== config 5 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      436.22     433.15       1.0000x  ffn_in
+
+=== config 6 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn    72276.99   71374.85       1.0000x  -
+
+=== config 8 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn     6600.29    6577.15       1.0000x  -
+
+=== config 13 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn     3306.50    3293.18       1.0000x  -
+
+wrote bench/probes/g41_attn_audit/iso_g41_t1_v41_vendor_aware_attn.json
