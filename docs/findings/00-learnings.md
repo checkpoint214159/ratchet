@@ -715,7 +715,10 @@ sequence length:
   passed, max_abs 8.66e-4, 0 failed elements.
 - **A blocked fp64 evaluation of the reference's arithmetic**, query axis blocked (exact:
   softmax reduces over keys), deliberately NOT online softmax so a rescaling bug in our
-  flash path cannot be mirrored by the oracle. Covers every row.
+  flash path cannot be mirrored by the oracle. Covers every row. Built and validated
+  against the reference at S <= 4096; **its full S=100000 run has not completed** (the GPU
+  has been continuously occupied), so at the time of writing only the prefix oracle has
+  actually returned at the real shape. Do not report it as if it had.
 
 The generalisation: **when the reference cannot run, look for a smaller instance of the
 reference that is provably the same computation, and for a re-evaluation of its own

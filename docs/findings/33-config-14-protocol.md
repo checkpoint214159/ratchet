@@ -12,8 +12,18 @@ measured, and it is 24.3% of the remaining score headroom.
 
 This finding establishes what is true about it, what can be checked, and what may be
 claimed. The short version: **the reference cannot run this config on any hardware that
-exists; we can compute it and can now prove the answer is right at the real sequence
-length; and there is still no speedup, because a ratio needs two measured times.**
+exists; we compute all 32 sequences of it, and the answer is now checked against the
+unmodified reference at the real sequence length rather than at proxy shapes; and there
+is still no speedup, because a ratio needs two measured times.**
+
+STATUS OF THE TWO ORACLES. The causal-prefix oracle (§2.1) has run at the real shape and
+passed. The blocked fp64 oracle (§2.2) is built, validated against the reference at
+S <= 4096, and has **not yet completed a full S=100000 run** — the GPU has been
+continuously occupied by other agents and its two attempts died on driver
+out-of-memory. Everything §2.2 claims about the oracle is measured; the one thing not yet
+measured is the candidate against it at S=100000. Re-running it is a queued single command
+(`bench/run_matrix.py --candidate v33_streamed_long --ids 14 --oracle-sequences 1`) and
+this document must not be read as if it had already returned.
 
 ---
 
@@ -311,9 +321,11 @@ is not a working-set problem.
   head of one sequence needs 37.25 GiB; the full config needs 18.63 TiB. Derived from the
   reference's source and confirmed against the driver.
 - We compute it, at the announced shape, in a few GiB.
-- The answer is verified at the real sequence length by two independent oracles — the
-  unmodified reference on a causal prefix, and a blocked fp64 evaluation of the reference's
-  own arithmetic covering every row — not by proxy shapes.
+- The answer is verified at the real sequence length **for query rows 0..4095** against
+  the unmodified reference, using the causal-prefix theorem — real model, real 100,000-token
+  input, the harness's own `compare_outputs` at the locked tolerance. Not proxy shapes.
+  (Once the fp64 oracle completes, and only then, "every row including the last" becomes
+  claimable. Until it does, say rows 0..4095.)
 - The frontier's batch-streaming gap was found and closed.
 
 **May not claim:**
@@ -322,8 +334,11 @@ is not a working-set problem.
   measured times; the denominator does not exist. Timing our own slower reimplementation
   of the baseline and dividing by it would be a number about us, not about the reference.
   `timing.speedup` is `None` and stays `None`.
-- A pass/fail against the reference at S=100000. What exists is a pass against the fp64
-  oracle plus a measured, extrapolated bound on the reference's own distance from exact.
+- A pass/fail against the reference for query rows beyond P=4096. The causal-prefix
+  theorem says nothing there, and the fp64 oracle — which would — has not completed at
+  S=100000. Even when it does, what it gives is a pass against the oracle plus a measured
+  and then extrapolated bound on the reference's own distance from exact (§2.3), never a
+  direct `|candidate - reference|`.
 - That config 14 is runnable end to end on this card by anything. It is not: §1.2.
 
 **How it scores.** `weighted_score` gives an unmeasured config 1.0, and a
