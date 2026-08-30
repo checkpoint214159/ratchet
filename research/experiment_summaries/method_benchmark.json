@@ -1,0 +1,39 @@
+{
+  "block_m_count": 4,
+  "block_n_count": 5,
+  "completed_trials": 100,
+  "max_runtime_seconds": 10800,
+  "noise_scale": 0.12,
+  "stage_count": 4,
+  "summary": {
+    "failure_weighted_pagerank": {
+      "cutoff": 64.0,
+      "gain_vs_random": -0.012500000000000011,
+      "overlap": 12.0,
+      "precision_at_k": 0.0,
+      "spearman": 0.5654079263469369
+    },
+    "plain_pagerank": {
+      "cutoff": 64.0,
+      "gain_vs_random": -0.1375,
+      "overlap": 4.0,
+      "precision_at_k": 0.0,
+      "spearman": -0.4606211364368793
+    },
+    "random_baseline": {
+      "cutoff": 64.0,
+      "gain_vs_random": 0.003124999999999989,
+      "overlap": 13.0,
+      "precision_at_k": 0.0,
+      "spearman": 0.006679203410189552
+    },
+    "tuning_pressure": {
+      "cutoff": 64.0,
+      "gain_vs_random": -0.012500000000000011,
+      "overlap": 12.0,
+      "precision_at_k": 0.0,
+      "spearman": 0.5576084727389916
+    }
+  },
+  "warp_count": 4
+}

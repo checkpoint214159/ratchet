@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import base64
 import binascii
-import fcntl
 import json
 import os
 import tempfile
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback for portable tests
+    fcntl = None
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Iterator, Mapping
@@ -52,11 +56,13 @@ class FileExperimentArchive:
     def _locked(self) -> Iterator[None]:
         self._root.mkdir(parents=True, exist_ok=True)
         with self._lock.open("a+b") as lock:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            if fcntl is not None:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             try:
                 yield
             finally:
-                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+                if fcntl is not None:
+                    fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
 
     @staticmethod
     def _atomic(path: Path, data: bytes) -> None:

@@ -1,0 +1,158 @@
+{
+  "hardware_profiles": [
+    "cuda",
+    "hip"
+  ],
+  "max_runtime_seconds": 10800,
+  "quantization_modes": [
+    "fp32",
+    "fp8"
+  ],
+  "scenarios": [
+    {
+      "hardware_profile": "cuda",
+      "quantization_mode": "fp32",
+      "scenario_name": "cuda/fp32",
+      "summary": {
+        "failure_weighted_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.02812500000000001,
+          "overlap": 11.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.43193756774968506
+        },
+        "plain_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.16875,
+          "overlap": 2.0,
+          "precision_at_k": 0.0,
+          "spearman": -0.5169141666422523
+        },
+        "random_baseline": {
+          "cutoff": 64.0,
+          "gain_vs_random": 0.003124999999999989,
+          "overlap": 13.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.008045000439457415
+        },
+        "tuning_pressure": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.05937500000000001,
+          "overlap": 9.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.39281175841560956
+        }
+      },
+      "trial_count": 100
+    },
+    {
+      "hardware_profile": "cuda",
+      "quantization_mode": "fp8",
+      "scenario_name": "cuda/fp8",
+      "summary": {
+        "failure_weighted_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.02812500000000001,
+          "overlap": 11.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.334949682125802
+        },
+        "plain_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.16875,
+          "overlap": 2.0,
+          "precision_at_k": 0.0,
+          "spearman": -0.5169141666422523
+        },
+        "random_baseline": {
+          "cutoff": 64.0,
+          "gain_vs_random": 0.003124999999999989,
+          "overlap": 13.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.008064776023203352
+        },
+        "tuning_pressure": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.05937500000000001,
+          "overlap": 9.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.27057521313684707
+        }
+      },
+      "trial_count": 100
+    },
+    {
+      "hardware_profile": "hip",
+      "quantization_mode": "fp32",
+      "scenario_name": "hip/fp32",
+      "summary": {
+        "failure_weighted_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.02812500000000001,
+          "overlap": 11.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.43278572056367737
+        },
+        "plain_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.16875,
+          "overlap": 2.0,
+          "precision_at_k": 0.0,
+          "spearman": -0.5262621583218586
+        },
+        "random_baseline": {
+          "cutoff": 64.0,
+          "gain_vs_random": 0.003124999999999989,
+          "overlap": 13.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.006843633726891864
+        },
+        "tuning_pressure": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.05937500000000001,
+          "overlap": 9.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.3985120704303753
+        }
+      },
+      "trial_count": 100
+    },
+    {
+      "hardware_profile": "hip",
+      "quantization_mode": "fp8",
+      "scenario_name": "hip/fp8",
+      "summary": {
+        "failure_weighted_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.02812500000000001,
+          "overlap": 11.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.3331446107872147
+        },
+        "plain_pagerank": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.16875,
+          "overlap": 2.0,
+          "precision_at_k": 0.0,
+          "spearman": -0.5263156256408754
+        },
+        "random_baseline": {
+          "cutoff": 64.0,
+          "gain_vs_random": 0.003124999999999989,
+          "overlap": 13.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.006843633726891864
+        },
+        "tuning_pressure": {
+          "cutoff": 64.0,
+          "gain_vs_random": -0.05937500000000001,
+          "overlap": 9.0,
+          "precision_at_k": 0.0,
+          "spearman": 0.2630586602408227
+        }
+      },
+      "trial_count": 100
+    }
+  ],
+  "seeds": 100
+}
