@@ -52,6 +52,7 @@ exact but measured 1.2-2.7x SLOWER and is closed (finding 23) -- do not re-propo
 from __future__ import annotations
 
 import torch
+import torch.nn.functional as F
 import triton
 import triton.language as tl
 
@@ -334,8 +335,93 @@ def viable_tiles(seq_len: int, head_dim: int, regs_per_sm: int,
     return out
 
 
+RTOL, ATOL = 0.02, 0.002          # the locked tolerance. Never widened.
+
+
+def sdpa_reference(qkv: torch.Tensor, heads: int, head_dim: int) -> torch.Tensor:
+    """What this kernel must reproduce: SDPA plus the head-major repack.
+
+    Lives here, next to the kernel whose contract it states, so that every tuner in this
+    package gates on ONE definition. `attn_choice._reference` is an alias for it.
+    """
+    b, s, _ = qkv.shape
+    dm = heads * head_dim
+    q, k, v = qkv.split(dm, dim=2)
+    q = q.view(b, s, heads, head_dim).transpose(1, 2)
+    k = k.view(b, s, heads, head_dim).transpose(1, 2)
+    v = v.view(b, s, heads, head_dim).transpose(1, 2)
+    o = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+    return o.transpose(1, 2).reshape(b, s, dm)
+
+
+def flushed_time(fn, reps: int = 2) -> float:
+    """What `autotune_tile` ranked with from generation 23 to 41. Milliseconds.
+
+    KEPT, NAMED, AND STILL THE DEFAULT -- because a candidate is only measurable against
+    a parent that is byte-identical to the parent (finding 49's addendum, finding 50's
+    structural fix). Generation 42's whole claim is "this timer picks the wrong tile on
+    config 2", and the only way to measure that claim is to run both timers as two arms
+    resident in ONE process. So the default here preserves v23's behaviour exactly and
+    the candidate selects `hot_time` explicitly; the default flips when the measurement
+    says it should, not before.
+
+    Do not read the default as an endorsement. See `hot_time` for what it cannot do.
+    """
+    import triton.testing as tt
+    return min(tt.do_bench(fn, warmup=10, rep=25, return_mode="min")
+               for _ in range(reps))
+
+
+def hot_time(fn, reps: int = 2) -> float:
+    """THE TIMER `attn_choice` HAS RANKED WITH SINCE GENERATION 40. Milliseconds.
+
+    [L53]: use a timer whose regime matches the call site's -- or write in the code why
+    not. This kernel is replayed inside a captured CUDA graph, on operands a 48 MB L2 has
+    already seen (the whole QKV buffer is 6.29 MB at the announced shapes). `do_bench`
+    models neither: it flushes L2 between reps and pays a launch per call.
+
+    IT IS ALSO THE ONLY ONE OF THE TWO THAT CAN RESOLVE THESE KERNELS AT ALL, which is
+    the sharper reason and the one generation 42 measured. `do_bench` times each call
+    with a pair of CUDA events, and the event timer's quantum on this card is 1.024 us.
+    These kernels run in 1.9-11 us. `bench/probes/g42_tile_timer/probe_timer_regimes.py`
+    swept the full eight-tile grid under both timers, twice, on every shape the kernel
+    accepts:
+
+    The eight-tile grid at B=1, S=128, head_dim=32 -- the smallest announced shape, and
+    the one where the quantum is the largest fraction of the quantity:
+
+        flushed   5.120  5.120  5.120  5.120  5.120  6.144  6.144  6.144
+        hot       1.905  2.260  2.409  2.438  2.486  3.344  3.423  3.718
+
+    Five of the eight arms report the IDENTICAL number under `do_bench`, and the entire
+    spread of the grid is one quantum. The ranking it produces is not noisy, it is
+    absent -- and the tie then hands the decision to whatever tiebreak follows. Under the
+    hot timer the same grid spreads 1.9x and the best arm is 1.28x clear of the tile that
+    tie shipped. At B=4 the same quantization went the other way: a one-quantum artefact
+    cleared the 10% `DECISIVE` bar for a tile the hot timer ranks 1.9% SLOWER, and the
+    flushed sweep picked a DIFFERENT tile in each of two runs of itself. That instability
+    is what finding 50 recorded as "deterministic against a comparable process state, not
+    absolutely"; it is quantization, and the fix is resolution.
+
+    `do_bench_cudagraph` times a graph of many replays and divides, so the event quantum
+    is amortized rather than paid per call. That is why it resolves 1.9 us kernels and
+    `do_bench` cannot.
+
+    A device or context that refuses capture falls back to `do_bench` and the caller is
+    none the wiser -- which is worse than failing closed on a tuner (v23's rule), and is
+    why the fallback exists rather than a raise.
+    """
+    import triton.testing as tt
+    try:
+        return min(tt.do_bench_cudagraph(fn, rep=25, return_mode="min")
+                   for _ in range(reps))
+    except Exception:
+        return min(tt.do_bench(fn, warmup=10, rep=25, return_mode="min")
+                   for _ in range(reps))
+
+
 def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
-                  device="cuda") -> tuple[tuple[int, int, int], str]:
+                  device="cuda", timer=None) -> tuple[tuple[int, int, int], str]:
     """Pick the tile by TIMING it on this device, not by arguing about it.
 
     A mechanism argument cannot pick a tile size -- a sibling candidate lost at 0.88x on
@@ -349,7 +435,43 @@ def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
     grid is large enough to fill the machine, so timing config 6's 10000-row batch would
     allocate 983 MB to learn what 66 rows already say. The cap is derived from the
     measured SM count.
+
+    `timer` IS THE WHOLE OF GENERATION 42, AND IT IS NOT A TILE
+    ------------------------------------------------------------
+    From generation 23 to 41 this routine ranked with `do_bench(warmup=10, rep=25)` --
+    L2 flushed between reps, one launch per call, one pair of CUDA events per call. The
+    event quantum on this card is 1.024 us and these kernels run in 1.9-11 us, so on the
+    smallest shapes the sweep it produced was a table of TIES. `hot_time`'s docstring
+    carries the measured grids: on config 2 five of the eight tiles reported the
+    identical 5.120 us, the tie fell through to the derived-tile tiebreak below, and the
+    tile that tiebreak kept is one the hot timer ranks 1.28x behind the best arm. That is
+    an uncapped scoring row, and finding 51 called it the largest unclaimed op-level
+    margin on its table.
+
+    So the defect is not "the wrong tile was hardcoded for config 2" and the fix is not a
+    tile. It is that this routine and `attn_choice` -- two tuners answering the same
+    question about the same kernel, one calling the other -- ranked on different
+    instruments, and only one of them can resolve the kernels being ranked. Pass
+    `hot_time` and the routine selects `(16, 4, 1)` on config 2 BY ITSELF, from shapes
+    and measured device properties, with no config id anywhere; and it is then right on
+    shapes nobody has swept.
+
+    `timer=None` means `flushed_time`, i.e. exactly what v23 through v41 shipped. That
+    default is deliberate and temporary: see `flushed_time`. Nothing else about the
+    decision changes under either timer -- same grid, same trial budget, same `DECISIVE`
+    bar, same tiebreak, same probe batch.
+
+    CORRECTNESS BEFORE TIMING, PER ARM -- ALSO NEW
+    -----------------------------------------------
+    `attn_choice` gates every arm against the reference at the locked tolerance before
+    admitting it to the timing set, on the rule that a fast wrong kernel must never win a
+    sweep. This routine did not, and was the one place in the package where a tile could
+    be selected on speed alone. Measured, the gap is latent and not live: the g42 probe
+    checked all eight tiles on all ten accepted shapes, twice, and every arm matched. It
+    is closed anyway, because [L38] a check nobody has seen fail is indistinguishable
+    from a check that cannot.
     """
+    timer = flushed_time if timer is None else timer
     props = torch.cuda.get_device_properties(device)
     tiles = viable_tiles(seq_len, head_dim, props.regs_per_multiprocessor,
                          props.max_threads_per_multi_processor, props.warp_size)
@@ -358,35 +480,47 @@ def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
     fallback = choose_tile(seq_len, head_dim, props.regs_per_multiprocessor,
                            props.max_threads_per_multi_processor, props.warp_size)
     try:
-        import triton.testing as tt
         probe_b = max(1, min(batch, 4 * props.multi_processor_count // max(1, heads)))
         dm = heads * head_dim
         qkv = torch.randn(probe_b, seq_len, 3 * dm, device=device, dtype=torch.float16)
         scale = head_dim ** -0.5
-        timed = {}
+        ref = sdpa_reference(qkv, heads, head_dim)
+        timed, dropped = {}, []
         for bm, w, st in tiles:
             try:
                 fn = (lambda bm=bm, w=w, st=st:
                       single_tile_attention(qkv, heads, head_dim, scale, bm, w, st))
-                fn()
-                timed[(bm, w, st)] = min(
-                    tt.do_bench(fn, warmup=10, rep=25, return_mode="min")
-                    for _ in range(2))
+                out = fn()
+                torch.cuda.synchronize()
+                if not torch.allclose(out.float(), ref.float(), atol=ATOL, rtol=RTOL):
+                    dropped.append((bm, w, st))
+                    continue
+                timed[(bm, w, st)] = timer(fn, 2)
             except Exception:
                 continue
-        del qkv
+        del qkv, ref
+        # The timer is NAMED in every reason string. [L36]: a candidate whose mechanism
+        # never engages is its parent with extra build time, and the only externally
+        # visible trace of which instrument ranked this sweep is what it says it was.
+        tn = getattr(timer, "__name__", str(timer))
+        note = f" ({len(dropped)} dropped on tolerance)" if dropped else ""
         if timed:
             best, best_ms = min(timed.items(), key=lambda kv: kv[1])
             base_ms = timed.get(fallback)
             # THE DERIVED TILE HOLDS THE GROUND unless something beats it DECISIVELY.
-            # These kernels run in 1-13 us and the CUDA event timer resolves ~1 us, so
-            # inside DECISIVE the ranking is noise -- and a candidate whose own tile
-            # varies run to run adds that noise to every measurement taken of it (L29).
+            # A candidate whose own tile varies run to run adds that noise to every
+            # measurement taken of it (L29), so the bar stays where v23 put it. What
+            # `hot_time` changes is that the numbers being compared can be told apart at
+            # all: under `flushed_time` this branch was routinely deciding a tie.
+            margin = (base_ms / best_ms) if base_ms else float("nan")
             if base_ms is None or best_ms < base_ms * (1.0 - DECISIVE):
-                return best, (f"autotuned over {len(tiles)} tiles at batch {probe_b}: "
-                              f"{best} beat the derived tile decisively")
-            return fallback, (f"derived tile {fallback}, confirmed against "
-                              f"{len(tiles)} tiles at batch {probe_b}")
+                return best, (f"autotuned over {len(tiles)} tiles at batch {probe_b} "
+                              f"by {tn}{note}: {best} beat the derived tile {fallback} "
+                              f"decisively ({margin:.3f}x)")
+            return fallback, (f"derived tile {fallback}, confirmed by {tn} against "
+                              f"{len(tiles)} tiles at batch {probe_b}{note} "
+                              f"(best challenger {best} at {margin:.3f}x, "
+                              f"inside {DECISIVE:.0%})")
     except Exception:
         pass
     return fallback, "derived (autotune unavailable)"

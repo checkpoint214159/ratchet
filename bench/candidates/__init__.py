@@ -188,6 +188,11 @@ def _v41(baseline_cls):
     return build(baseline_cls)
 
 
+def _v42(baseline_cls):
+    from .v42_hot_tuned_tile import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -455,6 +460,26 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "and is byte-identical to v40. It is a guard on the fallback path, "
                 "worth +0.0000 as shipped and ~+0.0035 in the branch where "
                 "`autotune_looped` declines config 10.",
+    ),
+    "v42_hot_tuned_tile": CandidateSpec(
+        name="v42_hot_tuned_tile", generation=42, parent="v41_vendor_aware_attn",
+        build=_v42,
+        summary="THE TILE SWEEP GETS AN INSTRUMENT THAT CAN RESOLVE IT. From generation "
+                "23 to 41 `autotune_tile` ranked with the L2-flushed `do_bench`, which "
+                "times each call with a pair of CUDA events whose quantum is 1.024 us -- "
+                "against kernels that run in 1.9-11 us. On config 2 five of the eight "
+                "tiles reported the IDENTICAL 5.120 us and the whole grid spanned one "
+                "quantum, so the sweep was not noisy but blank; the tie fell through to "
+                "the derived-tile tiebreak, which kept a tile the hot timer ranks 1.28x "
+                "behind. The same quantization flipped config 3's pick between two runs "
+                "of the identical sweep, in the other direction. The diff is one value: "
+                "`attn_tile_timer = hot_time`, the timer `attn_choice` has ranked with "
+                "since g40, so the two tuners now share one instrument by construction. "
+                "No tile is hardcoded and no config id appears -- the sweep selects "
+                "(16,4,1) on config 2 by itself. Blast radius measured before it was "
+                "claimed: 9 of the 10 accepted shapes select the identical tile under "
+                "both timers, twice. Also closes the one tuner in the package that "
+                "admitted arms to a timing set without a correctness gate.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
