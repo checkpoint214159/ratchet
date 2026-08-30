@@ -106,6 +106,32 @@ call is served from the compiled callable, and the moment the count returns to i
 measured baseline the buffer is replayed into and cloned out -- **the parent's exact
 behaviour at the parent's exact cost.** Worst case equals g21; typical case equals v26.
 
+CHANGE 4 vs g21 -- THE BOOKKEEPING IS CHEAP ENOUGH TO SURVIVE THE LAUNCH-BOUND CONFIGS
+---------------------------------------------------------------------------------------
+The saving here is a device-side copy; the price is Python in `forward`. On config 2 --
+batch 1, a ~60 us call that L20 measured as CPU-dispatch-bound rather than GPU-bound --
+that trade could go the wrong way, and a candidate that wins on 6 and 13 while losing on
+2, 3 and 12 is not an advance. MEASURED on CPU (no GPU timing, so no contention):
+
+    untyped_storage() + use_count   0.209 us     <- g21 paid this every call
+    cached _cdata      use_count    0.098 us     <- REJECTED, see below
+    buf.detach()                    0.464 us     <- g21 paid this every call
+    sys.getrefcount                 0.034 us
+
+The detach is the expensive one and it is removable: on the branch where the liveness
+check has just proved nobody holds the previous handout, that TensorImpl is ours to hand
+out again. Bookkeeping goes from ~0.71 us to ~0.25 us per call, against a ~2.2 us launch
+(this card's measured launch overhead) plus an allocation saved by not cloning.
+
+**The other 0.11 us was taken and then given back, because taking it broke the guard.**
+Caching the storage handle at arm time makes the per-call check one C call instead of an
+object construction -- and `tensor.untyped_storage()` returns the SAME Python object every
+time, so the handle we hold IS the one the caller receives, and holding it permanently
+folds the caller's reference into our own calibrated baseline. The guard went blind to a
+caller keeping the storage, which is precisely the hole this candidate had just closed.
+`test_a_caller_who_kept_only_the_storage_is_seen` failed on the first run. Recorded here
+because the next person to look at 0.11 us will have the same idea.
+
 WHAT THIS DOES NOT DO, AND WHY
 -------------------------------
 The input copy could also be elided, by remembering `x.data_ptr()` and `x._version` and
@@ -143,6 +169,24 @@ import torch
 from .v26_causal_correct import build as build_v26
 
 
+def _use_count_of(cdata) -> int:
+    """The primitive underneath the liveness check. Separated so a test can wedge it.
+
+    CACHING THE HANDLE IS A CORRECTNESS BUG, AND THIS IS THE NOTE THAT SAYS SO. Reading a
+    `_cdata` captured once at arm time costs 0.098 us against 0.209 us for building the
+    storage object each call, and on config 2 -- a ~60 us CPU-dispatch-bound call (L20) --
+    0.11 us is not nothing. It was implemented, and
+    `test_a_caller_who_kept_only_the_storage_is_seen` failed immediately.
+
+    MEASURED cause: `tensor.untyped_storage()` returns the SAME Python object every time
+    (there is one PyObject slot per StorageImpl). So a handle we hold permanently is the
+    very object the caller receives, holding it raises no C-level count, and the baseline
+    we calibrated already includes our own reference -- the guard goes blind to exactly
+    the case g21 declared unreachable. The saving is 0.11 us; the price is finding 24.
+    """
+    return torch._C._storage_Use_Count(cdata)
+
+
 def _storage_use_count(t: torch.Tensor) -> int:
     """How many things share `t`'s storage: TensorImpls, and held UntypedStorage objects.
 
@@ -154,7 +198,7 @@ def _storage_use_count(t: torch.Tensor) -> int:
     What it genuinely cannot see is a caller holding a raw integer address from
     `data_ptr()`. Nothing in Python can see that.
     """
-    return torch._C._storage_Use_Count(t.untyped_storage()._cdata)
+    return _use_count_of(t.untyped_storage()._cdata)
 
 
 def build(baseline_cls):
@@ -172,6 +216,7 @@ def build(baseline_cls):
         # stops being zero on the discard pattern.
         output_copies: int = 0
         zero_copy_returns: int = 0
+        handout_reuses: int = 0
         preserve_rebinds: int = 0
         alias_events: int = 0
         fallback_calls: int = 0
@@ -193,6 +238,9 @@ def build(baseline_cls):
                 self.zero_copy_reason = "refused: no static output buffer to hand out"
                 return
             try:
+                # The storage handle is deliberately NOT cached across calls -- see the
+                # note on `_use_count_of`. It would save 0.11 us per forward and blind the
+                # guard to a caller who keeps the storage.
                 n0 = _storage_use_count(buf)
                 probe = buf.reshape(-1)[:1]          # an alias we make ourselves
                 n1 = _storage_use_count(buf)
@@ -299,6 +347,7 @@ def build(baseline_cls):
             buf = self._static_y
 
             if self.zero_copy == "on":
+                reusable = None
                 verdict = self._verdict()
                 if verdict == "aliased":
                     self._to_clone_mode(
@@ -319,10 +368,20 @@ def build(baseline_cls):
                     self.preserve_rebinds += 1
                     self.output_copies += 1
                 else:
+                    # Nobody holds the previous handout, so its TensorImpl is ours to hand
+                    # out again: it still views exactly this buffer and the replay below
+                    # refreshes the values. MEASURED 0.464 us saved per call against a
+                    # fresh `detach()`, which is 0.8% of config 2's whole forward.
+                    reusable = self._handout
                     self._handout = None
 
                 self._replay(x, valid_token_mask)
-                handout = buf.detach()   # a distinct TensorImpl, so aliases are countable
+                if reusable is not None:
+                    handout = reusable
+                    self.handout_reuses += 1
+                else:
+                    # A distinct TensorImpl, so aliases of it are countable.
+                    handout = buf.detach()
                 self._handout = handout
                 self.zero_copy_returns += 1
                 return handout

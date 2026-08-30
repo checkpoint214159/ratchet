@@ -29,7 +29,7 @@ import torch
 pytestmark = pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA")
 
 from bench.candidates import REGISTRY
-from bench.candidates.v29_copy_elimination import _storage_use_count
+from bench.candidates.v29_copy_elimination import _storage_use_count, _use_count_of
 
 NAME = "v29_copy_elimination"
 PARENT = "v26_causal_correct"
@@ -136,6 +136,10 @@ def test_no_copy_on_the_pattern_both_harnesses_use():
     assert cand.zero_copy_returns >= 10
     assert cand.preserve_rebinds == 0
     assert cand.fallback_calls == 0
+    # The handout TensorImpl is reused on this branch rather than re-detached: 0.464 us
+    # per call on the config that is CPU-dispatch-bound. Asserted so the saving cannot be
+    # quietly dropped, and so the reuse is visibly the branch that ran.
+    assert cand.handout_reuses >= 9, "the free branch re-allocated a handout every call"
 
 
 @pytest.mark.gpu
@@ -398,6 +402,12 @@ def test_the_storage_use_count_means_what_the_candidate_thinks_it_means():
         "kept-only-the-storage test above is passing for the wrong reason")
     del s
     assert _storage_use_count(t) == base
+    # And the reason the storage handle must NOT be cached across calls: torch returns the
+    # same Python object every time, so a permanently held handle is the caller's own
+    # object and folds their reference into our baseline. Caching it saved 0.11 us per
+    # call and blinded the guard; this pins the property that makes that true.
+    assert t.untyped_storage() is t.untyped_storage()
+    assert _use_count_of(t.untyped_storage()._cdata) == _storage_use_count(t)
 
 
 @pytest.mark.gpu
@@ -419,7 +429,7 @@ def test_a_sensor_that_cannot_fire_is_refused_and_the_parent_clone_stands(monkey
     candidate must decline zero-copy entirely and go on being the parent -- not assume the
     buffer is free forever, which is finding 24 with extra steps."""
     import bench.candidates.v29_copy_elimination as mod
-    monkeypatch.setattr(mod, "_storage_use_count", lambda t: 1)
+    monkeypatch.setattr(mod, "_use_count_of", lambda cdata: 1)
 
     m, cand, base = _build(NAME, with_baseline=True)
     x = _x()
