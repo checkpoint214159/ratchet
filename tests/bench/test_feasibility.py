@@ -194,6 +194,27 @@ class TestBlockedFp64Oracle:
             torch.backends.cuda.matmul.allow_tf32 = prev
             torch.set_float32_matmul_precision("high")
 
+    def test_the_default_query_block_is_sized_from_free_memory(self):
+        # The oracle's first full-S run died with a DRIVER out-of-memory at a hardcoded
+        # q_block of 1024: `_blocked_attention` batches the head axis, so one tile is
+        # [heads, q_block, seq] and 16 heads at S=100000 asked for 7.75 GiB.
+        from bench.feasibility import choose_q_block
+        big = choose_q_block(100000, 16, free_bytes=14 * GIB)
+        small = choose_q_block(100000, 16, free_bytes=2 * GIB)
+        assert 8 <= small < big <= 1024
+        assert big * 16 * 100000 * 8 * 3 <= 14 * GIB
+        # and it must not blow up on a shape where the whole tile is tiny
+        assert choose_q_block(128, 4, free_bytes=14 * GIB) == 1024
+
+    def test_the_default_query_block_gives_the_same_answer(self):
+        import torch
+        torch.cuda.is_available() or pytest.skip("no CUDA")
+        _ref, m, x, msk = self._setup()
+        with torch.inference_mode():
+            auto = FZ.blocked_reference_forward(m, x, msk, causal=True)
+            fixed = FZ.blocked_reference_forward(m, x, msk, causal=True, q_block=128)
+        assert (auto - fixed).abs().max().item() < 1e-12
+
     def test_query_blocking_changes_nothing(self):
         import torch
         torch.cuda.is_available() or pytest.skip("no CUDA")
