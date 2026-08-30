@@ -1,4 +1,4 @@
-# 51 — Three attention paths, thirteen configs, twice: the predicate is wrong on exactly one shape, and the looped form had already covered it
+# 52 — Three attention paths, thirteen configs, twice: the predicate is wrong on exactly one shape, and the looped form had already covered it
 
 **Date:** 2026-08-31. **Generation:** 41. **Branch:** `cand/g41/attn-audit`.
 **Parent:** `v40_looped_attn` (`ac0ef1e`). **Candidate:** `v41_vendor_aware_attn`.
