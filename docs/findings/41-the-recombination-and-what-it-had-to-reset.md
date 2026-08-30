@@ -172,3 +172,32 @@ resolving before the next merge; not resolved here.
 (Three `test_lineage_topology` failures on this branch — v23, v26, v33 all git-descending
 from `v19_norm_fused` — are **pre-existing**, verified identical on `bb7c471` with every
 change of this generation stashed.)
+
+## Screen verdict
+
+`bench/screen_log.jsonl` is gitignored by design — advisory, partial sweeps, never feeds
+clade sampling — so the two runs are recorded here instead.
+
+```
+                    geomean   cfg 2      cfg 7      cfg 8     cfg 10
+screen 1            2.7377    0.04518    0.08499    6.7553    0.24269
+screen 2            2.7216    0.04710    0.08397    6.7441    0.24166
+v26 parent          2.5340
+
+PROMOTE, +8.0%  and  PROMOTE, +7.4%      (commit 77b9aef, clean tree)
+```
+
+Screened against `v26_causal_correct` rather than the declared parent: v33 has only
+config-14 rows on this branch, and on the thirteen resident configs v33 *is* v26 by
+construction — the streaming layer delegates and adds no kernel, which the census confirms
+independently (both count 36.0 nodes per forward, five out of five). v26 is also what v34
+screened against, so the siblings are comparable.
+
+**What this settles and what it does not.** v34 screened +8.1% and then +0.7% on the same
+commit and a clean tree ([L46]). Both of my config-2 readings sit inside v34's measured
+min-of-N band (0.0440–0.0471) and far below v26's (0.0604–0.0614); configs 7, 8 and 10
+reproduced to three or four digits across both screens, which is the free control saying
+the harness was steady while I sampled. So this pair did not exhibit the instability —
+and two samples cannot establish that it is gone, since v34 needed one unlucky draw to
+show +0.7%. A screen is one pass and advisory ([L41]). The mechanism is intact; the
+statistic is still the open question, and the fix for it belongs to `run_matrix`.
