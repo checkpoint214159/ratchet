@@ -158,6 +158,11 @@ def _v29(baseline_cls):
     return build(baseline_cls)
 
 
+def _v20(baseline_cls):
+    from .v20_headmajor_qkv import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -358,5 +363,13 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "Declines head_dim 128/256 and seq_len 1024/100000, where a loop-free "
                 "kernel cannot keep enough blocks resident to hide its own latency -- "
                 "measured 0.94x and 0.84x there, so declining is the point.",
+    ),
+    "v20_headmajor_qkv": CandidateSpec(
+        name="v20_headmajor_qkv", generation=20, parent="v18_capture_insurance", build=_v20,
+        summary="SIBLING of v19 off v18. A fused QKV GEMM that scatters straight into "
+                "head-major buffers, so flash reads contiguously instead of through a "
+                "stride jumping by 3*D. The tax is 1.78x of attention at config 6 and "
+                "cannot be repacked away (.contiguous() costs more than it saves). Tuned "
+                "kernel beats cuBLAS+strided by 1.163x on the segment.",
     ),
 }
