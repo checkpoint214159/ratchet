@@ -171,6 +171,40 @@ The screen cannot settle this, and re-running it would only resample the same fo
 The shape the claim actually lives on — config 6, `d_model` 128 and 1.28 M tokens — is
 deliberately excluded from the screen set because it alone is half a full sweep.
 
+## The op-level probe and the harness disagree, and the probe loses
+
+Probe part 4, under the GPU lock, min-of-3 × `do_bench`. The baseline arm is the split path
+**`torch.compile`d**, deliberately, so that Inductor fuses its widen and its add — timing
+them as separate eager ops is the exact mistake that made v19's op probe read 3.84x on a
+candidate the harness measured flat ([L41]). Batch is capped at 256, so the cfg6 row is
+B = 256 rather than 10 000.
+
+| shape | split (compiled) | fused | gain |
+|---|---|---|---|
+| cfg1  B64  D128 hd32 | 0.0414 | 0.0332 | **1.249x** |
+| cfg4  B16  D128 hd32 | 0.0188 | 0.0157 | **1.196x** |
+| cfg5  B128 D128 hd32 | 0.0632 | 0.0667 | **0.947x** |
+| cfg6  B256 D128 hd32 | 0.1326 | 0.1307 | **1.015x** |
+| cfg7  B64  D32  hd8  | 0.0214 | 0.0154 | **1.388x** |
+| cfg11 B64  D128 hd8  | 0.0508 | 0.0540 | **0.941x** |
+| cfg12 B64  D128 hd32 | 0.0186 | 0.0144 | **1.292x** |
+
+Geomean 1.135x, **two losing shapes**, and the segment is roughly break-even in exactly the
+large-batch regime the candidate was aimed at (cfg5 0.947x, cfg6 1.015x). Unlike g24's
+"1.28x–1.58x, no losing shape", this fusion does not win everywhere it fires.
+
+**And the probe contradicts the harness on the one config both saw.** cfg7 measures 1.388x
+at the segment and **+4.1% slower** end to end. Per [L41] the harness is right until proven
+otherwise — three recurrences and counting — and the mechanism is available: in the real
+candidate the split path's residual add is followed immediately by `norm2`, so Inductor has
+somewhere to fuse it that this probe's isolated baseline does not. The probe removes a
+launch the candidate was not actually paying for, which is [L33] precisely: *isolation does
+not merely shrink an effect, it can invent one that was never available.*
+
+Recorded because it was measured, not because it is evidence. **Nothing in this section is
+a verdict**, and the two losing shapes are the more useful half of it: they say the
+occupancy the fusion spends is real and is not always bought back.
+
 ## Honest expectation, stated before the sweep ([L33])
 
 The commissioning profile of the frontier at config 6's shape:
@@ -205,9 +239,19 @@ that says which of three conditions refused rather than silently falling back.
 Per [L39], a candidate whose value the screen cannot see needs a bespoke falsifier rather
 than a screen verdict. Here the falsifiers are `bench/probe_outproj_epilogue.py` parts 1–3
 and the 37 tests in `tests/bench/test_v31_outproj_epilogue.py`, all of which are
-unambiguous. What is *not* established is the speed, and the single firing screen config
-points the wrong way. **A full sweep is the only thing that can answer it, and the case for
-spending one rests on config 6 and config 11 — not on config 7, which the screen already
-suggests is a losing shape and which a narrower saturation or residency threshold could be
-made to decline if a sweep confirms it.** Making it decline *now*, on one screen pass,
-would be fitting the predicate to noise.
+unambiguous. What is *not* established is the speed, and **both speed signals available are
+weak and they disagree**: the op-level probe says 1.135x on the segment with two losing
+shapes, the screen's single firing config says −4.1% end to end, and [L41] says believe the
+harness.
+
+So the honest recommendation is *not* "promote". It is: **this candidate is correct, better
+conditioned, structurally cheaper, and unproven on speed — and the only measurement that
+would settle it is a full sweep, which is expensive and which the evidence does not
+currently justify demanding.** If one is spent, config 6 and config 11 are what it is for;
+config 7 is the shape both signals agree least about.
+
+One thing deliberately *not* done: tightening the saturation or residency threshold until
+config 7 declines. It would raise the geomean on this evidence and it would be fitting the
+predicate to a single screen pass inside the noise floor — the [L29] error, committed on
+purpose. If a sweep confirms config 7 is a losing shape, the threshold that excludes it
+should be derived from what the sweep shows, not reverse-engineered from a verdict.
