@@ -1,0 +1,47 @@
+
+=== config 1 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      224.26     223.23       1.0000x  out,ffn_in,ffn_out
+v42_hot_tuned_tile         224.26     223.23       1.0000x  out,ffn_in,ffn_out
+
+=== config 2 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      200.70     200.70       1.0000x  -
+v42_hot_tuned_tile         194.56     156.67       1.0316x  -
+
+=== config 3 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      117.76     116.74       1.0000x  qkv
+v42_hot_tuned_tile         117.76     116.74       1.0000x  qkv
+
+=== config 4 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn       86.02      86.02       1.0000x  qkv,out
+v42_hot_tuned_tile          88.06      87.04       0.9767x  qkv,out
+
+=== config 7 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn       77.82      76.80       1.0000x  qkv,out
+v42_hot_tuned_tile          77.82      76.80       1.0000x  qkv,out
+
+=== config 9 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      225.28     224.26       1.0000x  out,ffn_in,ffn_out
+v42_hot_tuned_tile         225.28     224.26       1.0000x  out,ffn_in,ffn_out
+
+=== config 10 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      224.26     222.21       1.0000x  out,ffn_in,ffn_out
+v42_hot_tuned_tile         223.23     221.18       1.0046x  out,ffn_in,ffn_out
+
+=== config 11 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      269.31     269.31       1.0000x  out,ffn_in,ffn_out
+v42_hot_tuned_tile         269.31     268.29       1.0000x  out,ffn_in,ffn_out
+
+=== config 12 (all arms correct) ===
+arm                     median us     min us vs v41_vendor_aware_attn  sites
+v41_vendor_aware_attn      104.45     103.42       1.0000x  qkv,out
+v42_hot_tuned_tile         103.42     102.40       1.0099x  qkv,out
+
+wrote bench/probes/g42_tile_timer/abba_run2.json

@@ -479,7 +479,18 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "(16,4,1) on config 2 by itself. Blast radius measured before it was "
                 "claimed: 9 of the 10 accepted shapes select the identical tile under "
                 "both timers, twice. Also closes the one tuner in the package that "
-                "admitted arms to a timing set without a correctness gate.",
+                "admitted arms to a timing set without a correctness gate. "
+                "MEASURED (finding 53): config 2 is worth +0.006 to +0.013 of "
+                "weighted_score -- seven independent ABBA runs, floors 48.13 -> 45.06 us "
+                "(1.068x), the tile stable at (16,4,1) in 7 of 7, and the pre-registered "
+                "ceiling of +0.0083 landing between the two defensible estimators. "
+                "Configs 1, 7, 9, 10, 11 are inert with identical tiles on both arms. "
+                "THE COST, stated: config 3's plan destabilises -- v41 picks one tile in "
+                "6 of 6 runs, v42 picks three different tiles in 6 -- because its true "
+                "margin is ~2% and prime-time noise now clears the 10% bar spuriously, "
+                "where the flushed timer's tie table never cleared it at all. Config 3 "
+                "is capped so this costs no score, and the fix is pre-registered: make "
+                "the sweep replicate before it displaces.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,

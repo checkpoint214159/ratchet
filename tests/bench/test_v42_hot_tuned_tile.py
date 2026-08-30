@@ -245,18 +245,27 @@ def test_the_hot_timer_ranks_the_chosen_tile_well_clear_of_the_derived_one():
 
 
 def test_every_other_accepted_shape_keeps_its_tile():
-    """THE BYTE-IDENTICAL-CONTROL CLAIM, tested rather than assumed -- and [L38]: it is
-    what shows the tuner is capable of NOT changing its mind.
+    """[L38]: the tuner must be shown capable of NOT changing its mind, or "it changed
+    its mind on the shape we care about" means nothing.
 
-    Nine of the ten shapes the kernel accepts must select the identical tile under both
-    timers. If this fails the candidate is not what it says it is, and the A/B's control
-    configs are not controls.
+    READ THE SCOPE OF THIS TEST CAREFULLY. It asserts a property of the tuner **in this
+    process's regime** -- a near-idle GPU with only the probe tensor resident. It does
+    NOT establish which tile the MODEL will pick, and it must not be quoted as if it did.
+    Measured (finding 53): at the model's prime time, with the full model resident, the
+    hot timer ranks `(16,4,1)` **1.460x** ahead of `(64,4,1)` at B=4 -- where this
+    process measures it 1.9% BEHIND. A 1.49x regime gap on the same two arms, which is
+    the same order as the gap this candidate was built to fix, one level up. The tile a
+    standalone sweep picks and the tile the model picks are two different measurements.
 
-    Config 3 is EXCLUDED and the exclusion is the evidence, not a concession: the g42
-    probe measured the flushed timer picking `(16,4,1)` on it in one run and `(64,4,1)`
-    in the next, off a one-quantum difference. An arm that cannot reproduce its own
-    answer cannot be asserted equal to anything (finding 50). The hot timer picks
-    `(64,4,1)` there in both runs, and that is asserted.
+    So: exactly one shape moves HERE, and that is worth pinning because a change of mind
+    on every shape would mean the timer swap had simply randomised the sweep. What the
+    A/B's control configs actually are is a question only the A/B can answer, and
+    `bench/abba.py` now records each arm's chosen tile per config so it does.
+
+    B=4 is EXCLUDED from the equality assertion, and the exclusion is evidence rather
+    than a concession: the g42 probe measured the flushed timer picking `(16,4,1)` there
+    in one run and `(64,4,1)` in the next, off a one-quantum difference. An arm that
+    cannot reproduce its own answer cannot be asserted equal to anything (finding 50).
     """
     props = torch.cuda.get_device_properties("cuda")
     moved, unstable = [], BY_ID[3]

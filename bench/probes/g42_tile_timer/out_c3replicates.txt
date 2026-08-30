@@ -1,0 +1,7 @@
+########## cfg3 replicate 1 ##########
+########## cfg3 replicate 2 ##########
+########## cfg3 replicate 3 ##########
+########## cfg3 replicate 4 ##########
+########## cfg3 replicate 5 ##########
+########## cfg3 replicate 6 ##########
+ALL CFG3 REPLICATES DONE
