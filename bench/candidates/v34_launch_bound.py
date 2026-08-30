@@ -127,7 +127,6 @@ import torch
 import torch.nn.functional as F
 
 from .v26_causal_correct import build as build_v26
-from ..kernels.attn_single_tile import single_tile_attention
 from ..kernels.ffn_fused import (amortizes, fits, fused_ffn_normed, launch_tile,
                                  one_wave)
 
@@ -285,17 +284,7 @@ def build(baseline_cls):
                 qkv_w, qkv_b, out_w, out_b = cached[0], cached[1], cached[2], cached[3]
 
                 qkv = F.linear(xn, qkv_w, qkv_b)
-                if self.attn_used:
-                    abm, awarps, astages = self.attn_tile
-                    ctx = single_tile_attention(qkv, a.num_heads, a.head_dim, a.scale,
-                                                abm, awarps, astages)
-                else:
-                    q, k, v = qkv.split(a.d_model, dim=-1)
-                    q = q.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    k = k.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    v = v.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    ctx = F.scaled_dot_product_attention(
-                        q, k, v, is_causal=True).transpose(1, 2).reshape(b, s, a.d_model)
+                ctx = self._attention(qkv, a, b, s)
                 # NOT `.float()`. The out-projection is an fp16 GEMM over fp16 operands,
                 # so its result is already fp16 and the upcast is a lossless widening --
                 # but with the residual add now living inside the megakernel there is no

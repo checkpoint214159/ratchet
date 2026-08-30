@@ -178,6 +178,11 @@ def _v38(baseline_cls):
     return build(baseline_cls)
 
 
+def _v40(baseline_cls):
+    from .v40_looped_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -413,6 +418,21 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "against total_memory -- which has no coefficient to calibrate and "
                 "keeps config 14's full batch streaming on a 16 GiB card while letting "
                 "an 80 GiB card attempt it.",
+    ),
+    "v40_looped_attn": CandidateSpec(
+        name="v40_looped_attn", generation=40, parent="v38_stream_fallback", build=_v40,
+        summary="A SECOND ATTENTION TILE SHAPE, CHOSEN BY A SYMMETRIC SWEEP. Adds a "
+                "flash-style kernel with the K/V axis in a loop, so K/V stage through "
+                "shared memory and the pipeliner has something to hide latency behind, "
+                "and a chooser that sweeps BOTH Triton forms plus sdpa+repack over "
+                "their full legal grids with one timer and one repeat count -- the "
+                "symmetry finding 47 measured at 4.5% and finding 48 then lost. "
+                "Predicated on the grid (B*heads*cdiv(S,BM) against the measured SM "
+                "count) rather than on head_dim: pipelining needs more than one wave to "
+                "hide behind. Census first: attention is 17.5% of config 10's wall on "
+                "v38, and the op-level ratio was re-measured L2-hot (1.228x, replicated "
+                "to 0.2%) because finding 48 had priced an in-graph time with an "
+                "L2-flushed ratio across a 2.24x regime gap.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
