@@ -14,3 +14,6 @@ research/ideas/intake/.human-input.lock
 
 # stage-1 screen results: advisory, partial sweeps, never feed clade sampling
 bench/screen_log.jsonl
+
+# agent worktrees -- transient, each is its own checkout
+.claude/worktrees/

@@ -138,6 +138,11 @@ def _v19(baseline_cls):
     return build(baseline_cls)
 
 
+def _v23(baseline_cls):
+    from .v23_single_tile_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -289,5 +294,17 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "memory, never from config ids. Chooses a streamed path when the working "
                 "set would not fit and v13 otherwise, and reports is_tuned so an untuned "
                 "path is never presented as a tuned one.",
+    ),
+    "v23_single_tile_attn": CandidateSpec(
+        name="v23_single_tile_attn", generation=23, parent="v18_capture_insurance",
+        build=_v23,
+        summary="THE FIRST HAND-WRITTEN ATTENTION. One Triton tile per (batch, head, "
+                "query block): no K/V loop, no online softmax, no rescale, and the "
+                "split/transpose/repack around SDPA deleted with it. Possible because "
+                "eleven announced rows have seq_len <= 128, where the whole score matrix "
+                "is 64 KB of registers. The tile is autotuned at prime time, not guessed. "
+                "Declines head_dim 128/256 and seq_len 1024/100000, where a loop-free "
+                "kernel cannot keep enough blocks resident to hide its own latency -- "
+                "measured 0.94x and 0.84x there, so declining is the point.",
     ),
 }
