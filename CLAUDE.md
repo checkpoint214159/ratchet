@@ -13,6 +13,32 @@ You are working in this repository as an implementation agent. Treat repository 
 
 If this shim conflicts with canonical files under `.beryl/agent/`, treat this shim as stale, follow `.beryl/agent/`, and note the conflict.
 
+## Ratchet Research Loop — read before touching `bench/`
+
+This repository runs a measured optimization loop. Before proposing, implementing, or
+measuring anything under `bench/`, read `ONBOARDING.md` and then `docs/loop/method.md`.
+
+- `docs/loop/method.md` — the 24 rules distilled from every measurement so far.
+- `docs/loop/architecture.md` — orchestrator, researcher, expander, verifier.
+- `docs/loop/runbook.md` — one turn of the loop, as exact commands.
+- `docs/loop/roles/` — the role prompt for whichever of those you are.
+
+Four rules that override convenience in every session:
+
+- Correctness runs before timing, and the tolerances are locked. Never widen them.
+- Only the orchestrator measures, holding `bench/gpu_lock.py`. Two processes on one GPU
+  produce two wrong numbers, not two measurements.
+- A number that will change a decision comes through `bench/run_matrix.py`. An ad-hoc
+  probe may propose; it may never conclude.
+- `bench/results.jsonl` is append-only and candidate branches are never rebased,
+  squashed, amended or force-pushed.
+
+Findings belong in `docs/findings/`, never in an agent's private memory.
+
+Note on the sub-agent default below: the `bench/` loop **is** a multi-agent design,
+and running it is an explicit request for sub-agents. The default still holds
+everywhere else in this repository.
+
 ## Required Context Before Editing
 
 Before changing code or tests, read `.beryl/agent/task-routing.md`, classify the current task, and load only the matching workflow from `.beryl/agent/skills/<skill-name>/SKILL.md`.
