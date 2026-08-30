@@ -116,21 +116,32 @@ def flash_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
     B, H, N, D = q.shape
     H_kv = k.shape[1]
     KV_N = k.shape[2]
-    assert D in (16, 32, 64, 128), f"unsupported head dim {D}"
     assert H % H_kv == 0, "H must be a multiple of H_kv"
+
+    # Tensor cores need the QK/PV contraction K>=16; pad head_dim<16 to 16 with zeros. This
+    # is exact: zeros add nothing to QK^T and produce zero output columns that we slice off.
+    D_orig = D
+    if D < 16:
+        q = torch.nn.functional.pad(q, (0, 16 - D))
+        k = torch.nn.functional.pad(k, (0, 16 - D))
+        v = torch.nn.functional.pad(v, (0, 16 - D))
+        D = 16
+    assert D in (16, 32, 64, 128, 256), f"unsupported head dim {D}"
 
     q = q.contiguous()
     k = k.contiguous()
     v = v.contiguous()
     o = torch.empty_like(q)
 
-    scale = 1.0 / math.sqrt(D)
+    scale = 1.0 / math.sqrt(D_orig)   # true head_dim, not the padded width
     # Tiles are fp32 in shared memory; D=128 with 64x64 needs ~113KB > GB10's 99KB optin.
     # Solve for feasible tiles from the measured budget rather than copying a config.
     if D <= 64:
         BLOCK_M, BLOCK_N, num_warps, num_stages = 64, 64, 4, 2
-    else:  # D == 128
+    elif D == 128:
         BLOCK_M, BLOCK_N, num_warps, num_stages = 32, 32, 4, 2
+    else:  # D == 256: tiles are 256-wide, so shrink the query block to fit smem
+        BLOCK_M, BLOCK_N, num_warps, num_stages = 16, 32, 4, 2
 
     grid = (triton.cdiv(N, BLOCK_M), B * H)
     _flash_fwd[grid](
@@ -146,4 +157,4 @@ def flash_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
         CAUSAL=causal, PREC=prec,
         num_warps=num_warps, num_stages=num_stages,
     )
-    return o
+    return o[..., :D_orig] if D_orig != D else o

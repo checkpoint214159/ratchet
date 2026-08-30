@@ -11,20 +11,29 @@ from pathlib import Path
 import torch
 import triton
 
+from ratchet.kernels.graphed import graphed_forward
+
 BENCH = Path("benchmarks/reference/torch_transformer_benchmark.py").resolve()
 spec = importlib.util.spec_from_file_location("tt_bench", BENCH)
 mod = importlib.util.module_from_spec(spec)
 sys.modules["tt_bench"] = mod
 spec.loader.exec_module(mod)
 
-from ratchet.kernels.graphed import graphed_forward
-
-# (id, batch, d_model, heads, seq, layers, ffn_dim) -- subset of the 14, all causal.
+# (id, batch, d_model, heads, seq, layers, ffn_dim) -- the announced matrix, all causal.
 CONFIGS = [
     (1, 64, 128, 4, 128, 4, 128),
-    (2, 1, 128, 4, 128, 4, 128),      # launch-bound: CUDA graph should shine
-    (13, 64, 128, 4, 1024, 4, 128),   # attention-heavy
-    (8, 64, 1024, 4, 128, 4, 1024),   # head_dim 256
+    (2, 1, 128, 4, 128, 4, 128),        # launch-bound
+    (3, 4, 128, 4, 128, 4, 128),
+    (4, 16, 128, 4, 128, 4, 128),
+    (5, 128, 128, 4, 128, 4, 128),
+    (6, 10000, 128, 4, 128, 4, 128),    # occupancy extreme
+    (7, 64, 32, 4, 128, 4, 32),         # head_dim 8
+    (8, 64, 1024, 4, 128, 4, 1024),     # head_dim 256
+    (9, 64, 128, 1, 128, 4, 128),       # head_dim 128
+    (10, 64, 128, 2, 128, 4, 128),      # head_dim 64
+    (11, 64, 128, 16, 128, 4, 128),     # head_dim 8
+    (12, 64, 128, 4, 32, 4, 128),       # short seq
+    (13, 64, 128, 4, 1024, 4, 128),     # attention-heavy
 ]
 ONLY = set(int(a) for a in sys.argv[1:] if a.isdigit())
 
