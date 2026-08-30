@@ -230,6 +230,38 @@ control (comparing against a rolled batch) so the comparison is capable of faili
 
 ---
 
+## 3.5 What was measured, on the row
+
+`python3 bench/run_matrix.py --candidate v33_streamed_long --ids 14`, commit 3db6faf,
+clean tree, ledger row `status="reference_infeasible"`:
+
+| | |
+|---|---|
+| sequences completed | **32 / 32** |
+| tokens computed | **3,200,000**, at the announced S=100000 |
+| peak device memory | **3.54 GiB** |
+| per sequence | 0.518 s min, 0.634 s mean (`host_wallclock`, **not** a timing measurement) |
+| causal-prefix check | **passed**, P=4096, max_abs **8.658e-04**, 0 failed elements |
+| dispatch | `resident`, slice=1 — the capability path feeds it one sequence at a time |
+| attention | SDPA; the single-tile kernel declines at S=100000, as designed |
+| speedup | **null** |
+
+This supersedes finding 09's B=32 figure, which was 32x a measured single-sequence
+forward. **All 32 sequences are now actually run**, with the harness's own
+`generate_random_case` producing each one, and correctness is checked against the real
+reference at the real sequence length instead of at proxy shapes.
+
+Two things it does not show. The **full-batch call** — the single `forward` a grading
+harness makes — fails, as §1.2 says it must; the row records the stage and the driver's
+words. And the **fp64 oracle** did not complete on the first attempt: it died with a
+*driver* out-of-memory while another agent's process held ~15.8 GB, which the nvidia-smi
+contention check did not see (finding 26 / [L38] again, and the row was written with
+`gpu_exclusive=True` because our lock *was* held). The capability path now releases the
+allocator cache before the oracle and retries it at a quarter and a sixteenth of the
+query block.
+
+---
+
 ## 4. What was built
 
 **`bench/feasibility.py`** — the derived requirement, the two predicates

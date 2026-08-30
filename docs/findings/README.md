@@ -30,6 +30,8 @@ the note. Where something is inferred rather than measured, it says so.
 | [13](13-we-are-fp32-only.md) | Every candidate assumes an fp32 model; fp16 crashes or fails the gate | 2026-08-29 |
 | [12](12-the-baseline-was-wrong.md) | **Our baseline was eager. Honest speedup is 1.69x, not 7.2x, and we lose 2 configs.** | 2026-08-29 |
 
+| [33](33-config-14-protocol.md) | **Config 14: the reference is infeasible on any hardware (18.63 TiB); we compute it, verified at the real S; and there is still no speedup.** Supersedes [09]. | 2026-08-30 |
+
 Related, and deliberately elsewhere:
 
 - `bench/matrix.py` — the matrix as executable data; findings cite it, never restate it.
