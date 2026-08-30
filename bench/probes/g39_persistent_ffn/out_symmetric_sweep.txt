@@ -1,0 +1,46 @@
+
+==============================================================================================
+128 tokens  (cfg 2)   derived tile BM=16, grid=8
+==============================================================================================
+  frontier AS SHIPPED (BM=16 w=8, default stages)    7.791 us    1.2% peak
+  frontier best of 32 arms                  7.677 us    1.2% peak   BM=16 warps=8 stages=3
+  persistent best, ONE trip (39)            7.734 us    1.2% peak   BM=16 w=8 st=2 grid=132 progs=8  <- NO MECHANISM
+  persistent best, >1 trip (0)           (no arm)
+  one-trip ratio (same geometry, loop runs once)     = 1.0075x
+  frontier spread across its 32 arms: 7.677 .. 310.945 us
+
+==============================================================================================
+2048 tokens  (cfg 4, 12)   derived tile BM=32, grid=64
+==============================================================================================
+  frontier AS SHIPPED (BM=32 w=8, default stages)   14.354 us   10.6% peak
+  frontier best of 32 arms                 14.185 us   10.7% peak   BM=32 warps=8 stages=1
+  persistent best, ONE trip (33)           13.848 us   11.0% peak   BM=32 w=8 st=1 grid=132 progs=64  <- NO MECHANISM
+  persistent best, >1 trip (6)             13.732 us   11.1% peak   BM=16 w=8 st=3 grid=66 progs=66 trips=1.94  <- mechanism engaged
+
+  MECHANISM RATIO (persistent>1trip / frontier-best) = 0.9681x  FASTER
+  one-trip ratio (same geometry, loop runs once)     = 0.9762x
+  frontier spread across its 32 arms: 14.185 .. 394.581 us
+
+==============================================================================================
+8192 tokens  (cfg 1, 9, 10 -- declined by one_wave)   derived tile BM=64, grid=128
+==============================================================================================
+  frontier AS SHIPPED (BM=64 w=8, default stages)   35.936 us   16.9% peak
+  frontier best of 32 arms                 34.832 us   17.5% peak   BM=64 warps=8 stages=1
+  persistent best, ONE trip (11)           32.545 us   18.7% peak   BM=64 w=8 st=1 grid=264 progs=128  <- NO MECHANISM
+  persistent best, >1 trip (28)            32.989 us   18.5% peak   BM=64 w=8 st=1 grid=66 progs=66 trips=1.94  <- mechanism engaged
+
+  MECHANISM RATIO (persistent>1trip / frontier-best) = 0.9471x  FASTER
+  one-trip ratio (same geometry, loop runs once)     = 0.9343x
+  frontier spread across its 32 arms: 34.832 .. 93.011 us
+
+==============================================================================================
+16384 tokens  (cfg 5 -- declined by one_wave)   derived tile BM=64, grid=256
+==============================================================================================
+  frontier AS SHIPPED (BM=64 w=8, default stages)   61.170 us   19.9% peak
+  frontier best of 32 arms                 61.495 us   19.8% peak   BM=64 warps=8 stages=2
+  persistent best, ONE trip (4)            57.635 us   21.1% peak   BM=64 w=8 st=1 grid=264 progs=256  <- NO MECHANISM
+  persistent best, >1 trip (35)            56.736 us   21.5% peak   BM=32 w=8 st=1 grid=66 progs=66 trips=7.76  <- mechanism engaged
+
+  MECHANISM RATIO (persistent>1trip / frontier-best) = 0.9226x  FASTER
+  one-trip ratio (same geometry, loop runs once)     = 0.9372x
+  frontier spread across its 32 arms: 61.495 .. 139.503 us

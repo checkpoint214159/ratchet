@@ -1,0 +1,71 @@
+device: NVIDIA GeForce RTX 4070 Ti SUPER  SMs=66  smem/SM=102400  smem/block optin=101376
+fused-block smem at BM=32: 81920 B  -> 1 block(s)/SM
+
+
+========================================================================================
+128 tokens  (configs 2)   frontier: BM=16 warps=8 grid=8
+========================================================================================
+  persistent at matched BM=16: 8 programs, 1.00 trips/program, matches=True
+    n_regs=125 n_spills=0 smem=73984
+
+  ABBA, 5 kept rounds, min of min:
+    frontier       7.657 us     1.2% of peak   rounds=[8.33, 7.71, 8.31, 7.66, 7.78]
+    persistent     7.872 us     1.2% of peak   rounds=[7.94, 7.87, 8.47, 8.5, 8.47]
+    ratio persistent/frontier = 1.0281x   <- F-03 claims 0.918-0.977x here
+
+  SELECTION CONTROL -- frontier kernel, timed both ways:
+    single min-of-5 draw (F-03's frontier protocol)         7.716 us
+    min of 96 min-of-3 draws (F-03's candidate protocol)    7.608 us
+    median of the 96 draws                                  7.744 us
+    apparent 'speedup' of the frontier over ITSELF       0.9859x   <- pure selection, no kernel change
+
+========================================================================================
+2048 tokens  (configs 4, 12)   frontier: BM=32 warps=8 grid=64
+========================================================================================
+  persistent at matched BM=32: 64 programs, 1.00 trips/program, matches=True
+    n_regs=164 n_spills=0 smem=73984
+
+  ABBA, 5 kept rounds, min of min:
+    frontier      14.167 us    10.7% of peak   rounds=[14.2, 14.17, 14.86, 14.3, 14.36]
+    persistent    13.817 us    11.0% of peak   rounds=[13.89, 13.88, 13.82, 13.98, 14.18]
+    ratio persistent/frontier = 0.9753x   <- F-03 claims 0.918-0.977x here
+
+  SELECTION CONTROL -- frontier kernel, timed both ways:
+    single min-of-5 draw (F-03's frontier protocol)        14.782 us
+    min of 96 min-of-3 draws (F-03's candidate protocol)   14.118 us
+    median of the 96 draws                                 14.311 us
+    apparent 'speedup' of the frontier over ITSELF       0.9551x   <- pure selection, no kernel change
+
+========================================================================================
+8192 tokens  (configs 1, 9, 10 (declined))   frontier: BM=64 warps=8 grid=128
+========================================================================================
+  persistent at matched BM=64: 128 programs, 1.00 trips/program, matches=True
+    n_regs=240 n_spills=0 smem=81920
+
+  ABBA, 5 kept rounds, min of min:
+    frontier      36.840 us    16.5% of peak   rounds=[37.23, 37.28, 36.84, 36.91, 37.3]
+    persistent    35.041 us    17.4% of peak   rounds=[35.24, 35.8, 35.22, 35.04, 35.21]
+    ratio persistent/frontier = 0.9512x   <- F-03 claims 0.918-0.977x here
+
+  SELECTION CONTROL -- frontier kernel, timed both ways:
+    single min-of-5 draw (F-03's frontier protocol)        36.790 us
+    min of 96 min-of-3 draws (F-03's candidate protocol)   36.710 us
+    median of the 96 draws                                 36.952 us
+    apparent 'speedup' of the frontier over ITSELF       0.9978x   <- pure selection, no kernel change
+
+========================================================================================
+16384 tokens  (configs 5 (declined))   frontier: BM=64 warps=8 grid=256
+========================================================================================
+  persistent at matched BM=64: 256 programs, 1.00 trips/program, matches=True
+    n_regs=240 n_spills=0 smem=81920
+
+  ABBA, 5 kept rounds, min of min:
+    frontier      62.393 us    19.5% of peak   rounds=[62.74, 62.52, 62.49, 62.45, 62.39]
+    persistent    57.727 us    21.1% of peak   rounds=[58.24, 57.73, 57.73, 58.18, 58.27]
+    ratio persistent/frontier = 0.9252x   <- F-03 claims 0.918-0.977x here
+
+  SELECTION CONTROL -- frontier kernel, timed both ways:
+    single min-of-5 draw (F-03's frontier protocol)        63.058 us
+    min of 96 min-of-3 draws (F-03's candidate protocol)   62.078 us
+    median of the 96 draws                                 62.504 us
+    apparent 'speedup' of the frontier over ITSELF       0.9845x   <- pure selection, no kernel change
