@@ -275,33 +275,35 @@ control (comparing against a rolled batch) so the comparison is capable of faili
 
 ## 3.5 What was measured, on the row
 
-`python3 bench/run_matrix.py --candidate v33_streamed_long --ids 14`, commit 3db6faf,
-clean tree, ledger row `status="reference_infeasible"`:
+`python3 bench/run_matrix.py --candidate v33_streamed_long --ids 14 --oracle-sequences 1`,
+commit 975c69b, clean tree, GPU lock held, ledger row `status="reference_infeasible"`:
 
 | | |
 |---|---|
 | sequences completed | **32 / 32** |
 | tokens computed | **3,200,000**, at the announced S=100000 |
 | peak device memory | **3.54 GiB** |
-| per sequence | 0.518 s min, 0.634 s mean (`host_wallclock`, **not** a timing measurement) |
-| causal-prefix check | **passed**, P=4096, max_abs **8.658e-04**, 0 failed elements |
-| dispatch | `resident`, slice=1 — the capability path feeds it one sequence at a time |
-| attention | SDPA; the single-tile kernel declines at S=100000, as designed |
+| per sequence | 0.508 s min (`host_wallclock`, **not** a timing measurement) |
+| causal-prefix check | **passed**, P=4096, max_abs **8.658e-04**, 0 failed elements, covers rows 0..4095 |
+| blocked fp64 oracle | max_abs **8.0913e-04**, threshold 1.191e-03, **`certifies: true`**, every row |
+| full-batch call | **fails**, at `candidate forward`, after 4.5 s and 30.6 GiB reserved |
 | speedup | **null** |
+
+The oracle figure reproduces the standalone §2.4 run to every digit
+(`0.000809131791957074` both times, different processes, different query block).
 
 This supersedes finding 09's B=32 figure, which was 32x a measured single-sequence
 forward. **All 32 sequences are now actually run**, with the harness's own
-`generate_random_case` producing each one, and correctness is checked against the real
-reference at the real sequence length instead of at proxy shapes.
+`generate_random_case` producing each one, and correctness is checked at the real
+sequence length instead of at proxy shapes.
 
-One thing it does not show: the **full-batch call** — the single `forward` a grading
-harness makes — fails, as §1.2 says it must; the row records the stage and the driver's
-words.
-
-The fp64 oracle number in §2.4 was taken separately, at B=1, after the fragmentation fix
-(`scratchpad/oracle_fullS.py`, reproducible from `bench/feasibility.py` alone). The
-capability path now tears down the candidate's graph buffers before invoking it, so a
-future `--oracle-sequences 1` run carries the certificate on the row itself.
+**The full-batch attempt is worth reading rather than skipping.** It records
+`stream_path: "streamed"` — v33's dispatch fired on the real config-14 shape, chose to
+stream, got through the harness's own input generation, and died 4.5 s later inside the
+forward with 30.6 GiB reserved. That is §1.2 and §1.3 happening exactly as derived: the
+mechanism works, the working set is no longer the binding constraint, and the two tensors
+the signature requires still do not fit. A grader on a card with 32 GiB would see this
+succeed; on this one it cannot.
 
 ---
 
