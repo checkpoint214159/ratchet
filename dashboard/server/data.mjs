@@ -94,20 +94,29 @@ function weightedScore(speedupsByConfig, matrixIds) {
 // Static, cached once at server start: the matrix and the candidate registry.
 // ---------------------------------------------------------------------------
 const PY_MATRIX = `import sys;sys.path.insert(0,${JSON.stringify(REPO)});import json;from bench.matrix import MATRIX,regime_of;print(json.dumps([{**c.to_dict(),'regime':regime_of(c.id)} for c in MATRIX]))`;
-const PY_CANDIDATES = `import sys;sys.path.insert(0,${JSON.stringify(REPO)});import json;from bench.candidates import REGISTRY;print(json.dumps([{'name':s.name,'generation':s.generation,'parent':s.parent,'summary':s.summary} for s in REGISTRY.values()]))`;
+// The DECLARED lineage -- the registry's parent graph, which is the real evolutionary
+// tree (finding 28). Its derivation needs more than one line (recombination edges,
+// known-unsafe and topology-violation sets), so it lives in a file rather than -c.
+const PY_LINEAGE = path.join(REPO, "dashboard", "server", "lineage.py");
 
 async function pyJson(code) {
   const { stdout } = await pexec("python3", ["-c", code], { cwd: REPO, maxBuffer: 8 * 1024 * 1024 });
   return JSON.parse(stdout);
 }
 
+async function pyScript(file) {
+  const { stdout } = await pexec("python3", [file], { cwd: REPO, maxBuffer: 8 * 1024 * 1024 });
+  return JSON.parse(stdout);
+}
+
 let STATIC = null;
 let CAND_AT = 0;
 const CAND_TTL_MS = 30000;
+const EMPTY_LINEAGE = { nodes: [], recombination_edges: [], known_unsafe: [], topology_violations: [] };
 
 export async function loadStatic() {
   if (!STATIC) {
-    STATIC = { matrix: [], candidates: [], errors: [] };
+    STATIC = { matrix: [], candidates: [], lineage: EMPTY_LINEAGE, errors: [] };
     // The matrix is the 14 announced competition configs: genuinely static, read once.
     try { STATIC.matrix = await pyJson(PY_MATRIX); }
     catch (e) { STATIC.errors.push("matrix: " + (e.stderr || e.message)); }
@@ -117,7 +126,12 @@ export async function loadStatic() {
   if (Date.now() - CAND_AT > CAND_TTL_MS) {
     CAND_AT = Date.now();
     try {
-      STATIC.candidates = await pyJson(PY_CANDIDATES);
+      const lineage = await pyScript(PY_LINEAGE);
+      STATIC.lineage = lineage;
+      // `candidates` is the flat registry view the scoreboard/heatmap/drawer already
+      // read; it is now a projection of the lineage rather than a second query.
+      STATIC.candidates = lineage.nodes.map(
+        ({ name, generation, parent, summary }) => ({ name, generation, parent, summary }));
       STATIC.errors = STATIC.errors.filter((e) => !e.startsWith("candidates:"));
     } catch (e) {
       if (!STATIC.candidates.length) STATIC.errors.push("candidates: " + (e.stderr || e.message));
@@ -127,8 +141,12 @@ export async function loadStatic() {
 }
 
 // ---------------------------------------------------------------------------
-// git: the commit DAG is the evolutionary tree. %P carries ALL parents, so the
-// merge commit really does have two edges -- this is not a linear history.
+// git: the commit DAG. NOT the evolutionary tree -- finding 28 measured that every
+// candidate has exactly `generation - 1` git ancestors, because every candidate branch
+// was cut from `ben`'s tip and every candidate is merged back into `ben`. The spurs in
+// `git log --graph` are decorative. This is kept because it is the real record of what
+// was committed when; the lineage the dashboard DRAWS comes from the registry
+// (see lineage.py and `snapshot().lineage`).
 // ---------------------------------------------------------------------------
 async function gitState() {
   const state = { commits: [], branches: [], head: null, dirty: null, dirtyFiles: [], error: null };
@@ -164,7 +182,8 @@ async function gitState() {
 
 // Reduce the full 60+ commit history to the nodes that carry meaning: commits with
 // measurements, merges, merge parents, and branch tips. Edges are nearest-interesting
-// ancestry, so the diamond around the merge survives the reduction.
+// ancestry, so the diamond around the merge survives the reduction. This is git
+// TOPOLOGY -- documentation of the commit record, not the lineage mechanism.
 function buildTree(gitS, rows) {
   const byShaCommit = new Map(gitS.commits.map((c) => [c.sha, c]));
   const measured = new Map(); // sha -> {candidates:Set, rows:n}
@@ -490,6 +509,9 @@ export async function snapshot() {
     },
     matrix, matrix_static_errors: stat.errors,
     candidates: stat.candidates,
+    // THE tree: the declared-parent graph from the registry (finding 28).
+    lineage: stat.lineage,
+    // Git topology, retained as documentation. It is a chain, not the lineage.
     tree: buildTree(gitS, rows),
     baselines: {
       eager_ms: eagerMs, compiled_ms: compiledMs,

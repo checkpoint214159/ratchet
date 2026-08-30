@@ -1,11 +1,16 @@
 // ratchet dashboard — client. Vanilla ES modules, no build step, no dependencies.
 
+// Relative, not absolute: the browser resolves it to /layout.mjs and node resolves it
+// on disk, so dashboard/test/render.test.mjs can import this exact file.
+import { layoutLineage, edgePath } from "./layout.mjs";
+
 const $  = (s, r = document) => r.querySelector(s);
 const el = (t, cls, txt) => { const n = document.createElement(t); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let SNAP = null;
-let SEL = { tab: "tree", node: null, heatMetric: "compiled", sbSort: { key: "weighted_score", dir: -1 }, doc: "00-learnings.md" };
+let SEL = { tab: "tree", node: null, cand: null, treeZoom: 1, heatMetric: "compiled",
+            sbSort: { key: "weighted_score", dir: -1 }, doc: "00-learnings.md" };
 let docCache = new Map();
 
 // ---------------------------------------------------------------- formatting
@@ -205,7 +210,7 @@ function renderTabs() {
       const n = SNAP.failures.length;
       const bd = el("span", "badge" + (n ? " bad" : ""), String(n)); b.append(bd);
     }
-    if (id === "tree" && SNAP) b.append(el("span", "badge", String(SNAP.tree.nodes.length)));
+    if (id === "tree" && SNAP) b.append(el("span", "badge", String(lineageOf(SNAP).nodes.length)));
     if (id === "scoreboard" && SNAP) b.append(el("span", "badge", String(SNAP.scoreboard.length)));
     b.onclick = () => { SEL.tab = id; render(); };
     nav.append(b);
@@ -214,130 +219,362 @@ function renderTabs() {
 }
 
 // ------------------------------------------------------------- evolution tree
-function groupsAt(sha) { return SNAP.scoreboard.filter((g) => g.commit_sha === sha); }
-function primaryAt(sha) {
-  const gs = groupsAt(sha).filter((g) => g.candidate && g.candidate !== "baseline");
+// THE TREE IS THE DECLARED LINEAGE, NOT GIT ANCESTRY (docs/findings/28).
+// `bench/README.md` states the premise "git branches are the evolutionary tree". That
+// was the intent; it is not what the repository contains. Every candidate branch was cut
+// from `ben`'s tip and every candidate is merged back INTO `ben`, so each candidate has
+// exactly `generation - 1` git ancestors -- a perfectly linear chain, the L1 degeneracy
+// the whole method exists to escape. The graph that genuinely branches is
+// `CandidateSpec.parent` in the registry, and it is what `clade_stats_by_candidate` and
+// `sample_candidate` have scored over since finding 28. So that is what is drawn here.
+
+// A candidate's best measured run, on the terms the clade criterion uses: padding 0.0
+// (the CMP condition) first, then the most complete sweep, then the newest.
+function bestGroupFor(name) {
+  const gs = SNAP.scoreboard.filter((g) => g.candidate === name && g.geomean_compiled != null);
   if (!gs.length) return null;
-  return gs.reduce((a, b) => (b.weighted_score > a.weighted_score ? b : a));
+  return gs.slice().sort((a, b) =>
+    (a.padding_ratio === 0 ? 0 : 1) - (b.padding_ratio === 0 ? 0 : 1)
+    || b.configs_measured - a.configs_measured
+    || String(b.latest_ts).localeCompare(String(a.latest_ts)))[0];
+}
+
+// The node ramp is geomean vs the COMPILED baseline -- the honest reference (finding 12).
+// Its range is roughly 0.8x to 3.1x, so the heatmap's 34x-topped ramp would flatten the
+// whole tree into one shade; the top stop is the best candidate actually measured.
+function lineageColor(g, top) {
+  const dark = isDark();
+  if (g >= 1) return rampAt(dark ? RAMP_DARK : RAMP_LIGHT, Math.log(g) / Math.log(Math.max(top, 1.05)));
+  return rampAt(dark ? SLOW_DARK : SLOW_LIGHT, Math.min(1, Math.log(1 / g) / Math.log(2)));
+}
+
+const svgEl = (tag, attrs = {}) => {
+  const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, val] of Object.entries(attrs)) n.setAttribute(k, val);
+  return n;
+};
+
+function findingLink(prefix, label) {
+  const doc = (SNAP.findings.docs || []).find((d) => d.file.startsWith(prefix));
+  if (!doc) return null;
+  const b = el("button", "btn", label);
+  b.onclick = () => { SEL.doc = doc.file; SEL.tab = "learnings"; render(); };
+  return b;
+}
+
+// The lineage the view draws. `snapshot.lineage` is the full version (recombination
+// edges, the known-unsafe set, declared children); a dashboard server started before
+// lineage.py existed serves only the flat `candidates` list, which still carries
+// name/generation/parent -- enough for the tree itself. Degrading to that beats a blank
+// tab, and the view says which it is showing.
+function lineageOf(snap) {
+  const lin = snap.lineage;
+  if (lin && lin.nodes && lin.nodes.length) return lin;
+  const nodes = (snap.candidates || []).map((c) => ({
+    ...c, children: [], recombines: [], known_unsafe: false, topology_violation: false,
+  }));
+  const byName = new Map(nodes.map((n) => [n.name, n]));
+  for (const n of nodes) if (n.parent && byName.has(n.parent)) byName.get(n.parent).children.push(n.name);
+  return { nodes, recombination_edges: [], known_unsafe: [], topology_violations: [], degraded: nodes.length > 0 };
 }
 
 function renderTree() {
   const v = $("#view-tree");
   v.innerHTML = "";
+  const lin = lineageOf(SNAP);
+
   const head = el("div");
-  head.append(el("h2", null, "Evolution tree — git ancestry is the lineage"));
-  head.append(el("p", "sub",
-    "Nodes are commits that carry measurements, merges, or branch tips; edges are nearest-interesting ancestry over the real DAG, so the merge keeps both of its parents. Amber = merge. Click a node for its per-config detail."));
+  head.append(el("h2", null, "Evolution tree — the declared lineage"));
+  const sub = el("p", "sub");
+  sub.innerHTML =
+    "A node is a <b>candidate</b>. An edge is its <b>declared parent</b> " +
+    "(<code>CandidateSpec.parent</code>, <code>bench/candidates/</code>) — the graph clade " +
+    "metaproductivity and Thompson sampling have scored over since finding 28. " +
+    "<b>Git ancestry is not this tree.</b> Every candidate branch was cut from <code>ben</code>'s " +
+    "tip and merged back into it, so each candidate has exactly <code>generation − 1</code> git " +
+    "ancestors: a perfectly linear chain, and the spurs in <code>git log --graph</code> are " +
+    "decorative. Git topology is documentation of what was committed when; the registry is the " +
+    "mechanism. Generation runs left to right; children are centred on their parent.";
+  head.append(sub);
+  const link = findingLink("28-", "finding 28 — the tree was a chain");
+  if (link) { const row = el("div", "doclist"); row.append(link); head.append(row); }
   v.append(head);
 
-  const nodes = SNAP.tree.nodes.map((n) => ({ ...n }));
-  const edges = SNAP.tree.edges;
-  if (!nodes.length) { v.append(el("p", "empty-note", "no commits to draw")); return; }
-
-  const byS = new Map(nodes.map((n) => [n.sha, n]));
-  // lane assignment: a child inherits its first parent's lane when free
-  const parents = new Map(nodes.map((n) => [n.sha, []]));
-  for (const e of edges) parents.get(e.to)?.push(e.from);
-  const maxDepth = Math.max(...nodes.map((n) => n.depth));
-  const occupied = new Map(); // depth -> Set(lane)
-  const take = (d, want) => {
-    const set = occupied.get(d) || new Set();
-    let lane = want;
-    while (set.has(lane)) lane++;
-    set.add(lane); occupied.set(d, set);
-    return lane;
-  };
-  for (const n of nodes.sort((a, b) => a.depth - b.depth || (a.when < b.when ? -1 : 1))) {
-    const ps = (parents.get(n.sha) || []).map((s) => byS.get(s)).filter(Boolean);
-    const want = ps.length ? Math.min(...ps.map((p) => p.lane ?? 0)) : 0;
-    n.lane = take(n.depth, want);
+  if (!lin.nodes.length) {
+    v.append(el("p", "empty-note", "the candidate registry could not be read — no lineage to draw"));
+    return;
   }
-  const maxLane = Math.max(...nodes.map((n) => n.lane));
+  if (lin.degraded) {
+    v.append(el("p", "empty-note",
+      "this dashboard server predates the lineage endpoint: the tree is drawn from the flat "
+      + "registry view, so recombination edges and the known-unsafe flags are missing. "
+      + "Restart the server to get them."));
+  }
 
-  const W = 250, H = 54, GX = 34, GY = 30, PAD = 18;
-  const width = PAD * 2 + (maxLane + 1) * (W + GX);
-  const height = PAD * 2 + (maxDepth + 1) * (H + GY);
-  const cx = (n) => PAD + n.lane * (W + GX);
-  const cy = (n) => PAD + n.depth * (H + GY);
+  // ---- layout ------------------------------------------------------------
+  const geo = { nodeW: 176, nodeH: 44, colGap: 54, rowGap: 14, pad: 24 };
+  const out = layoutLineage(lin.nodes, geo);
+  const pos = new Map(out.nodes.map((n) => [n.name, n]));
 
-  const NS = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(NS, "svg");
-  svg.id = "tree";
-  svg.setAttribute("width", width); svg.setAttribute("height", height);
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  const groups = new Map();
+  let top = 1.5;
+  for (const n of out.nodes) {
+    const g = bestGroupFor(n.name);
+    if (!g) continue;
+    groups.set(n.name, g);
+    if (g.geomean_compiled > top) top = g.geomean_compiled;
+  }
+  let frontier = null;
+  for (const [name, g] of groups) {
+    if (!frontier || g.geomean_compiled > groups.get(frontier).geomean_compiled) frontier = name;
+  }
 
-  for (const e of edges) {
-    const a = byS.get(e.from), b = byS.get(e.to);
-    if (!a || !b) continue;
-    const x1 = cx(a) + W / 2, y1 = cy(a) + H, x2 = cx(b) + W / 2, y2 = cy(b);
-    const p = document.createElementNS(NS, "path");
-    const mid = (y1 + y2) / 2;
-    p.setAttribute("d", `M${x1},${y1} C${x1},${mid} ${x2},${mid} ${x2},${y2}`);
-    p.setAttribute("class", "edge" + (b.isMerge ? " merge" : ""));
+  // ---- controls ----------------------------------------------------------
+  const z = SEL.treeZoom;
+  const ctl = el("div", "treectl");
+  const zbtn = (label, fn, title) => { const b = el("button", "btn", label); b.title = title; b.onclick = fn; return b; };
+  ctl.append(el("span", "k", "zoom"));
+  ctl.append(zbtn("−", () => { SEL.treeZoom = Math.max(0.35, +(z - 0.15).toFixed(2)); renderTree(); }, "zoom out"));
+  ctl.append(el("span", "mono dim", Math.round(z * 100) + "%"));
+  ctl.append(zbtn("+", () => { SEL.treeZoom = Math.min(1.6, +(z + 0.15).toFixed(2)); renderTree(); }, "zoom in"));
+  ctl.append(zbtn("fit", () => {
+    const w = ($("#view-tree").clientWidth || 1200) - 40;
+    SEL.treeZoom = Math.max(0.2, Math.min(1, +(w / out.width).toFixed(3)));
+    renderTree();
+  }, "scale the whole tree to the panel width"));
+  ctl.append(zbtn("100%", () => { SEL.treeZoom = 1; renderTree(); }, "reset"));
+  ctl.append(el("span", "dim tiny",
+    `${out.nodes.length} candidates · ${out.edges.length} lineage edges · ` +
+    `${(lin.recombination_edges || []).length} recombination · ${groups.size} measured`));
+  v.append(ctl);
+
+  // ---- draw --------------------------------------------------------------
+  const svg = svgEl("svg", {
+    id: "tree", width: Math.round(out.width * z), height: Math.round(out.height * z),
+    viewBox: `0 0 ${out.width} ${out.height}`,
+  });
+
+  const defs = svgEl("defs");
+  const marker = svgEl("marker", {
+    id: "recomb-arrow", viewBox: "0 0 10 10", refX: "9", refY: "5",
+    markerWidth: "6", markerHeight: "6", orient: "auto-start-reverse",
+  });
+  marker.append(svgEl("path", { d: "M0,0 L10,5 L0,10 z", class: "recomb-head" }));
+  defs.append(marker);
+  svg.append(defs);
+
+  // generation ruler: the depth axis is labelled, so panning stays oriented
+  const ruler = svgEl("g", { class: "ruler" });
+  for (const c of out.columns) {
+    const t = svgEl("text", { x: c.x, y: 14, class: "gen" });
+    t.textContent = "g" + c.generation;
+    ruler.append(t);
+  }
+  svg.append(ruler);
+
+  // tree edges first, so nodes sit on top of them
+  for (const e of out.edges) {
+    const child = pos.get(e.to);
+    const p = svgEl("path", {
+      d: edgePath(e.points),
+      class: "ledge" + (groups.has(child.name) ? " measured" : ""),
+    });
+    const title = svgEl("title");
+    title.textContent = `${e.from} → ${e.to} (declared parent)`;
+    p.append(title);
     svg.append(p);
   }
 
-  for (const n of nodes) {
-    const g = document.createElementNS(NS, "g");
-    g.setAttribute("class", "node" + (n.rows ? " measured" : "") + (n.isMerge ? " mergenode" : "") + (SEL.node === n.sha ? " sel" : ""));
-    g.setAttribute("transform", `translate(${cx(n)},${cy(n)})`);
-    const r = document.createElementNS(NS, "rect");
-    r.setAttribute("class", "box"); r.setAttribute("width", W); r.setAttribute("height", H); r.setAttribute("rx", 3);
-    g.append(r);
+  // RECOMBINATION. v17 merges the g16 FFN megakernel into the g13 frontier; v13 is its
+  // declared parent, so v16's contribution is not a tree edge and must not be silently
+  // dropped -- merges expressing recombination are a designed feature here. It is drawn
+  // as a distinct dashed, bowed edge with its own legend entry.
+  for (const e of lin.recombination_edges || []) {
+    const a = pos.get(e.from), b = pos.get(e.to);
+    if (!a || !b) continue;
+    const forward = a.col < b.col;
+    const x1 = forward ? a.x + a.w : a.x, x2 = forward ? b.x : b.x + b.w;
+    const bow = (b.cy >= a.cy ? 1 : -1) * Math.max(18, Math.abs(b.cy - a.cy) * 0.35);
+    const p = svgEl("path", {
+      class: "recomb",
+      d: `M${x1},${a.cy} C${x1 + (x2 - x1) * 0.45},${a.cy + bow} ${x2 - (x2 - x1) * 0.45},${b.cy - bow} ${x2},${b.cy}`,
+      "marker-end": "url(#recomb-arrow)",
+    });
+    const title = svgEl("title");
+    title.textContent = `recombination: ${e.from} contributes to ${e.to}, whose declared parent is ${pos.get(e.to).parent}`;
+    p.append(title);
+    svg.append(p);
+  }
+  for (const n of out.nodes) {
+    const g = groups.get(n.name);
+    const leaf = !(n.children || []).length;
+    const col = g ? lineageColor(g.geomean_compiled, top) : null;
+    const grp = svgEl("g", {
+      class: "lnode" + (g ? " measured" : " unmeasured")
+        + (n.name === frontier ? " frontier" : "")
+        + (leaf ? " leaf" : "")
+        + (n.known_unsafe ? " unsafe" : "")
+        + (SEL.cand === n.name ? " sel" : ""),
+      transform: `translate(${n.x},${n.y})`,
+    });
 
-    const prim = primaryAt(n.sha);
-    const label = prim ? prim.candidate : (n.candidates[0] || (n.isMerge ? "merge" : "—"));
-    const t1 = document.createElementNS(NS, "text");
-    t1.setAttribute("class", "nlabel"); t1.setAttribute("x", 9); t1.setAttribute("y", 17);
-    t1.textContent = label.length > 24 ? label.slice(0, 23) + "…" : label;
-    g.append(t1);
-
-    const t2 = document.createElementNS(NS, "text");
-    t2.setAttribute("class", "nsub"); t2.setAttribute("x", 9); t2.setAttribute("y", 31);
-    t2.textContent = `${n.short}  ${n.rows ? n.rows + " rows" : "no rows"}`;
-    g.append(t2);
-
-    const t3 = document.createElementNS(NS, "text");
-    t3.setAttribute("class", "nnum"); t3.setAttribute("x", 9); t3.setAttribute("y", 45);
-    if (prim) {
-      t3.textContent = `geo ${sx(prim.geomean)} eager / ${sx(prim.geomean_compiled)} compiled`;
-      t3.setAttribute("fill", "var(--teal)");
-    } else { t3.textContent = (n.subject || "").slice(0, 34); t3.setAttribute("fill", "var(--faint)"); }
-    g.append(t3);
-
-    if (n.tips && n.tips.length) {
-      const t4 = document.createElementNS(NS, "text");
-      t4.setAttribute("class", "tip"); t4.setAttribute("x", W - 9); t4.setAttribute("y", 17);
-      t4.setAttribute("text-anchor", "end");
-      t4.textContent = n.tips.join(" ");
-      g.append(t4);
+    if (n.name === frontier) {
+      grp.append(svgEl("rect", { class: "halo", x: -5, y: -5, width: n.w + 10, height: n.h + 10, rx: 13 }));
     }
-    const title = document.createElementNS(NS, "title");
-    title.textContent = `${n.short}  ${n.subject}\n${n.when || ""}${n.isMerge ? "\n(merge commit — two parents)" : ""}`;
-    g.append(title);
-    g.style.cursor = "pointer";
-    g.onclick = () => { SEL.node = n.sha; openCommit(n.sha); renderTree(); };
-    svg.append(g);
+    const box = svgEl("rect", { class: "box", width: n.w, height: n.h, rx: 9 });
+    if (col) box.setAttribute("fill", rgb(col));
+    grp.append(box);
+
+    // known-unsafe candidates are kept in the registry as LINEAGE, not as shippable
+    // code (tests/bench/test_lineage_invariants.py). A brick spine says so.
+    if (n.known_unsafe) grp.append(svgEl("rect", { class: "spine", x: 0, y: 0, width: 4, height: n.h }));
+
+    const ink = col ? readable(col) : null;
+    const name = svgEl("text", { class: "lname", x: 11, y: 18 });
+    if (ink) name.setAttribute("fill", ink);
+    name.textContent = n.name.length > 25 ? n.name.slice(0, 24) + "…" : n.name;
+    grp.append(name);
+
+    const sub2 = svgEl("text", { class: "lsub", x: 11, y: 33 });
+    if (ink) sub2.setAttribute("fill", ink);
+    sub2.textContent = g
+      ? `g${n.generation}  ${nf(g.geomean_compiled, 2)}× vs compiled`
+      : `g${n.generation}  not measured`;
+    grp.append(sub2);
+
+    if (n.name === frontier) {
+      const star = svgEl("text", { class: "lstar", x: n.w - 10, y: 18, "text-anchor": "end" });
+      if (ink) star.setAttribute("fill", ink);
+      star.textContent = "★ frontier";
+      grp.append(star);
+    }
+    if (n.topology_violation) {
+      const flag = svgEl("text", { class: "lflag", x: n.w - 10, y: 34, "text-anchor": "end" });
+      flag.textContent = "⚑";
+      grp.append(flag);
+    }
+    // A dead end: nothing has been derived from it yet. Not a verdict -- an untried
+    // direction is exactly what the sampler is supposed to find.
+    if (leaf) grp.append(svgEl("circle", { class: "leafdot", cx: n.w + 8, cy: n.h / 2, r: 3.5 }));
+
+    const title = svgEl("title");
+    title.textContent = [
+      `${n.name}   generation ${n.generation}`,
+      `declared parent: ${n.parent || "— (root)"}`,
+      (n.recombines || []).length ? `also recombines: ${n.recombines.join(", ")}` : null,
+      g ? `geomean ${nf(g.geomean_compiled, 3)}× vs compiled / ${nf(g.geomean, 3)}× vs eager, ${g.configs_passed}/${g.configs_measured} configs passed @ pad ${g.padding_ratio.toFixed(1)}`
+        : "no clean measurement recorded",
+      leaf ? "dead end so far: nothing declares it as a parent" : `${n.children.length} declared child(ren)`,
+      n.known_unsafe ? "KNOWN-UNSAFE: kept as lineage, not shippable (test_lineage_invariants.py)" : null,
+      n.topology_violation ? "git branch-point violation, recorded not hidden (test_lineage_topology.py)" : null,
+      "",
+      n.summary,
+    ].filter((x) => x != null).join("\n");
+    grp.append(title);
+    grp.style.cursor = "pointer";
+    grp.onclick = () => { SEL.cand = n.name; openCandidate(n.name); renderTree(); };
+    svg.append(grp);
   }
 
   const wrap = el("div", "card treewrap");
   wrap.append(svg);
   v.append(wrap);
+  v.append(treeLegend(top, frontier, groups.get(frontier)));
 
+  // ---- registry table ----------------------------------------------------
   const reg = el("div", "card");
   reg.append(el("h2", null, "Candidate registry (bench/candidates REGISTRY)"));
-  reg.append(el("p", "sub", "Declared generation and parent. Lineage for g8+ comes from git; the first entries predate the branch protocol and state their parent here."));
+  reg.append(el("p", "sub",
+    "The source of truth for lineage. `parent` is declared here, in code, and it is what CMP " +
+    "reads — not git. Generations ≤ 18 also have a git topology that disagrees (finding 28); " +
+    "that topology cannot be repaired without rewriting history, which the contract forbids."));
   const t = el("table", "grid");
-  t.innerHTML = `<thead><tr><th class="n">gen</th><th>candidate</th><th>parent</th><th>summary</th></tr></thead>`;
+  t.innerHTML = `<thead><tr><th class="n">gen</th><th>candidate</th><th>declared parent</th>` +
+    `<th>recombines</th><th class="n">vs compiled</th><th>flags</th><th>summary</th></tr></thead>`;
   const tb = el("tbody");
-  for (const c of SNAP.candidates) {
+  for (const c of lin.nodes) {
+    const g = groups.get(c.name);
+    const flags = [];
+    if (c.name === frontier) flags.push('<span class="pill ok">frontier</span>');
+    if (!g) flags.push('<span class="pill">unmeasured</span>');
+    if (!(c.children || []).length) flags.push('<span class="pill">leaf</span>');
+    if (c.known_unsafe) flags.push('<span class="pill bad">unsafe</span>');
+    if (c.topology_violation) flags.push('<span class="pill warn">git violation</span>');
     const tr = el("tr");
+    if (SEL.cand === c.name) tr.className = "sel";
     tr.innerHTML = `<td class="n">${c.generation}</td><td class="mono">${esc(c.name)}</td>` +
-      `<td class="mono dim">${esc(c.parent || "—")}</td><td style="white-space:normal;max-width:70ch">${esc(c.summary)}</td>`;
+      `<td class="mono dim">${esc(c.parent || "—")}</td>` +
+      `<td class="mono dim">${esc((c.recombines || []).join(", ") || "—")}</td>` +
+      `<td class="n" style="color:var(--teal)">${g ? sx(g.geomean_compiled) : "—"}</td>` +
+      `<td class="tiny">${flags.join(" ") || "—"}</td>` +
+      `<td style="white-space:normal;max-width:64ch">${esc(c.summary)}</td>`;
+    tr.style.cursor = "pointer";
+    tr.onclick = () => { SEL.cand = c.name; openCandidate(c.name); renderTree(); };
     tb.append(tr);
   }
-  t.append(tb); reg.append(el("div", "scroll", "").appendChild(t).parentNode);
+  t.append(tb);
+  const sc = el("div", "scroll"); sc.append(t); reg.append(sc);
   v.append(reg);
+}
+
+function treeLegend(top, frontier, fg) {
+  const card = el("div", "card legend");
+  const swatchRow = el("div", "legrow");
+  swatchRow.append(el("span", "k", "geomean vs compiled"));
+  const bar = svgEl("svg", { width: 220, height: 14, class: "rampbar" });
+  for (let i = 0; i < 44; i++) {
+    const t = i / 43;
+    const val = Math.exp(t * Math.log(Math.max(top, 1.05)));
+    bar.append(svgEl("rect", { x: i * 5, y: 0, width: 5, height: 14, fill: rgb(lineageColor(val, top)) }));
+  }
+  swatchRow.append(bar);
+  swatchRow.append(el("span", "mono dim", `1.00× → ${nf(top, 2)}×`));
+  swatchRow.append(el("span", "dim tiny", "below 1.00× runs warm (slower than the compiled baseline)"));
+  card.append(swatchRow);
+
+  const key = el("div", "legrow");
+  const chip = (cls, label) => { const s = el("span", "legchip " + cls); const w = el("span", "legkey"); w.append(s); w.append(el("span", null, label)); return w; };
+  key.append(chip("c-frontier", frontier
+    ? `★ frontier — ${frontier} at ${fg ? nf(fg.geomean_compiled, 2) : "?"}× vs compiled`
+    : "★ frontier"));
+  key.append(chip("c-unmeasured", "hollow, dashed — no clean measurement yet"));
+  key.append(chip("c-leaf", "dot — dead end so far (nothing declares it as parent)"));
+  key.append(chip("c-recomb", "dashed magenta — recombination (a second contributor, not the declared parent)"));
+  key.append(chip("c-unsafe", "brick spine — known-unsafe, kept as lineage only"));
+  key.append(chip("c-flag", "⚑ — created off the wrong branch point (recorded, not hidden)"));
+  card.append(key);
+  return card;
+}
+
+function openCandidate(name) {
+  const spec = (SNAP.lineage?.nodes || []).find((n) => n.name === name);
+  const g = bestGroupFor(name);
+  $("#drawer").hidden = false;
+  $("#drawer-title").textContent = spec ? `${name} — generation ${spec.generation}` : name;
+  const b = $("#drawer-body");
+  b.innerHTML = "";
+  const dl = el("dl", "kv");
+  const add = (k, v2) => { dl.append(el("dt", null, k)); dl.append(el("dd", null, v2)); };
+  add("declared parent", spec?.parent || "— (root of the lineage)");
+  add("declared children", (spec?.children || []).join(", ") || "none yet (dead end)");
+  if ((spec?.recombines || []).length) add("recombines", spec.recombines.join(", ") + "  (secondary contributor, not the declared parent)");
+  if (spec?.known_unsafe) add("known-unsafe", "kept in the registry as lineage; not a submission candidate (tests/bench/test_lineage_invariants.py)");
+  if (spec?.topology_violation) add("git topology", "branched off the wrong commit after the discipline existed — recorded, not hidden (tests/bench/test_lineage_topology.py)");
+  if (g) {
+    add("measured at", `${g.short_sha} on ${g.branch || "—"} @ pad ${g.padding_ratio.toFixed(1)}`);
+    add("configs", `${g.configs_passed} passed / ${g.configs_measured} measured`);
+    add("geomean", `${sx(g.geomean_compiled)} vs compiled · ${sx(g.geomean)} vs eager`);
+    add("weighted score", `${nf(g.weighted_score_compiled, 3)} compiled · ${nf(g.weighted_score, 3)} eager`);
+    add("last measured", `${g.latest_ts} (${ago(g.latest_ts)} ago)`);
+  } else {
+    add("measurement", "none recorded from a clean tree");
+  }
+  b.append(dl);
+  if (spec) { const p = el("p", "sub"); p.style.maxWidth = "none"; p.textContent = spec.summary; b.append(p); }
+  if (g) {
+    b.append(el("h2", null, "Per config"));
+    const sc = el("div", "scroll"); sc.append(perConfigTable(g)); b.append(sc);
+  }
 }
 
 // -------------------------------------------------------------- scoreboard
@@ -719,29 +956,6 @@ function openGroup(g) {
   b.append(el("div", "scroll", "").appendChild(perConfigTable(g)).parentNode);
 }
 
-function openCommit(sha) {
-  const gs = groupsAt(sha);
-  const node = SNAP.tree.nodes.find((n) => n.sha === sha);
-  $("#drawer").hidden = false;
-  $("#drawer-title").textContent = `${node?.short || sha.slice(0, 8)} — ${node?.subject || ""}`.slice(0, 90);
-  const b = $("#drawer-body");
-  b.innerHTML = "";
-  const dl = el("dl", "kv");
-  const add = (k, v) => { dl.append(el("dt", null, k)); dl.append(el("dd", null, v)); };
-  add("commit", sha);
-  add("subject", node?.subject || "—");
-  add("authored", node?.when || "—");
-  add("kind", node?.isMerge ? "merge (two parents)" : "commit");
-  add("branch tips", (node?.tips || []).join(", ") || "—");
-  add("ledger rows", String(node?.rows ?? 0));
-  b.append(dl);
-  if (!gs.length) { b.append(el("p", "empty-note", "no measurements recorded against this commit")); return; }
-  for (const g of gs) {
-    b.append(el("h2", null, `${g.candidate} @ pad ${g.padding_ratio.toFixed(1)} — geomean ${sx(g.geomean)} eager / ${sx(g.geomean_compiled)} compiled`));
-    b.append(el("div", "scroll", "").appendChild(perConfigTable(g)).parentNode);
-  }
-}
-
 function openCell(lane, cell) {
   const g = SNAP.scoreboard.find((x) => x.commit_sha === lane.commit_sha && x.candidate === lane.candidate && x.padding_ratio === lane.padding_ratio);
   if (g) openGroup(g);
@@ -781,3 +995,10 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => re
 
 fetch("/api/snapshot").then((r) => r.json()).then((s) => { SNAP = s; render(); }).catch(() => {});
 connect();
+
+// ---------------------------------------------------------------- test seam
+// No browser is available in this environment, so `dashboard/test/render.test.mjs`
+// drives THIS file against a real snapshot in a minimal DOM. Exports only -- the
+// browser path above is unchanged by their presence.
+export function __setSnapshot(s) { SNAP = s; }
+export { render, renderTree, SEL };
