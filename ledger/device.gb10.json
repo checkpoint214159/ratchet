@@ -1,0 +1,26 @@
+{
+  "_key": "NVIDIA GB10|13.0|2.9.1+cu130|3.5.1",
+  "backend": "cuda",
+  "clocks_locked": true,
+  "compute_capability": "sm_121",
+  "device_name": "NVIDIA GB10",
+  "driver_version": "13.0",
+  "l2_cache_size": 25165824,
+  "launch_overhead_us": 3.841770946023439,
+  "locked_sm_clock_mhz": 2418,
+  "measured_bandwidth_gbs": 246.7636853077021,
+  "notes": [
+    "NO PEAK ENTRY for (sm_121, NVIDIA GB10). Ridge point is meaningless until you add one. Find the FP32-accumulate dense BF16 figure in the architecture whitepaper."
+  ],
+  "peak_bf16_tflops": 0.0,
+  "peak_source": "table",
+  "regs_per_sm": 65536,
+  "ridge_point_flop_per_byte": 0.0,
+  "sm_count": 48,
+  "smem_per_block_optin": 101376,
+  "smem_per_sm": 102400,
+  "torch_version": "2.9.1+cu130",
+  "total_memory": 130595991552,
+  "triton_version": "3.5.1",
+  "warp_size": 32
+}
