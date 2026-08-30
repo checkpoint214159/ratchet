@@ -1,0 +1,62 @@
+device: NVIDIA GeForce RTX 4070 Ti SUPER  SMs=66  regs/SM=65536  smem/block optin=101376
+
+============================================================================================
+cfg 9  (H=1, hd=128)   B=64 H=1 hd=128 S=128   flash grid ~= 64 CTAs on 66 SMs
+============================================================================================
+  single_tile applies? False  (declined: 112 KB of register working set per program leaves fewer than 4 blocks resident on a 256 KB register file)
+  SDPA + repack (the real baseline)        23.774 us
+  looped, top 5 of 156 matching arms:
+    BM=128  BN=16   warps=8 stages=3    21.007 us   1.132x   n_regs=169  n_spills=0    smem=49152
+    BM=128  BN=16   warps=4 stages=3    21.462 us   1.108x   n_regs=255  n_spills=0    smem=49152
+    BM=128  BN=16   warps=8 stages=4    21.610 us   1.100x   n_regs=169  n_spills=0    smem=57344
+    BM=128  BN=32   warps=8 stages=3    22.584 us   1.053x   n_regs=182  n_spills=0    smem=65536
+    BM=128  BN=16   warps=4 stages=4    23.057 us   1.031x   n_regs=255  n_spills=0    smem=57344
+
+  BEST 1.132x  (grid 64 CTAs)   -> FAILS the 1.4x kill bar
+
+============================================================================================
+cfg 10 (H=2, hd=64)   B=64 H=2 hd=64 S=128   flash grid ~= 128 CTAs on 66 SMs
+============================================================================================
+  single_tile applies? True  (single-tile attention: 32x4 warps, 4 blocks resident per SM)
+  SDPA + repack (the real baseline)        58.461 us
+  single_tile BM=16                        29.433 us   1.986x
+  single_tile BM=32                        24.760 us   2.361x
+  single_tile BM=64                        24.623 us   2.374x
+  single_tile BM=128                       28.352 us   2.062x
+  looped, top 5 of 180 matching arms:
+    BM=128  BN=16   warps=8 stages=4    20.419 us   2.863x   n_regs=95   n_spills=0    smem=28672
+    BM=128  BN=16   warps=8 stages=3    20.792 us   2.812x   n_regs=95   n_spills=0    smem=24576
+    BM=128  BN=32   warps=8 stages=3    21.131 us   2.767x   n_regs=121  n_spills=0    smem=32768
+    BM=128  BN=16   warps=4 stages=3    21.190 us   2.759x   n_regs=168  n_spills=0    smem=24576
+    BM=128  BN=16   warps=4 stages=4    21.513 us   2.717x   n_regs=168  n_spills=0    smem=28672
+
+  BEST 2.863x  (grid 128 CTAs)   -> PASSES 1.4x
+
+============================================================================================
+cfg 8  (H=4, hd=256)   B=64 H=4 hd=256 S=128   flash grid ~= 256 CTAs on 66 SMs
+============================================================================================
+  single_tile applies? False  (declined: 192 KB of register working set per program leaves fewer than 4 blocks resident on a 256 KB register file)
+  SDPA + repack (the real baseline)       134.606 us
+  looped, top 5 of 90 matching arms:
+    BM=32   BN=32   warps=4 stages=3   133.814 us   1.006x   n_regs=238  n_spills=0    smem=83968
+    BM=32   BN=16   warps=4 stages=3   133.816 us   1.006x   n_regs=206  n_spills=0    smem=50176
+    BM=32   BN=32   warps=8 stages=3   135.346 us   0.995x   n_regs=153  n_spills=0    smem=83968
+    BM=32   BN=16   warps=2 stages=3   136.116 us   0.989x   n_regs=255  n_spills=4    smem=50176
+    BM=32   BN=32   warps=4 stages=1   136.309 us   0.988x   n_regs=234  n_spills=0    smem=34816
+
+  BEST 1.006x  (grid 1024 CTAs)   -> FAILS the 1.4x kill bar
+
+============================================================================================
+cfg 13 (H=4, hd=32, S=1024)   B=64 H=4 hd=32 S=1024   flash grid ~= 2048 CTAs on 66 SMs
+============================================================================================
+  single_tile applies? False  (declined: 388 KB of register working set per program leaves fewer than 4 blocks resident on a 256 KB register file)
+  SDPA + repack (the real baseline)       309.108 us
+  looped, top 5 of 192 matching arms:
+    BM=64   BN=64   warps=4 stages=2   268.138 us   1.153x   n_regs=96   n_spills=6    smem=12288
+    BM=64   BN=32   warps=4 stages=4   269.222 us   1.148x   n_regs=80   n_spills=0    smem=16384
+    BM=64   BN=32   warps=4 stages=3   270.783 us   1.142x   n_regs=80   n_spills=0    smem=12288
+    BM=64   BN=64   warps=4 stages=3   271.139 us   1.140x   n_regs=96   n_spills=0    smem=20480
+    BM=64   BN=64   warps=4 stages=4   277.349 us   1.115x   n_regs=96   n_spills=0    smem=28672
+
+  BEST 1.153x  (grid 4096 CTAs)   -> FAILS the 1.4x kill bar
+

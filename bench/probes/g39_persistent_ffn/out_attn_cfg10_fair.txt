@@ -1,0 +1,27 @@
+
+==========================================================================================
+cfg 10  B=64 H=2 hd=64 S=128
+==========================================================================================
+  single_tile: 36 legal arms swept, best 24.174 us at BM=64 warps=4 stages=1
+  looped     : 180 legal arms swept, best 20.811 us at BM=128 BN=16 warps=8 stages=4
+               n_regs=95 n_spills=0 smem=28672  grid=128 CTAs on 66 SMs
+  autotune_tile (what the candidate calls at prime time) -> (32, 4, 1)  (derived tile (32, 4, 1), confirmed against 5 tiles at batch 64)
+
+  ABBA head-to-head, 5 kept rounds, min of min:
+    looped                   20.623 us    1.200x vs the incumbent
+    sdpa+repack              27.469 us    0.901x vs the incumbent
+    single_tile              24.229 us    1.022x vs the incumbent
+    single_tile(tuned)       24.757 us    1.000x vs the incumbent
+
+==========================================================================================
+cfg 9  B=64 H=1 hd=128 S=128
+==========================================================================================
+  single_tile: 36 legal arms swept, best 24.741 us at BM=64 warps=8 stages=1
+  looped     : 156 legal arms swept, best 20.989 us at BM=128 BN=16 warps=8 stages=3
+               n_regs=169 n_spills=0 smem=49152  grid=64 CTAs on 66 SMs
+  autotune_tile unavailable: no viable tile
+
+  ABBA head-to-head, 5 kept rounds, min of min:
+    looped                   20.848 us    1.185x vs the incumbent
+    sdpa+repack              23.424 us    1.055x vs the incumbent
+    single_tile              24.709 us    1.000x vs the incumbent
