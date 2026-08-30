@@ -779,7 +779,7 @@ halves that tensor's traffic as well.
 removing.** Inductor's pointwise fuser scatters small ops into whatever large kernel is
 adjacent, so deleting a large kernel evicts its lodgers. The count is only knowable by
 counting — which is also why v34 counted before and after rather than reasoning about it
-(L36). See docs/findings/33.
+(L36). See docs/findings/39.
 
 
 ## L46 — The optimization worked well enough to invalidate the statistic measuring it (2026-08-30)
@@ -809,4 +809,4 @@ every future candidate that shrinks its GPU side inherits an unreadable screen v
 and the screen has no way to distinguish that from a regression.
 
 Companion to [L29] (the floor is per-config, not global): here the floor is not even
-per-config, it is per-*candidate* on the same config. See docs/findings/33.
+per-config, it is per-*candidate* on the same config. See docs/findings/39.

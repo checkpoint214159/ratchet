@@ -1,4 +1,4 @@
-# 33 — Thirty-six kernels on every config, and what a kernel costs when it computes nothing
+# 39 — Thirty-six kernels on every config, and what a kernel costs when it computes nothing
 
 **Date:** 2026-08-30. **Candidate:** `v34_launch_bound` (gen 34, parent v26_causal_correct).
 **Branch:** `cand/g34/launch-bound`. **Verdict:** mechanism proven; config 2 is

@@ -1,4 +1,4 @@
-# 30 — head_dim=8 is a real 1.4x and an end-to-end nothing, and the cost is the layout
+# 36 — head_dim=8 is a real 1.4x and an end-to-end nothing, and the cost is the layout
 
 **Date:** 2026-08-30. **Branch:** `cand/g22/headdim8-attn`, parent `v18_capture_insurance`.
 **Candidate:** `v22_headdim8_attn`. **Kernel:** `bench/kernels/attn_smallhead.py`.

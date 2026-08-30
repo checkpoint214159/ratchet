@@ -1,4 +1,4 @@
-# 33 — The graph's output copy, and the fact that nothing we run can see it
+# 38 — The graph's output copy, and the fact that nothing we run can see it
 
 **Date:** 2026-08-30. **Candidate:** `v29_copy_elimination`, branch `cand/g29/copy-elimination`,
 parent `v26_causal_correct`. **Ports:** `cand/g21/double-buffered` (v21), which built the

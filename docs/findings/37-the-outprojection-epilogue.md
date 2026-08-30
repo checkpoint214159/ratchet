@@ -1,4 +1,4 @@
-# Finding 33 — the out-projection in the attention kernel's epilogue, and the accuracy claim it corrects
+# Finding 37 — the out-projection in the attention kernel's epilogue, and the accuracy claim it corrects
 
 Generation 31, branch `cand/g31/outproj-epilogue`, parent `v26_causal_correct` (the frontier).
 Reproduce with `python3 bench/probe_outproj_epilogue.py --accuracy` (parts 1–3 need no GPU

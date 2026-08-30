@@ -1,4 +1,4 @@
-# Finding 33 — the QKV projection fused into attention, and the byte count that decides it
+# Finding 34 — the QKV projection fused into attention, and the byte count that decides it
 
 Generation 27, `cand/g27/qkv-fused-attn`, parent `v26_causal_correct`. 2026-08-30.
 

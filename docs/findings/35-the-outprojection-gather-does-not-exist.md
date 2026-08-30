@@ -1,4 +1,4 @@
-# Finding 30 — the out-projection's head-major gather does not exist, and what replaced it
+# Finding 35 — the out-projection's head-major gather does not exist, and what replaced it
 
 Generation 24, branch `cand/g24/outproj-prologue`, parent `v18_capture_insurance`.
 Reproduce with `python3 bench/probe_outproj.py` (part 1 needs no GPU lock).

@@ -252,7 +252,7 @@ def fused_ffn_normed(x, attn, n2w, n2b, w1, b1, w2, b2, nnw, nnb, eps,
 # and fitting replay time against N over N = 1 .. 256:
 #
 #     replay(N) = 1.886 + 0.7984 * N   us          (device calibration, not a candidate
-#     one trivial node's device duration: 775 ns    timing -- see docs/findings/33)
+#     one trivial node's device duration: 775 ns    timing -- see docs/findings/39)
 #
 # So **every kernel node in a replayed graph costs about 0.8 us whatever it computes.**
 # The frontier launches 36 nodes per forward on every announced config (censused at
