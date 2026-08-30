@@ -145,9 +145,21 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
     # So each arm is timed while it is the ONLY model on the device.
     #
     # The cost is losing cross-arm interleaving, which is our defence against thermal
-    # drift on a card whose clocks cannot be locked. That trade is deliberate: the
-    # memory-pressure distortion is 410%, drift between two adjacent measurements is a
-    # few percent, and `interleaved: False` is recorded so nobody has to guess.
+    # drift on a card whose clocks cannot be locked. That trade was made on the estimate
+    # that "drift between two adjacent measurements is a few percent".
+    #
+    # THAT ESTIMATE WAS WRONG, and finding 42 measured how wrong. Non-interleaved timing
+    # INVERTED THE SIGN on configs 1 and 9 for v34, and the graded harness's own baseline
+    # arm -- byte-identical reference code -- spreads 0.1% on config 8 but 33% on config 2
+    # and 39% on config 3. The noise scales inversely with config size, so it is worst
+    # exactly on the sub-millisecond rows that carry all remaining score.
+    #
+    # The resolution is not to pick one: the two hazards live on DIFFERENT configs. The
+    # 410% memory-pressure distortion needs a config large enough to spill (6, 8, 13); the
+    # drift that inverts signs needs a config small enough for a few microseconds to
+    # matter (1, 2, 3, 4, 9, 10, 12). So we time isolated ALWAYS, and additionally time
+    # INTERLEAVED whenever both models comfortably fit -- recording both, because 600
+    # existing rows were produced by the isolated protocol and must stay comparable.
     torch.manual_seed(SEED)
     baseline = ref.BaselineTransformer(tcfg).to(device=device, dtype=dtype).eval()
 
@@ -207,6 +219,40 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
         "arms_isolated": True, "clocks_locked": False,
     }
     out["memory"] = {"peak_MB": cand_peak, "baseline_peak_MB": base_peak}
+
+    # INTERLEAVED SECOND OPINION, on configs where co-residency is safe.
+    # Both arms alive, ABBA/BAAB rounds like the graded harness, the cold round discarded
+    # (round 1 of 100 calls reads 932.9 us on config 1 where rounds 2-3 read 250.9 us
+    # stable to 0.1 us -- ~130 calls of settling after graph capture), min over rounds.
+    try:
+        free_b, total_b = torch.cuda.mem_get_info(device)
+        need_b = (base_peak + cand_peak) * 1e6 * 2.0        # x2 headroom for allocator churn
+        if need_b < free_b * 0.5:
+            baseline2 = ref.BaselineTransformer(tcfg).to(device=device, dtype=dtype).eval()
+            ref.copy_model_weights(baseline2, baseline2)
+            b_rounds, c_rounds = [], []
+            for rnd in range(4):
+                if rnd % 2 == 0:
+                    b_rounds.append(median_ms(baseline2, xt, mt, n))
+                    c_rounds.append(median_ms(candidate, xt, mt, n))
+                else:
+                    c_rounds.append(median_ms(candidate, xt, mt, n))
+                    b_rounds.append(median_ms(baseline2, xt, mt, n))
+            del baseline2
+            torch.cuda.empty_cache()
+            bi, ci = min(b_rounds[1:]), min(c_rounds[1:])    # discard the cold round
+            out["timing_interleaved"] = {
+                "baseline_ms": bi, "candidate_ms": ci, "speedup": bi / ci,
+                "rounds": 4, "cold_round_discarded": True, "interleaved": True,
+                "note": "both models resident; safe here because the working set fits "
+                        "(finding 05's 410% spill needs a config large enough to spill)",
+            }
+        else:
+            out["timing_interleaved"] = {
+                "skipped": "co-residency would risk finding 05's host-memory spill",
+                "free_bytes": int(free_b), "needed_bytes": int(need_b)}
+    except Exception as e:
+        out["timing_interleaved"] = {"error": f"{type(e).__name__}: {e}"[:160]}
 
     # AFTER timing, never during: the profiler perturbs execution. This records WHY, so a
     # later reader can diff two candidates' kernel breakdowns instead of re-deriving them
@@ -856,7 +902,7 @@ def main() -> int:
                                  provenance_override=run_prov,
                                  extra={k: r[k] for k in
                                         ("baseline", "signature_floor", "capability",
-                                         "profile")
+                                         "profile", "timing_interleaved")
                                         if k in r} or None)
             if args.json_out:
                 # Carry correctness too. status=="ok" already IMPLIES it passed (an
