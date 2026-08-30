@@ -67,6 +67,26 @@ def estimate_working_set_bytes(batch: int, seq: int, d_model: int, heads: int,
     return act * 6
 
 
+def signature_floor_bytes(batch: int, seq: int, d_model: int,
+                          dtype_bytes: int) -> int:
+    """`forward(x) -> y`, both [B, S, d_model]: two tensors no implementation removes.
+
+    NOT an estimate and NOT tuned -- it counts exactly the two tensors the FUNCTION
+    SIGNATURE forces to be live simultaneously, and there is no coefficient in it to get
+    wrong. Returning a mutated view of the input would remove one of them and is not
+    available: it corrupts the caller's tensor and gives a wrong answer on the second
+    call with the same buffer, which is the defect [L25] catalogued.
+
+    Added at generation 38 as the ONE pre-check `v38_stream_fallback` keeps. Nothing in
+    v14 calls it, so v14's own measured behaviour is unchanged; it lives here because
+    this module is the single home of the dispatch predicates every streaming candidate
+    imports, and a second copy of a threshold is [L14]. `bench/feasibility.py` states the
+    same floor for REPORTING (its impossibility 2); `tests/bench/test_v38_stream_
+    fallback.py` pins the two equal so they cannot drift.
+    """
+    return 2 * batch * seq * d_model * dtype_bytes
+
+
 def choose(batch: int, seq: int, d_model: int, heads: int, layers: int,
            dtype_bytes: int, free_bytes: int) -> tuple[str, bool]:
     """(path, is_tuned). Pure function of shape and measured free memory."""
