@@ -1,0 +1,33 @@
+cfg      B   H   hd     S  runs today             incumbent   single   looped      sdpa sdpa vs inc  fastest                clears 10%?
+---------------------------------------------------------------------------------------------------------------------------------------
+  1     64   4   32   128  single_tile(64, 4, 1)      9.207    9.207    8.357    10.676       0.862  looped(32, 16, 2, 2)   no -- incumbent holds
+                                                   9.259    9.259    8.458    10.697       0.866  looped(32, 16, 2, 2)   no -- incumbent holds
+  2      1   4   32   128  single_tile(64, 4, 1)      2.476    1.929      nan     3.856       0.642  single_tile(16, 4, 1)  YES -- 1.283x, would displace
+                                                   2.475    1.933      nan     3.853       0.642  single_tile(16, 4, 1)  YES -- 1.280x, would displace
+  3      4   4   32   128  single_tile(64, 4, 1)      2.551    2.551      nan     4.335       0.589  single_tile(64, 4, 1)  IS the incumbent
+                                                   2.559    2.559      nan     4.335       0.590  single_tile(64, 4, 1)  IS the incumbent
+  4     16   4   32   128  single_tile(64, 4, 1)      3.807    3.807    3.862     4.216       0.903  single_tile(64, 4, 1)  IS the incumbent
+                                                   3.810    3.810    3.868     4.224       0.902  single_tile(64, 4, 1)  IS the incumbent
+  5    128   4   32   128  single_tile(64, 4, 1)     16.631   16.631   14.437    19.575       0.850  looped(32, 16, 2, 3)   YES -- 1.152x, would displace
+                                                  16.661   16.661   14.425    19.588       0.851  looped(32, 16, 2, 3)   YES -- 1.155x, would displace
+  6  10000   4   32   128  single_tile(64, 4, 1)   1145.117 1145.117 1145.071  2094.535       0.547  looped(32, 16, 2, 4)   no -- incumbent holds
+                                                1145.076 1145.076 1145.515  2094.688       0.547  single_tile(64, 4, 1)  IS the incumbent
+  7     64   4    8   128  single_tile(64, 4, 1)      6.556    6.556    6.041    11.537       0.568  looped(64, 32, 4, 2)   no -- incumbent holds
+                                                   6.554    6.554    6.038    11.566       0.567  looped(64, 32, 4, 2)   no -- incumbent holds
+  8     64   4  256   128  sdpa()                   115.181      nan  115.205   115.181       1.000  sdpa                   no -- incumbent holds
+                                                 115.022      nan  115.371   115.022       1.000  sdpa                   no -- incumbent holds
+  9     64   1  128   128  sdpa()                     9.446      nan   11.473     9.446       1.000  sdpa                   no -- incumbent holds
+                                                   9.395      nan   11.460     9.395       1.000  sdpa                   no -- incumbent holds
+ 10     64   2   64   128  single_tile(32, 4, 1)     11.176   11.176    9.090     9.988       1.119  looped(64, 32, 4, 4)   YES -- 1.229x, would displace
+                                                  11.167   11.167    9.081     9.968       1.120  looped(64, 32, 4, 4)   YES -- 1.230x, would displace
+ 11     64  16    8   128  single_tile(64, 4, 1)     20.293   20.293   18.696    40.370       0.503  looped(64, 32, 2, 2)   no -- incumbent holds
+                                                  20.302   20.302   18.641    40.363       0.503  looped(64, 32, 2, 2)   no -- incumbent holds
+ 12     64   4   32    32  single_tile(32, 2, 1)      2.107    2.107    2.169    10.534       0.200  single_tile(32, 2, 1)  IS the incumbent
+                                                   2.098    2.098    2.167    10.533       0.199  single_tile(32, 2, 1)  IS the incumbent
+ 13     64   4   32  1024  sdpa()                   280.034      nan  265.942   280.034       1.000  looped(64, 32, 4, 3)   no -- incumbent holds
+                                                 280.251      nan  267.419   280.251       1.000  looped(64, 32, 4, 3)   no -- incumbent holds
+
+`sdpa vs inc` = incumbent_time / sdpa_time, i.e. THE VENDOR'S SPEEDUP over what the model runs today.
+              >1 means sdpa+repack is faster and the predicate is letting a losing kernel fire.
+two rows per config = two independent runs. `nan` = that form declines this shape.
+`clears 10%?` applies v23's inherited DECISIVE margin to the fastest arm against the incumbent.

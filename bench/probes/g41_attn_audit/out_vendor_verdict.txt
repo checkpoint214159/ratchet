@@ -1,0 +1,20 @@
+device NVIDIA GeForce RTX 4070 Ti SUPER  SMs=66
+
+cfg      B   H   hd       S  incumbent             verdict    why
+  1     64   4   32     128  single_tile(64, 4, 1) kept       sdpa at 10.607 us did not clear single_tile(64, 4, 1) at 9.196 us by 10% at batch 64
+  2      1   4   32     128  single_tile(64, 4, 1) kept       sdpa at 3.825 us did not clear single_tile(64, 4, 1) at 2.452 us by 10% at batch 1
+  3      4   4   32     128  single_tile(64, 4, 1) kept       sdpa at 3.863 us did not clear single_tile(64, 4, 1) at 2.535 us by 10% at batch 4
+  4     16   4   32     128  single_tile(64, 4, 1) kept       sdpa at 4.184 us did not clear single_tile(64, 4, 1) at 3.777 us by 10% at batch 16
+  5    128   4   32     128  single_tile(64, 4, 1) kept       sdpa at 10.756 us did not clear single_tile(64, 4, 1) at 9.266 us by 10% at batch 66
+  6  10000   4   32     128  single_tile(64, 4, 1) kept       sdpa at 10.765 us did not clear single_tile(64, 4, 1) at 9.358 us by 10% at batch 66
+  7     64   4    8     128  single_tile(64, 4, 1) kept       sdpa at 11.414 us did not clear single_tile(64, 4, 1) at 6.511 us by 10% at batch 64
+  8     64   4  256     128  sdpa (declined)       NOT ASKED  the kernel already declines this shape
+  9     64   1  128     128  sdpa (declined)       NOT ASKED  the kernel already declines this shape
+ 10     64   2   64     128  single_tile(32, 4, 1) VENDOR     sdpa+repack at 9.903 us beat single_tile(32, 4, 1) at 11.053 us decisively (1.116x), two arms at batch 64, one trial budget each
+ 11     64  16    8     128  single_tile(64, 4, 1) kept       sdpa at 11.667 us did not clear single_tile(64, 4, 1) at 6.848 us by 10% at batch 16
+ 12     64   4   32      32  single_tile(32, 2, 1) kept       sdpa at 10.415 us did not clear single_tile(32, 2, 1) at 2.085 us by 10% at batch 64
+ 13     64   4   32    1024  sdpa (declined)       NOT ASKED  the kernel already declines this shape
+ 14     32  16   64  100000  sdpa (declined)       NOT ASKED  the kernel already declines this shape
+
+configs handed to the vendor: [10]
+NOTE: this asks the SINGLE-TILE plan. v41 asks it only where v40's looped sweep did not already win, so a config listed here as 'kept' is byte-identical to v40 for a second, independent reason as well.

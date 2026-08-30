@@ -183,6 +183,11 @@ def _v40(baseline_cls):
     return build(baseline_cls)
 
 
+def _v41(baseline_cls):
+    from .v41_vendor_aware_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -433,6 +438,23 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "v38, and the op-level ratio was re-measured L2-hot (1.228x, replicated "
                 "to 0.2%) because finding 48 had priced an in-graph time with an "
                 "L2-flushed ratio across a 2.24x regime gap.",
+    ),
+    "v41_vendor_aware_attn": CandidateSpec(
+        name="v41_vendor_aware_attn", generation=41, parent="v40_looped_attn",
+        build=_v41,
+        summary="THE CHOOSER MAY NOW STEP ASIDE FOR THE VENDOR. `attn_single_tile."
+                "pays()` is a residency argument -- whether OUR loop-free kernel can "
+                "hide its latency -- and it was being read as if it also said the vendor "
+                "was slower. It does not. Where the plan is still the single-tile "
+                "kernel, the chosen tile is timed hot against sdpa+repack, two arms with "
+                "one trial budget each, and the shape goes to the vendor if the vendor "
+                "clears v23's inherited DECISIVE 10%. The g41 audit measured all three "
+                "paths on all thirteen runnable configs, twice: the vendor wins on "
+                "exactly ONE shape (config 10, 1.119x over single_tile) and the looped "
+                "form already beats it there, so this fires on ZERO announced configs "
+                "and is byte-identical to v40. It is a guard on the fallback path, "
+                "worth +0.0000 as shipped and ~+0.0036 in the branch where "
+                "`autotune_looped` declines config 10.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
