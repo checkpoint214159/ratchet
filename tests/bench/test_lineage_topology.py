@@ -130,7 +130,27 @@ def test_new_candidates_branch_from_their_declared_parent(name):
     if name in KNOWN_VIOLATIONS:
         pytest.skip(f"{name} is a recorded violation of the branching discipline; "
                     f"see KNOWN_VIOLATIONS in this file")
-    extra = actual - declared - PRE_FINDING_28
+
+    # A candidate cut correctly from a parent that is itself a recorded violation
+    # INHERITS that parent's stray ancestors. That is not its fault and must not be
+    # charged to it -- otherwise one violation poisons every descendant forever and the
+    # test stops meaning "you branched from the trunk". Predicted by the g27 executor,
+    # which declined to edit this invariant to make its own candidate green.
+    inherited: set[str] = set()
+    cur = REGISTRY[name].parent
+    while cur is not None:
+        if cur in KNOWN_VIOLATIONS:
+            csha = _sha_of(cur)
+            if csha:
+                for other in REGISTRY:
+                    osha = _sha_of(other)
+                    if osha and other != cur and subprocess.run(
+                            ["git", "merge-base", "--is-ancestor", osha, csha],
+                            capture_output=True).returncode == 0:
+                        inherited.add(other)
+        cur = REGISTRY[cur].parent if cur in REGISTRY else None
+
+    extra = actual - declared - PRE_FINDING_28 - inherited
     assert not extra, (
         f"{name} git-descends from {sorted(extra)}, which are not its declared "
         f"ancestors. It was branched from the integration trunk instead of from "
