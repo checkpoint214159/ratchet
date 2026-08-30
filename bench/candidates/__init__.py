@@ -173,6 +173,11 @@ def _v37(baseline_cls):
     return build(baseline_cls)
 
 
+def _v38(baseline_cls):
+    from .v38_stream_fallback import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -394,6 +399,20 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "and asserts it covers v35's declared list. It also settles the GEMM "
                 "plan on the streamed path against the slice that runs, after the two "
                 "fusion decisions it reads.",
+    ),
+    "v38_stream_fallback": CandidateSpec(
+        name="v38_stream_fallback", generation=38, parent="v37_recombined2", build=_v38,
+        summary="RESIDENCY IS ATTEMPTED, NOT ESTIMATED. v33's dispatch asked "
+                "mem_get_info at the first forward -- which under run_matrix is the "
+                "correctness check, with the baseline still resident -- and latched the "
+                "answer into a timed phase where memory is plentiful, costing config 6 "
+                "1.6x on the whole streaming lineage. v38 tries the resident path and "
+                "streams only on an actual torch.cuda.OutOfMemoryError, releasing the "
+                "failed attempt through v37's derived reset first. The only surviving "
+                "pre-check is the signature floor -- 2*B*S*d*elem of input and output "
+                "against total_memory -- which has no coefficient to calibrate and "
+                "keeps config 14's full batch streaming on a 16 GiB card while letting "
+                "an 80 GiB card attempt it.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
