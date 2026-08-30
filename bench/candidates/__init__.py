@@ -213,7 +213,29 @@ def _v35(baseline_cls):
     return build(baseline_cls)
 
 
+def _v36(baseline_cls):
+    from .v36_gemm_gelu import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
+    "v36_gemm_gelu": CandidateSpec(
+        name="v36_gemm_gelu", generation=36, parent="v34_launch_bound", build=_v36,
+        summary="THE FIRST HAND-WRITTEN PROJECTION GEMM. Censused at config 9 -- the #1 "
+                "headroom row and one nobody had ever profiled -- the sixteen projection "
+                "GEMMs are 55.0% of device time at 47.3 TFLOP/s, 53.6% of this card's "
+                "measured peak, because cuBLAS selects `ampere_fp16_s1688gemm` at K=128: "
+                "`s1688` is mma.sync.m16n8k8 where sm_89 issues m16n8k16 and tl.dot "
+                "emits it. It does NOT do this at d_model 1024, where it hits 100.4% of "
+                "peak -- the bad selection is specific to narrow K. And the GELU is its "
+                "own kernel on every layer of every config because cuBLAS takes no "
+                "epilogue (finding 39), so it moves into the ffn_in epilogue in the "
+                "exact erf form, applied to the fp32 accumulator before any downcast. "
+                "Each of the four sites is decided by TIMING the vendor against 18 swept "
+                "tiles at prime time and keeping the vendor unless Triton wins by more "
+                "than 10%, so config 8 declines on its own evidence.",
+    ),
+
     "v33_streamed_long": CandidateSpec(
         name="v33_streamed_long", generation=33, parent="v26_causal_correct", build=_v33,
         summary="Restores batch streaming to the frontier. v14 built the predicate -- "
