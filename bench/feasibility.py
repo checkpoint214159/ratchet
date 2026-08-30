@@ -81,7 +81,7 @@ Two constructions here do test that, and neither needs the reference to fit.
      MEASURED at config 14's real shape, B=1, S=100000, every row:
      max|candidate - oracle| = 8.0913e-04 in 525 s of fp64, peak 6.37 GiB -- inside the
      1.19e-3 threshold of the certificate below, and three digits from the REFERENCE's
-     own 8.086e-04 distance from exact. See docs/findings/33.
+     own 8.086e-04 distance from exact. See docs/findings/40.
 
 WHAT STILL CANNOT BE CLAIMED
 -----------------------------

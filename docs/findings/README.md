@@ -49,10 +49,10 @@ the note. Where something is inferred rather than measured, it says so.
 | [37](37-the-outprojection-epilogue.md) | The out-projection in the attention kernel's epilogue, and the accuracy claim it corrects | 2026-08-30 |
 | [38](38-the-output-copy-and-what-can-see-it.md) | The graph's output copy, and the fact that nothing we run can see it | 2026-08-30 |
 | [39](39-the-launch-floor.md) | Thirty-six kernels on every config, and what a kernel costs when it computes nothing | 2026-08-30 |
+| [40](40-config-14-protocol.md) | **Config 14: the reference is infeasible on any hardware (18.63 TiB); we compute it, verified at the real S; and there is still no speedup.** Supersedes [09]. | 2026-08-30 |
 
 Numbers are identifiers, not an ordering guarantee. Findings 30 and 33 were each claimed concurrently by several agent branches; on merge the earliest-cited claimant kept the number and the rest were reassigned 35-39, so a few numbers run slightly out of chronological order.
 
-| [33](33-config-14-protocol.md) | **Config 14: the reference is infeasible on any hardware (18.63 TiB); we compute it, verified at the real S; and there is still no speedup.** Supersedes [09]. | 2026-08-30 |
 
 Related, and deliberately elsewhere:
 

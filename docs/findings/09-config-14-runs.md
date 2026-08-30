@@ -58,7 +58,7 @@ worth 2.10x-9.59x on the isolated attention call is what makes this row reachabl
 
 ---
 
-**SUPERSEDED 2026-08-30 by [finding 33](33-config-14-protocol.md).** What stands: the
+**SUPERSEDED 2026-08-30 by [finding 40](40-config-14-protocol.md).** What stands: the
 reference cannot run this shape, and we can. What is now stronger: the B=32 figure here
 was 32x a single measured sequence, and all 32 sequences have since actually been run
 (3,200,000 tokens, 3.54 GiB peak); correctness was checked at proxy shapes here, and is

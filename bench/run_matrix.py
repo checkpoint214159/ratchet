@@ -498,7 +498,7 @@ def _capability_checks(out, ref, cand, cfg, tcfg, device, dtype, x0, m0, done,
                 "caveat": "this measures |candidate - exact|, not |candidate - "
                           "reference|. The reference's own distance from exact is "
                           "1.9e-06 in strict fp32 and 8.09e-04 under TF32 (a "
-                          "representation floor, flat in S) -- see docs/findings/33.",
+                          "representation floor, flat in S) -- see docs/findings/40.",
             }
 
     out["correctness"] = {

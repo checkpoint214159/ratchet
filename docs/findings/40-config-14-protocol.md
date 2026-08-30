@@ -1,4 +1,4 @@
-# Finding 33 — Config 14: three different impossibilities, two real oracles, and no speedup
+# Finding 40 — Config 14: three different impossibilities, two real oracles, and no speedup
 
 Recorded 2026-08-30. Branch `cand/g33/config14`, parent `v26_causal_correct` (9bb30ed).
 Code: `bench/feasibility.py`, `bench/run_matrix.py` (capability path),
