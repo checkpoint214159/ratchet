@@ -148,6 +148,12 @@ def _v26(baseline_cls):
     return build(baseline_cls)
 
 
+
+def _v33(baseline_cls):
+    from .v33_streamed_long import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -319,5 +325,17 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "Declines head_dim 128/256 and seq_len 1024/100000, where a loop-free "
                 "kernel cannot keep enough blocks resident to hide its own latency -- "
                 "measured 0.94x and 0.84x there, so declining is the point.",
+    ),
+    "v33_streamed_long": CandidateSpec(
+        name="v33_streamed_long", generation=33, parent="v26_causal_correct", build=_v33,
+        summary="Restores batch streaming to the frontier. v14 built the predicate -- "
+                "estimated working set against measured free memory -- and v17 branched "
+                "from v13 rather than v14, so the streaming path fell out of the lineage "
+                "at generation 17. It changes nothing on the 13 configs that fit "
+                "(choose() returns resident) and is the difference between computing "
+                "config 14 one slice at a time and planning a 73 GiB resident working "
+                "set that would fail on an 80 GiB card too. It does NOT make config 14 "
+                "runnable here: the forward signature's own 12.21 GiB in + 12.21 GiB out "
+                "is a floor no implementation removes.",
     ),
 }
