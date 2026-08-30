@@ -200,6 +200,14 @@ def fits(seq_len: int, head_dim: int, block_m: int, num_warps: int,
 # `max_threads_per_multi_processor` so a card with a different register file evaluates it
 # differently without being retuned. Same discipline as ffn_fused.AMORTIZE_FRACTION.
 
+# OPEN QUESTION, pre-registered in docs/findings/31 so it is a prediction and not a fit.
+# The screen measured config 10 (head_dim 64) at -7.1% end to end -- the marginal case,
+# sitting at exactly MIN_RESIDENT_BLOCKS, one pass, inside the +/-7% floor. Raising the
+# threshold CANNOT fix it: head_dim 32 is a 1.55x win at the same 4.9 blocks/SM. The
+# discriminator that would is `scores >= operands`, i.e.
+#     block_m * BN * 4  >=  (block_m + 2 * BN) * pad16(head_dim) * 2
+# which holds at head_dim 8 and 32 and fails at 64, 128 and 256. It is deliberately NOT
+# implemented until a full sweep confirms the regression is real.
 MIN_RESIDENT_BLOCKS = 4
 
 # A margin below which the timer cannot separate two tiles: these kernels run in 1-13 us,
