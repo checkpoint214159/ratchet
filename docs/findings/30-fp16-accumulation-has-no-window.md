@@ -137,6 +137,13 @@ fails 6 of 12. The single-site arms pass — and that is the result worth readin
 premise is correct and whose operating window does not exist on this hardware. It should
 not be given GPU time, and `bench/run_matrix.py` was deliberately not run.
 
+The stage-1 screen was run once, on an idle GPU: **PROMOTE, 2.297x vs the parent's
+2.292x (+0.2%)**. That verdict must not be read as support for the mechanism. The screen
+promotes on "not clearly worse than the parent", and this candidate *is* its parent on
+the shipped path, so a tie was the only possible outcome. What the screen actually
+confirms is narrow and worth having: subclassing v18 did not disturb its compile and
+capture path. `bench/run_matrix.py` was deliberately not run.
+
 `v25_fp16_accum` ships with the accumulator predicate declining on every shape, which
 makes it **numerically identical to v18** (pinned by `torch.equal` against the parent).
 Its value is the recorded boundary and the falsifier that keeps the boundary measured:

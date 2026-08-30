@@ -21,6 +21,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [09](09-config-14-runs.md) | Config 14 runs in 3.18 GB where the reference OOMs -- with a stated limit | 2026-08-29 |
 | [10](10-layernorm-fusion-buys-nothing.md) | LayerNorm downcast fusion: +2.0% (below noise) and fails config 6 | 2026-08-29 |
 | [11](11-the-padding-blind-spot.md) | Every prior number used padding=0; v8 recovers the padded path with a proof | 2026-08-29 |
+| [30](30-fp16-accumulation-has-no-window.md) | **fp16 MMA accumulate is really 1.62x — and buys 1.000x, because the FFN runs at 99% of bandwidth; K=16 already spends 140% of budget** | 2026-08-30 |
 | [19](19-the-input-scale-tail.md) | Every candidate fails at input_scale=0.01; our 6% tolerance margin is not enough | 2026-08-29 |
 | [18](18-lineage-invariant-sweep.md) | Sweeping the lineage for staleness found 3 bugs the accuracy suite could not see | 2026-08-29 |
 | [17](17-the-empty-graph.md) | v12 could replay an empty graph and return stale output; v13 verifies or falls back | 2026-08-29 |
