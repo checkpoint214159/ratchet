@@ -256,7 +256,7 @@ def _confirm_infeasible(batch, seq, heads, device):
 
 
 def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, dtype,
-                   oracle_sequences: int = 1, oracle_q_block: int = 1024) -> dict:
+                   oracle_sequences: int = 1, oracle_q_block: int | None = None) -> dict:
     """Everything that CAN be measured on a config the reference cannot execute."""
     import time
 
@@ -349,6 +349,11 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
             out["capability"][attr] = getattr(cand, attr)
 
     # ---- correctness, by the two oracles ---------------------------------------------
+    # 32 sequences of 0.38 GiB each have been generated and freed by this point, and the
+    # allocator holds the cache. Release it before the oracles: the fp64 oracle is the
+    # single largest allocation in this function and the first full-S run of it died with
+    # a DRIVER out-of-memory, not an allocator one.
+    torch.cuda.empty_cache()
     checks = {}
     if done:
         # (A) the causal-prefix theorem, against the UNMODIFIED reference.
@@ -391,19 +396,34 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
         # (B) the blocked fp64 oracle, over EVERY row at the real sequence length.
         oracle = []
         for i in range(min(oracle_sequences, 1 if done else 0)):
-            try:
-                torch.cuda.empty_cache()
-                with torch.inference_mode():
-                    y = cand(x0, m0)
-                    o = blocked_reference_forward(cand, x0, m0, causal=cfg.causal,
-                                                  q_block=oracle_q_block)
-                    gap = (y.double() - o).abs().max().item()
-                    del o, y
-                oracle.append({"sequence": i, "seq_len": cfg.seq_len, "max_abs": gap})
-                torch.cuda.empty_cache()
-            except Exception as exc:
-                oracle.append({"sequence": i,
-                               "error": f"{type(exc).__name__}: {str(exc)[:160]}"})
+            # Retry smaller rather than reporting an error, once. The oracle's peak is
+            # q_block x seq x heads and `choose_q_block` sizes it from free memory at
+            # entry -- which is a snapshot, and this GPU has other tenants.
+            for divisor in (1, 4, 16):
+                try:
+                    torch.cuda.empty_cache()
+                    qb = None if (oracle_q_block is None and divisor == 1) else \
+                        max(8, (oracle_q_block or 256) // divisor)
+                    with torch.inference_mode():
+                        y = cand(x0, m0)
+                        o = blocked_reference_forward(cand, x0, m0, causal=cfg.causal,
+                                                      q_block=qb)
+                        gap = (y.double() - o).abs().max().item()
+                        del o, y
+                    oracle.append({"sequence": i, "seq_len": cfg.seq_len,
+                                   "max_abs": gap, "q_block": qb,
+                                   "certificate_threshold": ATOL - 8.09e-4,
+                                   "certifies": gap <= ATOL - 8.09e-4,
+                                   "certificate": "|cand-ref| <= |cand-oracle| + "
+                                                  "|ref-oracle|; the second term is "
+                                                  "8.09e-04 under TF32, measured flat in "
+                                                  "S and extrapolated to this S"})
+                    break
+                except Exception as exc:
+                    last = f"{type(exc).__name__}: {str(exc)[:160]}"
+                    torch.cuda.empty_cache()
+            else:
+                oracle.append({"sequence": i, "error": last})
         if oracle:
             checks["blocked_fp64_oracle"] = {
                 "oracle": "the reference's own arithmetic in float64 with the query axis "
