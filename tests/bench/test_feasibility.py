@@ -351,3 +351,53 @@ class TestThePrefixLengthIsDerived:
     def test_it_never_exceeds_the_sequence_length(self):
         from bench.run_matrix import _largest_reference_prefix as P
         assert P(1024, 128, 4, 4, 80 * GIB) <= 1024
+
+
+class TestTheCapabilityPathCannotThrowAwayWhatItAlreadyMeasured:
+    """A config-14 run reached the oracles with 32 sequences computed and the prefix
+    check passed, then died on an unguarded `torch.cuda.empty_cache()` reporting
+    `CUDA error: out of memory`. The child emitted no `__RESULT__`, the parent recorded
+    `status="crash"`, and every measurement in that process was lost to a cleanup call.
+
+    Structural tests, because reproducing a poisoned CUDA context on demand is not
+    something a unit test can do honestly."""
+
+    @staticmethod
+    def _src():
+        return (REPO / "bench" / "run_matrix.py").read_text()
+
+    def test_no_bare_empty_cache_survives_in_the_capability_path(self):
+        src = self._src()
+        body = src[src.index("def capability_one("):src.index("# ======", src.index(
+            "def capability_one("))]
+        assert "torch.cuda.empty_cache()" not in body, (
+            "use _release(), which reports instead of raising")
+
+    def test_the_checks_are_wrapped_so_a_failure_returns_a_row(self):
+        src = self._src()
+        i = src.index("_capability_checks(out,")
+        assert "try:" in src[max(0, i - 400):i], (
+            "the oracle/attempt stage must be inside a try so `out` still reaches the "
+            "ledger when it fails")
+
+    def test_release_reports_rather_than_raises(self, monkeypatch):
+        import torch
+        from bench.run_matrix import _release
+        monkeypatch.setattr(torch.cuda, "empty_cache",
+                            lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+        out = _release("unit")
+        assert out and "boom" in out and "unit" in out
+
+    def test_the_fp64_oracle_is_off_by_default(self):
+        """It is O(S^2) at fp64's 1/64 rate -- minutes per sequence at S=100000. A
+        routine sweep of the whole matrix must not silently pay that; the certificate is
+        something you ask for."""
+        import argparse
+        import inspect
+        from bench import run_matrix as RM
+        assert inspect.signature(RM.measure_one).parameters[
+            "oracle_sequences"].default == 0
+        assert inspect.signature(RM.capability_one).parameters[
+            "oracle_sequences"].default == 0
+        src = self._src()
+        assert 'ap.add_argument("--oracle-sequences", type=int, default=0' in src

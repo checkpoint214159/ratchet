@@ -79,7 +79,7 @@ def load_reference():
 
 def measure_one(config_id: int, candidate_name: str, samples: int = 300,
                 padding: float = 0.0, dtype_name: str = "float32",
-                input_scale: float = 1.0, oracle_sequences: int = 1) -> dict:
+                input_scale: float = 1.0, oracle_sequences: int = 0) -> dict:
     import torch
 
     sys.path.insert(0, str(REPO))
@@ -231,6 +231,26 @@ def _largest_reference_prefix(seq, d_model, heads, dtype_bytes, budget_bytes):
     return best
 
 
+def _release(note: str = "") -> str | None:
+    """`torch.cuda.empty_cache()`, which can itself raise.
+
+    It did: a config-14 capability run reached the oracles with everything already
+    established -- 32 sequences computed, the prefix check passed -- and died on an
+    unguarded `empty_cache()` reporting `CUDA error: out of memory`. The child returned
+    no `__RESULT__` at all, so the parent recorded `status="crash"` and the entire row's
+    worth of measurement was thrown away by a cleanup call.
+
+    Nothing in the capability path may take the row down with it. Every stage below
+    reports its own failure into the row and lets the next one run.
+    """
+    import torch
+    try:
+        torch.cuda.empty_cache()
+        return None
+    except Exception as exc:
+        return f"empty_cache{(' (' + note + ')') if note else ''}: {type(exc).__name__}: {exc}"
+
+
 def _confirm_infeasible(batch, seq, heads, device):
     """Ask the driver for the reference's score tensor and record what it says.
 
@@ -256,7 +276,7 @@ def _confirm_infeasible(batch, seq, heads, device):
 
 
 def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, dtype,
-                   oracle_sequences: int = 1, oracle_q_block: int | None = None) -> dict:
+                   oracle_sequences: int = 0, oracle_q_block: int | None = None) -> dict:
     """Everything that CAN be measured on a config the reference cannot execute."""
     import time
 
@@ -315,7 +335,8 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
 
     torch.cuda.reset_peak_memory_stats()
     times, done, err = [], 0, None
-    try:
+    x0 = m0 = None          # bound before the try: the oracles below take them as
+    try:                    # arguments and must not raise NameError on an early failure
         with torch.inference_mode():
             x0, m0, y0 = one_sequence(SEED)          # warm: compile, capture, autotune
             torch.cuda.synchronize()
@@ -348,16 +369,51 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
         if hasattr(cand, attr):
             out["capability"][attr] = getattr(cand, attr)
 
+    # Everything from here on is BEST EFFORT and reports into `out`. What is already in
+    # `out` -- the reference's infeasibility, the signature floor, and what the candidate
+    # completed -- is measurement that has been paid for and must reach the ledger even
+    # if the GPU goes away underneath the next stage.
+    try:
+        _capability_checks(out, ref, cand, cfg, tcfg, device, dtype, x0, m0, done,
+                           oracle_sequences, oracle_q_block, candidate_name, REGISTRY)
+    except Exception as exc:
+        out.setdefault("correctness", {"passed": None, "checks": {}})
+        out["correctness"]["checks"]["_fatal"] = (
+            f"{type(exc).__name__}: {str(exc)[:300]} -- the stages above this point are "
+            f"still measurements and are recorded")
+
+    out["timing"] = {"baseline_ms": None, "candidate_ms": None, "speedup": None,
+                     "method": "none",
+                     "note": "no speedup is claimed or claimable: a ratio needs two "
+                             "measured times and the reference produces none."}
+    out["memory"] = {"peak_MB": out["capability"]["peak_bytes"] / 1e6,
+                     "baseline_peak_MB": None}
+    return out
+
+
+def _capability_checks(out, ref, cand, cfg, tcfg, device, dtype, x0, m0, done,
+                       oracle_sequences, oracle_q_block, candidate_name, REGISTRY):
+    """The oracles and the full-batch attempt. Separated so that a failure in any of them
+    returns to a caller holding a complete row rather than unwinding out of the child."""
+    import time
+
+    import torch
+
+    from bench.feasibility import blocked_reference_forward, causal_prefix_holds
+
     # ---- correctness, by the two oracles ---------------------------------------------
     # 32 sequences of 0.38 GiB each have been generated and freed by this point, and the
     # allocator holds the cache. Release it before the oracles: the fp64 oracle is the
     # single largest allocation in this function and the first full-S run of it died with
     # a DRIVER out-of-memory, not an allocator one.
-    torch.cuda.empty_cache()
+    release_err = _release("before the oracles")
     checks = {}
+    if release_err:
+        checks["_release"] = release_err
     if done:
         # (A) the causal-prefix theorem, against the UNMODIFIED reference.
-        P = _largest_reference_prefix(cfg.seq_len, cfg.d_model, cfg.heads, e,
+        P = _largest_reference_prefix(cfg.seq_len, cfg.d_model, cfg.heads,
+                                      dtype.itemsize,
                                       int(torch.cuda.mem_get_info(device)[0] * 0.5))
         if P and causal_prefix_holds(cfg.causal, m0):
             try:
@@ -389,7 +445,7 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
                     "does_not_cover": "any query attending over more than {} keys".format(P),
                 }
                 del base, expected, y_full
-                torch.cuda.empty_cache()
+                _release()
             except Exception as exc:
                 checks["causal_prefix"] = {"error": f"{type(exc).__name__}: {exc}"}
 
@@ -401,7 +457,7 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
             # entry -- which is a snapshot, and this GPU has other tenants.
             for divisor in (1, 4, 16):
                 try:
-                    torch.cuda.empty_cache()
+                    _release()
                     qb = None if (oracle_q_block is None and divisor == 1) else \
                         max(8, (oracle_q_block or 256) // divisor)
                     with torch.inference_mode():
@@ -421,7 +477,7 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
                     break
                 except Exception as exc:
                     last = f"{type(exc).__name__}: {str(exc)[:160]}"
-                    torch.cuda.empty_cache()
+                    _release()
             else:
                 oracle.append({"sequence": i, "error": last})
         if oracle:
@@ -456,7 +512,7 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
         # at that config's shape; reusing the instance warmed above at batch 1 would be
         # measuring our own harness's call pattern, not theirs ([L24]).
         del x0, m0
-        torch.cuda.empty_cache()
+        _release("before the full-batch attempt")
         torch.manual_seed(SEED)
         _b = ref.BaselineTransformer(tcfg)
         fresh_cand = REGISTRY[candidate_name].build(ref.BaselineTransformer)(tcfg)
@@ -489,12 +545,6 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
                        "not it succeeded.")
     out["capability"]["full_batch_attempt"] = attempt
 
-    out["timing"] = {"baseline_ms": None, "candidate_ms": None, "speedup": None,
-                     "method": "none",
-                     "note": "no speedup is claimed or claimable: a ratio needs two "
-                             "measured times and the reference produces none."}
-    out["memory"] = {"peak_MB": torch.cuda.max_memory_allocated() / 1e6,
-                     "baseline_peak_MB": None}
     return out
 
 
@@ -504,7 +554,7 @@ def capability_one(config_id: int, candidate_name: str, ref, tcfg, cfg, device, 
 
 def run_child(config_id: int, candidate: str, padding: float = 0.0,
               dtype_name: str = "float32", input_scale: float = 1.0,
-              oracle_sequences: int = 1, timeout_s: int = 3600) -> dict:
+              oracle_sequences: int = 0, timeout_s: int = 3600) -> dict:
     """One config in its own process. An OOM or a crash is a result, not an exception."""
     proc = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--child",
@@ -544,10 +594,13 @@ def main() -> int:
                          "for a capability probe (does this shape OOM?), never for timing.")
     ap.add_argument("--json-out", action="store_true",
                     help="emit one __ROW__ json line per config, for the search loop")
-    ap.add_argument("--oracle-sequences", type=int, default=1,
+    ap.add_argument("--oracle-sequences", type=int, default=0,
                     help="sequences to verify against the blocked fp64 oracle on a "
-                         "config the reference cannot run. 0 skips it; each one costs "
-                         "O(S^2) fp64 work (~3 min at S=100000 on this card)")
+                         "config the reference cannot run. DEFAULT 0: each one is O(S^2) "
+                         "work at fp64's 1/64 rate (minutes at S=100000), and a routine "
+                         "sweep of the whole matrix must not pay that. The cheap "
+                         "causal-prefix oracle always runs. Pass 1 deliberately when you "
+                         "want the certificate.")
     ap.add_argument("--capability-timeout", type=int, default=7200,
                     help="subprocess budget for a capability row, which runs the whole "
                          "batch one sequence at a time plus an fp64 oracle")
