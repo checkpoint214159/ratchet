@@ -679,3 +679,86 @@ unchanged. Configs above a millisecond reproduced within 0.6%; every deviation c
 sub-millisecond rows. Direct evidence for [L29]'s floor, and a caution that the geomean
 weights a 0.06 ms config equally with a 57 ms one. See docs/findings/32.
 
+
+## L43 — "The reference cannot run it" is a claim with THREE different scopes (2026-08-30)
+
+Config 14 had 28 ledger rows and no information: 27 `status="oom"` plus a truncated
+traceback. Pulling it apart, "it OOMs" turned out to be three unrelated statements that
+had been used interchangeably, and only one of them is universal:
+
+1. **The reference's ALGORITHM, on any hardware that exists.** Line 97 materialises a
+   [B,H,S,S] score tensor = **18.63 TiB**. Measured by asking the driver: even one head
+   of one sequence is 37.25 GiB and is refused. Not a batch-size problem, not a property
+   of this card.
+2. **The forward signature's floor, on THIS card.** 12.21 GiB in + 12.21 GiB out =
+   24.42 GiB of tensors no implementation removes, against 15.99 GiB. An 80 GiB card
+   clears this and still hits (1).
+3. **This box, this day.** WSL2 oversubscribes to a measured 30 GiB, so 24.42 GiB is
+   nominally reachable — and the harness throws it away: `generate_random_case` frees its
+   first 12.21 GiB buffer into the allocator cache, then the **3.05 MB mask splits that
+   segment and pins it**. `empty_cache()` cannot release a partly-used segment. A 3 MB
+   mask costs 12.21 GiB.
+
+A report that says only "it OOMs" is not wrong, it is three claims wearing one coat, and
+the strongest of them (18.63 TiB, universal) is the one that gets lost. **State the scope
+of every impossibility claim: the algorithm, the interface, or the machine.**
+
+## L44 — Correctness at a shape with no reference is available, and proxies were leaving it on the table (2026-08-30)
+
+Finding 09 recorded `correctness.passed = null` for config 14 and checked proxy shapes.
+That was right and it was weaker than what existed. Two constructions verify at the REAL
+sequence length:
+
+- **The causal-prefix theorem.** Under causality with an all-valid mask, `model(x[:, :P])
+  == model(x)[:, :P]`. So the UNMODIFIED reference is an oracle at S=100000 for the first
+  P rows — real model, real input, the harness's own `compare_outputs`. Measured: P=4096,
+  passed, max_abs 8.66e-4, 0 failed elements.
+- **A blocked fp64 evaluation of the reference's arithmetic**, query axis blocked (exact:
+  softmax reduces over keys), deliberately NOT online softmax so a rescaling bug in our
+  flash path cannot be mirrored by the oracle. Covers every row.
+
+The generalisation: **when the reference cannot run, look for a smaller instance of the
+reference that is provably the same computation, and for a re-evaluation of its own
+arithmetic in higher precision.** Both were available for two days and nobody looked;
+`passed = null` had stopped the search.
+
+What is still not available is `|candidate - reference|` at S=100000, and no amount of
+this produces it. Say so.
+
+## L45 — Our own TF32 baseline spends 40% of the tolerance budget (2026-08-30)
+
+Validating the fp64 oracle against the reference, at four sequence lengths:
+
+```
+matmul precision "highest"  (strict fp32)   1.24e-06 (S=1024)   1.92e-06 (S=4096)
+matmul precision "high"     (TF32)          8.086e-04           8.086e-04
+```
+
+Identical to four digits across a 32x change in sequence length — [L4]'s representation-
+floor signature exactly. TF32 keeps 10 mantissa bits (eps ~4.9e-4) and these outputs have
+mean magnitude 0.798.
+
+CLAUDE.md rule 5 mandates the torch.compile+TF32 baseline, correctly, because it is the
+strongest honest comparison. The cost had never been quantified: **the reference itself is
+8.09e-04 from exact, 40% of the locked 2e-3 absolute budget, before any candidate runs.**
+It does not make the harness's pass/fail unfair — both arms are TF32 — but it is exactly
+half of [L26]'s "the margin is thinner than it looks", and it is the reason a fp64 oracle
+can only certify at 1.19e-3 rather than 2e-3.
+
+## L46 — A model that has only ever been called at one shape is not known to work at two (2026-08-30)
+
+Building the config-14 capability path meant calling one warmed model with a second batch
+size. The frontier returns **an (8, 128, 128) tensor for a (1, 128, 128) input**: v13
+captures a CUDA graph on the first forward, keeps `_static_x` sized to it forever, and
+`_static_x.copy_(x)` broadcasts a smaller input across the buffer — the first sequence
+computed eight times and returned as eight rows. In the other direction it raises.
+
+177 tests were green. **Every sweep builds a fresh model per config, so no model in this
+project's history had ever been called at two shapes.** [L24] in its purest form: correct
+because of how the harness calls it.
+
+The general rule this adds to [L24]: **enumerate what your harness holds CONSTANT across
+every invocation, not just what it varies.** The audit rule (7 for 7 at [L42], now 8) has
+been about untested *values* of things the harness varies. This is the other half — a
+dimension the harness never varies at all is not tested, it is assumed, and it does not
+appear in any parameter list to remind you.

@@ -244,3 +244,62 @@ class TestBlockedFp64Oracle:
         # 4x the sequence must cost far less than the 16x a materialised score matrix
         # would; allow generous slack for the fixed weight footprint.
         assert peaks[1] < 8 * peaks[0], f"peaks {peaks} look quadratic in S"
+
+
+# ======================================================================================
+# The ledger contract for a capability row
+# ======================================================================================
+
+class TestACapabilityRowClaimsNothingItCannotMeasure:
+    """The point of `status="reference_infeasible"` is that it is INERT everywhere a
+    speedup would be read. If a capability row could leak into the scoreboard as a pass,
+    the whole protocol would be a way of scoring an unmeasured config."""
+
+    @staticmethod
+    def _rows(tmp_path):
+        from bench.ledger import BenchLedger
+        led = BenchLedger(tmp_path / "r.jsonl")
+        sha = "a" * 40
+        base = {"ts": "2026-08-30T00:00:00Z", "commit_sha": sha, "branch": "t",
+                "dirty": False, "candidate": "v33_streamed_long"}
+        led.append({**base, "config_id": 1, "status": "ok",
+                    "correctness": {"passed": True},
+                    "timing": {"speedup": 2.0, "baseline_ms": 10.0,
+                               "candidate_ms": 5.0}})
+        led.append({**base, "config_id": 14, "status": "reference_infeasible",
+                    "correctness": {"passed": None},
+                    "timing": {"speedup": None, "baseline_ms": None,
+                               "candidate_ms": None}})
+        return led
+
+    def test_it_is_not_counted_as_a_passing_config(self, tmp_path):
+        from bench.ledger import scoreboard
+        entry = scoreboard(self._rows(tmp_path))[0]
+        assert entry["configs_measured"] == 2 and entry["configs_passed"] == 1, (
+            "the capability row is measured but must not be counted as passing")
+        assert [f["config_id"] for f in entry["failures"]] == [14]
+        assert entry["failures"][0]["status"] == "reference_infeasible", (
+            "the row must name itself, not hide inside a generic bucket")
+
+    def test_it_contributes_no_speedup(self, tmp_path):
+        from bench.ledger import scoreboard
+        entry = scoreboard(self._rows(tmp_path))[0]
+        assert 14 not in entry["speedups"]
+
+    def test_the_objective_therefore_scores_it_1_0(self, tmp_path):
+        """The conservative floor, stated as an executable fact rather than as prose in a
+        findings document. A future edit that quietly credits config 14 with the 3.0 cap
+        has to delete this test to do it."""
+        from bench.matrix import weighted_score, MATRIX
+        without = weighted_score({c.id: 3.0 for c in MATRIX if c.id != 14})
+        with_it = weighted_score({**{c.id: 3.0 for c in MATRIX if c.id != 14}, 14: 1.0})
+        assert without == with_it, (
+            "an unmeasured config and a capability row must score identically: 1.0")
+
+    def test_extra_fields_cannot_overwrite_a_ledger_field(self, tmp_path):
+        import pytest as _pytest
+        from bench.ledger import BenchLedger
+        led = BenchLedger(tmp_path / "r.jsonl")
+        with _pytest.raises(ValueError):
+            led.record(config_id=14, status="reference_infeasible", candidate="c",
+                       extra={"timing": {"speedup": 3.0}})
