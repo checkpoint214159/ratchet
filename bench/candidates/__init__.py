@@ -173,6 +173,11 @@ def _v22(baseline_cls):
     return build(baseline_cls)
 
 
+def _v24(baseline_cls):
+    from .v24_outproj_prologue import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -408,5 +413,18 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "~1.13x on those two configs, ~+1.7% on the 13-config geomean, which is "
                 "INSIDE the noise floor, and ~zero under weighted_score because config 11 "
                 "is already capped. Per-config claim only.",
+    ),
+    "v24_outproj_prologue": CandidateSpec(
+        name="v24_outproj_prologue", generation=24, parent="v18_capture_insurance",
+        build=_v24,
+        summary="The attention out-projection, its fp32 widening and the fp32 residual "
+                "add in one Triton kernel, so the fp16 [M, D] temporary between them "
+                "never exists -- 29% of that segment's traffic and one launch of two. "
+                "Measured 1.31x-1.55x on the segment against the compiled two-kernel "
+                "path with no losing shape, and ~600x tighter against fp64 because the "
+                "fusion DELETES an fp16 rounding step. KILLS proposal D-02's headline: "
+                "SDPA returns ctx token-major-contiguous, so the 'head-major gather' it "
+                "was built to absorb does not exist. Expected end-to-end effect is "
+                "2-3% at config 6, inside the noise floor.",
     ),
 }
