@@ -324,3 +324,30 @@ class TestACapabilityRowClaimsNothingItCannotMeasure:
         with _pytest.raises(ValueError):
             led.record(config_id=14, status="reference_infeasible", candidate="c",
                        extra={"timing": {"speedup": 3.0}})
+
+
+class TestThePrefixLengthIsDerived:
+    """P is the coverage of the causal-prefix oracle, so a hardcoded P would be a
+    hardcoded claim. It comes from the same feasibility predicate against measured free
+    memory, which means it shrinks on a smaller card instead of lying about coverage."""
+
+    def test_it_responds_to_the_budget(self):
+        from bench.run_matrix import _largest_reference_prefix as P
+        seq, d, h = 100000, 1024, 16
+        big = P(seq, d, h, 4, 6 * GIB)
+        small = P(seq, d, h, 4, 100 * 2**20)
+        assert big > small >= 128
+        assert P(seq, d, h, 4, 1) == 0, "no prefix fits: say 0, do not guess one"
+
+    def test_the_prefix_it_returns_actually_fits(self):
+        from bench.run_matrix import _largest_reference_prefix as P
+        for budget in (100 * 2**20, GIB, 6 * GIB, 40 * GIB):
+            p = P(100000, 1024, 16, 4, budget)
+            if p:
+                assert FZ.reference_peak_bytes(1, p, 1024, 16, 4).realistic_bytes <= budget
+                assert FZ.reference_peak_bytes(1, 2 * p, 1024, 16, 4).realistic_bytes > budget, (
+                    "it must return the LARGEST prefix that fits, not merely one that does")
+
+    def test_it_never_exceeds_the_sequence_length(self):
+        from bench.run_matrix import _largest_reference_prefix as P
+        assert P(1024, 128, 4, 4, 80 * GIB) <= 1024
