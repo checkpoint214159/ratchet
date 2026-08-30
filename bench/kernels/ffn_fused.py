@@ -183,8 +183,13 @@ def _ffn_block_normed(
     off = rm[:, None] * D + rd[None, :]
 
     # --- attention residual add, in fp32 and in registers -----------------------------
-    res = (tl.load(X + off, mask=keep[:, None], other=0.0)
-           + tl.load(ATTN + off, mask=keep[:, None], other=0.0))
+    # ATTN may arrive in fp16. The out-projection is an fp16 GEMM over fp16 operands, so
+    # its result is ALREADY fp16 and widening it here rather than in a separate `.float()`
+    # kernel is bit-identical -- while halving the tensor's HBM traffic and, on the
+    # launch-bound rows, deleting one kernel node per layer (generation 34). An fp32 ATTN
+    # is unchanged by the cast, so v19's caller is unaffected.
+    res = (tl.load(X + off, mask=keep[:, None], other=0.0).to(tl.float32)
+           + tl.load(ATTN + off, mask=keep[:, None], other=0.0).to(tl.float32))
 
     # --- norm2, reduced in fp32 over the row we already hold --------------------------
     mu = tl.sum(res, axis=1) / D
@@ -231,3 +236,85 @@ def fused_ffn_normed(x, attn, n2w, n2b, w1, b1, w2, b2, nnw, nnb, eps,
         D=d, F=f, BM=block_m, num_warps=num_warps, STORE_NEXT=store_next,
     )
     return y, (yn if store_next else None)
+
+
+# ======================================================================================
+# THE SECOND REASON TO FUSE, AND IT POINTS THE OTHER WAY (generation 34)
+#
+# `amortizes` above asks a BANDWIDTH question: do enough tokens stream past the hoisted
+# weights to pay for hoisting them? At d_model = ffn_dim = 128 it wants ~32000 tokens and
+# so declines every launch-bound row in the matrix -- correctly, on its own terms.
+#
+# There is a SECOND, independent reason to collapse those same five kernels into one, and
+# it fires exactly where the first one declines.
+#
+# MEASURED ON THIS CARD, 2026-08-30, by capturing a graph of N identical trivial kernels
+# and fitting replay time against N over N = 1 .. 256:
+#
+#     replay(N) = 1.886 + 0.7984 * N   us          (device calibration, not a candidate
+#     one trivial node's device duration: 775 ns    timing -- see docs/findings/33)
+#
+# So **every kernel node in a replayed graph costs about 0.8 us whatever it computes.**
+# The frontier launches 36 nodes per forward on every announced config (censused at
+# configs 2, 8 and 12; the decomposition is identical on all three), which is a ~28.7 us
+# floor -- 47% of config 2's entire 0.061 ms wall and 0.45% of config 8's.
+#
+# THE PREDICATE IS OCCUPANCY, NOT A FITTED CONSTANT.
+# When every thread block of the fused segment is resident on the device simultaneously,
+# the segment runs in ONE WAVE. Nothing in it is throughput-limited: its cost is one
+# launch latency plus one block's serial chain. Splitting that same work across five
+# launches multiplies the launch latency by five and buys nothing back, because there was
+# never a second wave for the later launches to overlap with.
+#
+# Above one wave the opposite holds -- later waves hide launch latency behind earlier
+# ones, the segment becomes throughput-limited, and `amortizes` is the predicate that
+# governs. The two conditions are disjoint by construction on this matrix, which
+# `tests/bench/test_v34_launch_bound.py` asserts rather than assumes.
+#
+# Both inputs are read off `torch.cuda.get_device_properties` at run time. No config id,
+# no announced shape constant, and no crossover fitted to this matrix (CLAUDE.md rule 2).
+# ======================================================================================
+
+MIN_TILE_ROWS = 16          # sm_89's mma.sync is m16n8k16; tl.dot needs every dim >= 16
+MAX_TILE_ROWS = 64          # v17's swept tile; above this the smem footprint stops fitting
+
+
+def blocks_per_sm(d_model: int, ffn_dim: int, elem_size: int, block_m: int,
+                  smem_per_sm: int) -> int:
+    """How many programs of the fused block one SM can hold, by shared memory alone."""
+    need = smem_bytes(d_model, ffn_dim, elem_size, block_m)
+    return 0 if need <= 0 else smem_per_sm // need
+
+
+def one_wave(tokens: int, d_model: int, ffn_dim: int, elem_size: int, block_m: int,
+             sm_count: int, smem_per_sm: int) -> bool:
+    """Does the whole fused segment fit on the device at once?
+
+    True means there is no second wave, so per-launch latency is pure overhead and
+    collapsing five launches into one is a structural win independent of bandwidth.
+    """
+    if tokens <= 0 or block_m < MIN_TILE_ROWS:
+        return False
+    per_sm = blocks_per_sm(d_model, ffn_dim, elem_size, block_m, smem_per_sm)
+    if per_sm < 1:
+        return False
+    grid = -(-tokens // block_m)
+    return grid <= sm_count * per_sm
+
+
+def launch_tile(tokens: int, sm_count: int) -> int:
+    """Rows per program in the launch-bound regime: spread the segment over the machine.
+
+    In the throughput regime a wide tile is right, because the weight load amortizes over
+    the rows it serves. Here there are not enough rows to amortize anything, so the tile
+    should instead be narrow enough to put a block on as many SMs as possible -- the
+    serial dependent chain inside one program is the whole latency, and every block reads
+    the SAME weights, which the 48 MB L2 serves after the first.
+
+    Clamped to the MMA width below and to v17's swept tile above.
+    """
+    want = -(-tokens // max(1, sm_count))            # rows per SM if perfectly spread
+    bm = MIN_TILE_ROWS
+    while bm * 2 <= MAX_TILE_ROWS and bm * 2 <= want:
+        bm *= 2
+    return bm
