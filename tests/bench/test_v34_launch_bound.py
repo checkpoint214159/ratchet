@@ -286,9 +286,15 @@ def test_declines_take_the_parents_plan_and_cost_no_accuracy(cid, capsys):
         want = parent(px, pm)
         expect = base(x, m)
     assert not model.launch_fused_used, model.launch_reason
-    assert model.attn_reason == parent.attn_reason, (model.attn_reason,
-                                                     parent.attn_reason)
     assert model.fused_ffn_reason == parent.fused_ffn_reason
+    # Only the DISPATCH half of attn_reason. It is `f"{why}; {how}"`, where `why` comes
+    # from `applies()` (pure, shapes and device properties) and `how` from
+    # `autotune_tile` (chosen by TIMING ~1 us kernels against a ~1 us event timer, and
+    # measured to flip run to run at these shapes -- see docs/findings/33). Asserting the
+    # whole string makes this test fail for a reason that has nothing to do with v34,
+    # which is how a test ends up weakened later for the wrong reason.
+    assert model.attn_reason.split(";")[0] == parent.attn_reason.split(";")[0], (
+        model.attn_reason, parent.attn_reason)
 
     ours = ref.compare_outputs(expect, got, rtol=RTOL, atol=ATOL)
     theirs = ref.compare_outputs(expect, want, rtol=RTOL, atol=ATOL)
