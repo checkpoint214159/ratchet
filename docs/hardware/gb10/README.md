@@ -40,7 +40,8 @@ Task 3 optimizes a **full transformer layer**, not attention alone. In Ratchet t
 | Toolchain qualified (torch+triton on `sm_121`) | **done** | `00-toolchain.md`: torch 2.9.1+cu130, triton 3.5.1, Triton add proof green (needs `TRITON_PTXAS_PATH`) |
 | GB10 calibrated (`ledger/device.gb10.json`) | **done** (peak-TFLOP gap) | `01-calibration.md`: 48 SM, 99 KB smem, 246.8 GB/s, 2418 MHz; ridge point blocked on Zone-A peak entry |
 | CUDA qualification gate | **9/9 checks pass** | `02-qualification.md`: golden re-pin fixed correctness; only non-blocking peak-TFLOP gap remains; awaiting human ratification |
-| Transformer-layer kernels (E2–E6) | **done, negative result** | flash/TF32/QKV/full-layer all correct but 0.94–0.97x vs cuBLAS fp32; dispatch → baseline. `03-results.md` |
+| Transformer-layer kernels (E2–E6) | done | hand-written flash/TF32/QKV/full-layer all correct but 0.94–0.97x vs cuBLAS fp32. `03-results.md` |
+| **Speedup found (E7)** | **done, positive** | TF32 tensor cores (baseline forgoes them) + SDPA: **1.16x–1.66x**, correct, on the authoritative evaluator; dispatch selects it |
 | Trustworthy timing | **done** | drift-robust interleaved ratio harness (`tests/manual/timed_compare.py`); clocks unlockable without root |
 
 ## Promotion note — canonical `ledger/device.json`

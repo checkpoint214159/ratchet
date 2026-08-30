@@ -13,6 +13,7 @@ from pathlib import Path
 
 import torch
 
+from ratchet.kernels.explore import forward_cublas_tf32, forward_sdpa_fp32
 from ratchet.kernels.transformer_layer import (
     optimized_forward,
     optimized_forward_full,
@@ -30,7 +31,8 @@ spec.loader.exec_module(mod)
 
 SEAM = os.environ.get("RATCHET_SEAM", "tf32")
 forward = {"flash": optimized_forward, "tf32": optimized_forward_tf32,
-           "qkv": optimized_forward_qkv, "full": optimized_forward_full}[SEAM]
+           "qkv": optimized_forward_qkv, "full": optimized_forward_full,
+           "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32}[SEAM]
 
 dtype = {"float32": torch.float32, "bfloat16": torch.bfloat16}[
     os.environ.get("RATCHET_DTYPE", "float32")]
@@ -48,7 +50,9 @@ mod.copy_model_weights(baseline, optimized)
 
 x = torch.randn(B, Nseq, 512, device=dev, dtype=dtype)
 prof = calibrate(cache_path="ledger/device.gb10.json")
-flush = prof.l2_flush_bytes
+# L2 flush models a cold-cache serve; no-flush matches the authoritative evaluator's warm
+# back-to-back timing (the scored methodology). RATCHET_FLUSH=0 selects warm.
+flush = prof.l2_flush_bytes if os.environ.get("RATCHET_FLUSH", "1") == "1" else 0
 
 def fb():
     with torch.no_grad():

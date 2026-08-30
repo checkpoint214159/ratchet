@@ -151,16 +151,47 @@ ratio. Built on the Zone-A timing primitives (`get_timer("do_bench")`, `L2Flushe
 | E3 | TF32 (tf32x3) GEMMs | 0.936x | correct, slower |
 | E4 | + fused QKV | 0.971x | correct, slower |
 | E5 | + LayerNorm, full custom layer | 0.974x | correct, slower |
-| E6 | dispatch | → baseline | untuned fallback wins |
+| **E7** | **SDPA + cuBLAS TF32 GEMMs** | **1.16x–1.66x** | **correct, faster — the win** |
+| E6 | dispatch | → **cublastf32** | evidence selects the winner |
 
-**Conclusion (honest negative result).** On GB10 at the authoritative fp32 config, no
-hand-written kernel path beats the cuBLAS-backed eager baseline. Fusing launches/traffic
-(QKV, full-layer) monotonically closes the gap (0.936 → 0.974) but does not cross 1.0x,
-because the layer is GEMM-compute-bound and the fp32-only correctness constraint (E2 wall)
-denies the bf16 tensor cores that would provide the arithmetic win. The result is
-correct-and-slower; the deployable choice is the baseline. The single highest-value unlock
-remains the **bf16 target question** (validate against fp32/fp64 rather than the eager bf16
-baseline), which would reopen the tensor-core path.
+**Intermediate conclusion.** The *hand-written* kernels are all correct but do not beat
+cuBLAS: fusing launches/traffic (QKV, full-layer) monotonically closes the gap
+(0.936 → 0.974) yet never crosses 1.0x, because the layer is GEMM-compute-bound and a
+from-scratch Triton GEMM does not match cuBLAS's tuning. That was the wrong target.
+
+## E7 — the win: TF32 tensor cores (`ratchet/kernels/explore.py::forward_cublas_tf32`)
+
+The baseline runs its GEMMs as **true fp32** (`allow_tf32=False`), leaving GB10's tensor
+cores idle. TF32 keeps a 10-bit mantissa (~5e-4 rel error) — which **stays inside the
+0.002 gate** through 6 layers because LayerNorm renormalizes each layer — and runs on the
+tensor cores. Enabling it for the optimized path only (`torch.backends.cuda.matmul.
+allow_tf32=True`, scoped + restored so the baseline stays honest), with SDPA for attention:
+
+| Config (fp32, authoritative evaluator) | Accuracy | Speedup |
+| --- | --- | --- |
+| default `B=8, seq=128` | PASS (0 failed) | **1.16x** |
+| `--causal` | PASS | **1.23x** |
+| `--batch-size 32` | PASS | **1.22x** |
+| `--seq-len 512` | PASS | **1.66x** |
+
+Probe: a raw 4096³ fp32 matmul goes 36 ms → 10.5 ms (3.4x) under `allow_tf32=True`, err
+1e-3 → 0.11; in the transformer the per-GEMM error is far smaller and LayerNorm keeps the
+end-to-end output within 7.3e-4 abs. The win **grows with compute** (seq512 → 1.66x).
+
+**Measurement lesson.** The do_bench interleaved harness reported ~2.3x for this candidate
+but only ~0.95x for the E2–E5 candidates; the authoritative evaluator (20-warmup + 100
+-repeat, holding clocks high) reported 1.16x. GB10's clock idles at 266 MHz and cannot be
+locked without root, so short timing loops under-clock the fp32 baseline and inflate the
+ratio. **The authoritative evaluator is the scored, trusted methodology; the do_bench
+harness is unreliable for fast candidates and is kept only as a cross-check.**
+
+**Conclusion (positive result).** A correct candidate beats the baseline on GB10 at the
+authoritative fp32 config — **1.16x–1.66x, growing with workload size**. The lever was not
+a cleverer attention kernel but **using the tensor cores the baseline forgoes**, at TF32
+precision that survives the gate. Dispatch (E6) now selects `cublastf32`. The hand-written
+kernels (E2–E5) remain correct and are the reusable building blocks; the deployable winner
+combines SDPA attention with TF32 GEMMs. Open follow-ups: a hand-tuned TF32/tf32x3 Triton
+GEMM that matches cuBLAS (for a fully hand-written win), and the bf16 target question.
 
 ## Accepted candidate events
 

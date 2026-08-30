@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 
+from ratchet.kernels.explore import forward_cublas_tf32, forward_sdpa_fp32
 from ratchet.kernels.transformer_layer import (
     optimized_forward,
     optimized_forward_full,
@@ -26,6 +27,7 @@ seam = os.environ.get("RATCHET_SEAM", "flash")
 mod.UserOptimizedTransformer.forward = {
     "flash": optimized_forward, "tf32": optimized_forward_tf32,
     "qkv": optimized_forward_qkv, "full": optimized_forward_full,
+    "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32,
 }[seam]
 
 # default config; pass through any extra CLI args (e.g. --causal, --dtype)
