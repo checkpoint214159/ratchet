@@ -595,3 +595,36 @@ Also today: v15 re-measured on an idle GPU gives **2.634x against the contended 
 ("+2.4% worse on config 6") was contamination and is actually -1.4% better. A result can be
 right for the wrong reason, and re-running is the only way to tell. See docs/findings/27.
 
+
+
+## L40 — A mechanism's speedup and its error budget can be scissors in the same variable (2026-08-30)
+
+fp16 MMA accumulation. The hardware reading was right and three agents converged on it:
+`tl.dot(out_dtype=tl.float16)` really emits `mma...f16.f16.f16.f16` against
+`...f32.f16.f16.f32`, and really measures **1.62x** in an MMA-saturated loop. It is still
+worth nothing, for two independent reasons that meet in one variable.
+
+Both conditions depend on the contraction depth K, and in this architecture
+`K == d_model == ffn_dim`, so one shape parameter drives both — in opposite directions:
+
+* **fast** needs intensity above the ridge point: `d_model >= 359` on this card
+* **accurate** needs `eps_fp16*sqrt(K) <= atol`: `K <= 16.8` at the locked 2e-3
+
+A 21.4x gap, and it WIDENS on better hardware — a higher peak-FLOPs-to-bandwidth ratio
+pushes the ridge up while fp16's mantissa stays 11 bits. Measured confirmation from both
+ends: the fused FFN runs at **99.2-100.1% of measured bandwidth** at config 6's token
+count (so all four accumulator arms measure 1.000x, 1.001x, 0.998x, 1.000x — no win, not
+a small one), and an fp16 accumulator at **K=16, the shallowest MMA sm_89 can issue,
+already spends 140% of the tolerance budget.** The affordable region is not narrow; it is
+empty.
+
+**The transferable move: before building, check whether the mechanism's speed condition
+and its accuracy condition are functions of the SAME shape parameter.** If they are and
+they point opposite ways, the question is not "does this help" but "is the window
+non-empty", which is arithmetic on measured device properties and costs no GPU time.
+Finding 08 is the precedent for the write-up; this is the precedent for killing it before
+the build. See docs/findings/30.
+
+Corollary on reporting: the single-site arms PASS every config — and cost 15-34 points of
+tolerance budget for a measured 1.001x. "Passes" was never the bar. Per L26, a candidate
+at 90-107% of budget does not survive the input-scale shift that L26 already measured.
