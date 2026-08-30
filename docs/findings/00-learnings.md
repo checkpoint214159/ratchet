@@ -837,3 +837,50 @@ carrying:
   fp16 path. That is why the same 8-9e-04 keeps appearing on unrelated configs.
 - It also means a candidate cannot buy much margin back by being more careful internally.
   The floor is in the comparison, not in the candidate.
+
+
+## L50 — A fix can make a second, dormant defect reachable for the first time (2026-08-30)
+
+Merging g33 and g34 -- two orthogonal children of the same parent, neither wrong on its
+own -- produced a silent wrong answer that **neither candidate could exhibit alone**.
+
+v34 latches `_nomask` once, in `_prime`, and its `_try_capture` ELIDES the mask buffer
+when `_nomask` is True. That is unreachable in v34 by itself: v13's shape latch makes the
+model raise on the second shape before a different mask can ever be presented. v33's whole
+purpose is to remove that raise. Measured on the merge with the reset deliberately
+disabled -- warm at (8,128,128) unpadded, call at (16,128,128) with padding 0.4:
+
+    max_abs 3.1612e+00     69407 / 262144 elements past the locked tolerance
+
+Twenty-six percent of the output wrong, on a path that did not exist in either parent.
+
+**A candidate's correctness argument is conditional on what its siblings do NOT do.**
+v34's "the mask check runs once and that is enough" was true, and stopped being true when
+something else in the same lineage removed the guard that made it true. So the question to
+ask at a merge is not "are both halves correct" -- both were -- but "does either half
+depend on a limitation the other removes". Here the dependency was one attribute derived
+in a function that runs once per model.
+
+Companion to [L14] (when you merge, assert nothing was dropped): nothing WAS dropped. The
+defect came from something being *added*. See docs/findings/41.
+
+
+## L51 — The profiled kernel count carries a constant offset; only the difference is portable (2026-08-30)
+
+Counting device events over ten profiled forwards, GPU lock held, five repeats:
+
+                     alone        inside the full 279-test suite
+    v26 / v33        36.0 x5      35.3
+    v35              20.0 x5      19.3
+
+A **constant deficit of seven events per profiled window**, identical for both models --
+the profiler drops events in a loaded process. The absolute count is not reproducible
+across environments. The DIFFERENCE is exactly 16.0 in both.
+
+This nearly cost a real mechanism test: `assert n_parent == approx(36.0, abs=0.5)` passed
+in isolation and failed in the suite, and the tempting reading was "widen the tolerance".
+The correct reading is that the two numbers are not the same measurement. **Assert the
+quantity the mechanism claims -- here, sixteen nodes removed -- not the absolute reading
+that happens to contain it**, and take both readings in the same process so the offset
+cancels. Same shape as [L44]'s free control: what reproduces tells you what the
+perturbation is. See docs/findings/41.

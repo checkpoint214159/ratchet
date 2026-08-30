@@ -80,10 +80,17 @@ from .v26_causal_correct import build as build_v26
 from .v14_dispatch import RESIDENT_BUDGET, choose, estimate_working_set_bytes
 
 
-def build(baseline_cls):
-    v26_cls = build_v26(baseline_cls)
+def build_on(base_cls):
+    """The streaming layer, applied to whatever class is handed in.
 
-    class CandidateV33(v26_cls):
+    Factored out at generation 35 so a recombination can stack it on top of a SIBLING of
+    v26 rather than on v26 itself, WITHOUT a second copy of this dispatch existing. That
+    is the same argument this file already makes for importing v14's predicate instead of
+    restating it: two copies drift, one copy cannot ([L14]). `build` below is unchanged --
+    it is `build_on(build_v26(...))` and nothing about v33's own behaviour moves.
+    """
+
+    class CandidateV33(base_cls):
         stream_path: str = "unset"
         stream_is_tuned: bool = False
         stream_slice: int = 0
@@ -110,8 +117,11 @@ def build(baseline_cls):
                 f"{RESIDENT_BUDGET:.2f} x {free / 2**30:.2f} GiB free; "
                 f"slice={self.stream_slice}")
 
-        def _invalidate_shape_state(self):
+        def _invalidate_shape_state(self, mask=None):
             """Drop everything that was decided against the previous input shape.
+
+            `mask` is accepted and ignored here; it exists so a subclass that latches
+            MASK-derived state as well can re-derive it (generation 35).
 
             v13 captures a CUDA graph on the first forward and keeps `_static_x` sized to
             that input for the life of the model; v17 and v23 latch their kernel choices
@@ -132,6 +142,19 @@ def build(baseline_cls):
             self.attn_reason = "undecided"
             self.fused_ffn_reason = "undecided"
 
+        def _settle_slice_decisions(self, head):
+            """Settle every shape-latched kernel decision against the SLICE that will
+            actually run, not against the whole batch that never will.
+
+            An extension point, not a convenience: a subclass that adds a fourth
+            shape-latched decision has to settle it here too, or the streamed path runs
+            with that decision still reading "undecided" and silently takes a default.
+            """
+            if self.attn_reason == "undecided":
+                self._decide_attn(head)
+            if self.fused_ffn_reason == "undecided":
+                self._decide_ffn(head)
+
         def forward(self, x, valid_token_mask=None):
             # Non-causal input goes to v26's own guard, unchanged: it delegates to the
             # unmodified baseline, and that decision is not this candidate's to revisit.
@@ -148,7 +171,7 @@ def build(baseline_cls):
             # correct only under the call pattern we happen to use.
             if self.stream_path == "unset" or self._decided_for != tuple(x.shape):
                 if self._decided_for is not None:
-                    self._invalidate_shape_state()
+                    self._invalidate_shape_state(valid_token_mask)
                 self._decide_stream(x)
             if self.stream_path == "resident":
                 # v23's and v17's forwards re-run their own decisions when the reason is
@@ -161,10 +184,7 @@ def build(baseline_cls):
             if not hasattr(self, "_cache"):
                 self._prime(valid_token_mask)
             head = x[: self.stream_slice]
-            if self.attn_reason == "undecided":
-                self._decide_attn(head)
-            if self.fused_ffn_reason == "undecided":
-                self._decide_ffn(head)
+            self._settle_slice_decisions(head)
 
 
             out = torch.empty_like(x)
@@ -175,3 +195,7 @@ def build(baseline_cls):
             return out
 
     return CandidateV33
+
+
+def build(baseline_cls):
+    return build_on(build_v26(baseline_cls))
