@@ -9,12 +9,16 @@ import os
 import sys
 from pathlib import Path
 
-from ratchet.kernels.explore import forward_cublas_tf32, forward_sdpa_fp32
+from ratchet.kernels.explore import (
+                                    forward_cublas_tf32,
+                                    forward_fused_ffn,
+                                    forward_sdpa_fp32,
+)
 from ratchet.kernels.transformer_layer import (
-    optimized_forward,
-    optimized_forward_full,
-    optimized_forward_qkv,
-    optimized_forward_tf32,
+                                    optimized_forward,
+                                    optimized_forward_full,
+                                    optimized_forward_qkv,
+                                    optimized_forward_tf32,
 )
 
 BENCH = Path("benchmarks/reference/torch_transformer_benchmark.py").resolve()
@@ -28,6 +32,7 @@ mod.UserOptimizedTransformer.forward = {
     "flash": optimized_forward, "tf32": optimized_forward_tf32,
     "qkv": optimized_forward_qkv, "full": optimized_forward_full,
     "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32,
+    "fusedffn": forward_fused_ffn,
 }[seam]
 
 # default config; pass through any extra CLI args (e.g. --causal, --dtype)

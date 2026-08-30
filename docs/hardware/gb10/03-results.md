@@ -209,6 +209,36 @@ the deployable winner combines SDPA attention with TF32 GEMMs (± compile). Open
 a hand-tuned TF32 Triton GEMM matching cuBLAS (for a fully hand-written win), and the bf16
 target question.
 
+## E9 — fused FFN megakernel (`ratchet/kernels/fused_ffn.py`) — the real "better kernel" attempt
+
+The honest test of "design a better kernel": one Triton kernel doing
+`GEMM1 → bias → GELU → GEMM2`, streaming the hidden dim so the `[M, 2048]` intermediate
+never touches HBM (the baseline writes+reads ~16 MB/layer). This is the one place a hand
+kernel can structurally beat two separate cuBLAS calls.
+
+**Correct** (tf32x3, max_abs 6.7e-6 vs fp32 on the FFN alone; full-transformer authoritative
+accuracy PASS, 0 failed). **But far slower:**
+
+| Config | Speedup vs baseline |
+| --- | --- |
+| seq128 | **0.166x** (6x slower: 43 ms vs 7.2 ms) |
+| seq512 | 0.289x |
+
+**Why it loses.** Keeping the full `d_model=512` output tile resident caps the GEMM2 block
+at `BH=32` under GB10's 99 KB shared-memory budget → 64 tiny `K=32` tensor-core dots with no
+pipelining (`num_stages=1`). The saved HBM traffic is real but **dwarfed by the collapse in
+MMA efficiency**: cuBLAS uses large, optimally-tuned tiles; the fusion constraint forces
+tiny ones. Net 6x slower.
+
+**The verdict on "a better kernel."** None of the speedups in this dossier come from a
+hand-written kernel. cuBLAS TF32 (E7) is a library flag; torch.compile (E8) is compiler-
+generated; the hand-written kernels — flash (0.96x), TF32/QKV/full-layer (0.94–0.97x), and
+this fused FFN (0.17x) — are all **correct but slower**. On GB10, at this workload, a
+from-scratch Triton kernel does not beat cuBLAS/SDPA; the honest win is "enable the tensor
+cores the baseline forgoes," not "write a faster kernel." Beating cuBLAS here would need
+Blackwell-specific MMA (tcgen05/TMA, warp-specialized persistent GEMM) well beyond
+straightforward Triton — recorded as the open frontier.
+
 ## Accepted candidate events
 
 Still none in the append-only experiment `ledger/`: E2–E6 are characterization + a

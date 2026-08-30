@@ -13,7 +13,11 @@ from pathlib import Path
 
 import torch
 
-from ratchet.kernels.explore import forward_cublas_tf32, forward_sdpa_fp32
+from ratchet.kernels.explore import (
+    forward_cublas_tf32,
+    forward_fused_ffn,
+    forward_sdpa_fp32,
+)
 from ratchet.kernels.transformer_layer import (
     optimized_forward,
     optimized_forward_full,
@@ -32,7 +36,8 @@ spec.loader.exec_module(mod)
 SEAM = os.environ.get("RATCHET_SEAM", "tf32")
 forward = {"flash": optimized_forward, "tf32": optimized_forward_tf32,
            "qkv": optimized_forward_qkv, "full": optimized_forward_full,
-           "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32}[SEAM]
+           "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32,
+           "fusedffn": forward_fused_ffn}[SEAM]
 
 dtype = {"float32": torch.float32, "bfloat16": torch.bfloat16}[
     os.environ.get("RATCHET_DTYPE", "float32")]

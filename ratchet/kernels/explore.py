@@ -8,11 +8,14 @@ hand-tuned kernel. Negative results are kept, per the repo contract.
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
+
+from ratchet.kernels.fused_ffn import fused_ffn
 
 
 @contextmanager
@@ -72,4 +75,24 @@ def forward_sdpa_fp32(self, x: torch.Tensor,
         return self.final_norm(x)
     for layer in self.layers:
         x = _block(layer, x, causal)
+    return self.final_norm(x)
+
+
+def forward_fused_ffn(self, x: torch.Tensor,
+                      valid_token_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    """Everything is the exact baseline EXCEPT the FFN, which runs in the fused megakernel.
+    Isolates the hand-written kernel's effect: baseline attention + projections (cuBLAS
+    fp32), my fused FFN for norm2 -> ffn_in -> GELU -> ffn_out. RATCHET_FFN_PREC selects
+    the kernel precision (default tf32x3)."""
+    causal = self.config.causal
+    prec = os.environ.get("RATCHET_FFN_PREC", "tf32x3")
+    if valid_token_mask is not None and not bool(valid_token_mask.all()):
+        for layer in self.layers:
+            x = layer(x, valid_token_mask, causal)
+        return self.final_norm(x)
+    for layer in self.layers:
+        x = x + layer.attention(layer.norm1(x), None, causal)
+        g = layer.norm2(x)
+        x = x + fused_ffn(g, layer.ffn_in.weight, layer.ffn_in.bias,
+                          layer.ffn_out.weight, layer.ffn_out.bias, prec=prec)
     return self.final_norm(x)
