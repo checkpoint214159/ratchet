@@ -792,3 +792,48 @@ applied inside: each stage reports its own failure into the row, and the row is 
 reads as incapable of failing, which is why it was the one call not wrapped. Same family
 as [L38] and [L36] — the assurance nobody arranged to be capable of failing — but from
 the other side: the *operation* nobody imagined could fail.
+
+## L48 — The optimisation that halves the work can be the thing that stops it running (2026-08-30)
+
+The fp64 oracle truncates its key axis at the causal diagonal. Obviously right: it halves
+the arithmetic, it is exact, and it is the same saving the candidate's own attention
+takes. It also makes **every loop iteration a different allocation size** — at S=100000,
+~1500 distinct multi-hundred-MB tiles that the caching allocator can never reuse.
+
+It failed with `torch.AcceleratorError: CUDA error: out of memory` at S=32768 **with
+14.18 GiB free**. Three things about that error misdirected the diagnosis for an hour:
+
+- it is a *driver* OOM, not a `torch.OutOfMemoryError`, so it does not carry PyTorch's
+  helpful "of the allocated memory X is allocated by PyTorch" breakdown;
+- a driver OOM poisons the CUDA context, so every later call fails too — including
+  `empty_cache()` ([L47]) — which makes the *last* thing to fail look like the cause;
+- the GPU genuinely was contended at the time, which supplied a plausible wrong answer.
+  It failed identically on an idle card.
+
+Fixed-width tile plus in-place softmax: one allocation, reused every iteration. It costs
+exactly the 2x the causal truncation saved, and it is the difference between an oracle
+that runs and an oracle that is merely described.
+
+**A memory-shape argument beats a FLOP-count argument when the allocator is the binding
+constraint**, and a loop whose allocation size is a function of the loop variable is the
+signature to look for.
+
+## L49 — The candidate is as accurate as the reference, and neither is very accurate (2026-08-30)
+
+Measured at config 14's real shape, B=1, S=100000, every row:
+
+```
+|candidate - exact|   8.0913e-04
+|reference - exact|   8.086e-04         (measured at S <= 4096, flat in S)
+```
+
+Three digits apart. Both are the TF32 representation floor ([L45]), not their own
+arithmetic — so **the fp16 intermediates and flash attention over 100,000 keys contribute
+almost nothing on top of what the baseline already spends**. Two consequences worth
+carrying:
+
+- The precision worry this project has carried since [L4] ("the budget is nearly spent")
+  is now better localised. Most of the budget is spent by TF32 in *both* arms, not by our
+  fp16 path. That is why the same 8-9e-04 keeps appearing on unrelated configs.
+- It also means a candidate cannot buy much margin back by being more careful internally.
+  The floor is in the comparison, not in the candidate.

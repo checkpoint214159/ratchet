@@ -78,6 +78,11 @@ Two constructions here do test that, and neither needs the reference to fit.
      reference runs, and has a negative control, because a check nobody has watched fail
      is not a check (L38, L36).
 
+     MEASURED at config 14's real shape, B=1, S=100000, every row:
+     max|candidate - oracle| = 8.0913e-04 in 525 s of fp64, peak 6.37 GiB -- inside the
+     1.19e-3 threshold of the certificate below, and three digits from the REFERENCE's
+     own 8.086e-04 distance from exact. See docs/findings/33.
+
 WHAT STILL CANNOT BE CLAIMED
 -----------------------------
 `|candidate - reference|` at S=100000 is not measurable and this module does not pretend
@@ -225,26 +230,35 @@ def _blocked_attention(q, k, v, scale, causal, q_block, key_mask=None):
     score row, takes an ordinary max-subtract softmax over the key axis, and multiplies
     by V -- the same three steps, in the same order, as the reference. Blocking the query
     axis changes nothing because softmax is reduced along keys.
+
+    EVERY ITERATION ALLOCATES THE SAME SHAPE, AND THAT IS NOT INCIDENTAL. The obvious
+    version truncates the key axis at the causal diagonal (`k[:, :stop]`), which halves
+    the arithmetic and makes every iteration a DIFFERENT size. At S=100000 that is ~1500
+    distinct allocations of 0.1-1 GB that the caching allocator can never reuse; measured,
+    it fails with a driver `CUDA error: out of memory` at S=32768 with 14.18 GiB free.
+
+    So the key axis is full width and fixed, the causal triangle is masked rather than
+    skipped, and every step after the matmul is IN PLACE -- one tile is allocated per
+    iteration and the allocator hands back the same block every time. It costs the 2x the
+    causal truncation would have saved. An oracle that runs at 2x is worth more than one
+    that does not run.
     """
     H, S, _ = q.shape
     out = torch.empty_like(q)
+    ar = torch.arange(S, device=q.device)
     for start in range(0, S, q_block):
         stop = min(start + q_block, S)
-        # Causal: a query at position i attends to keys 0..i, so this block needs keys
-        # 0..stop-1 and no more. Skipping the rest is exact, not an approximation.
-        k_hi = stop if causal else S
-        scores = torch.matmul(q[:, start:stop], k[:, :k_hi].transpose(-2, -1)) * scale
+        scores = torch.matmul(q[:, start:stop], k.transpose(-2, -1))
+        scores.mul_(scale)
         if causal:
-            qi = torch.arange(start, stop, device=q.device).unsqueeze(1)
-            ki = torch.arange(k_hi, device=q.device).unsqueeze(0)
-            scores.masked_fill_(ki > qi, float("-inf"))
+            scores.masked_fill_(ar[None, None, :] > ar[start:stop, None], float("-inf"))
         if key_mask is not None:
-            scores.masked_fill_(~key_mask[None, None, :k_hi], float("-inf"))
-        scores = scores - scores.amax(dim=-1, keepdim=True)
-        probs = scores.exp()
-        probs = probs / probs.sum(dim=-1, keepdim=True)
-        out[:, start:stop] = torch.matmul(probs, v[:, :k_hi])
-        del scores, probs
+            scores.masked_fill_(~key_mask[None, None, :], float("-inf"))
+        scores.sub_(scores.amax(dim=-1, keepdim=True))
+        scores.exp_()
+        scores.div_(scores.sum(dim=-1, keepdim=True))
+        out[:, start:stop] = torch.matmul(scores, v)
+        del scores
     return out
 
 
@@ -252,13 +266,13 @@ def choose_q_block(seq: int, heads: int, free_bytes: int,
                    dtype_bytes: int = 8, budget: float = 0.25) -> int:
     """The largest query block whose score tile fits the memory the device reports free.
 
-    `_blocked_attention` batches the head axis, so one tile is [heads, q_block, seq] and
-    three of them are live at the peak (scores, the max-subtracted copy, exp). Getting
-    this wrong is not a slowdown, it is an OOM inside the oracle -- which is how the
-    first full-S run of this protocol failed, at q_block=1024 with 16 heads asking the
-    driver for 7.75 GiB.
+    `_blocked_attention` batches the head axis, so one tile is [heads, q_block, seq], and
+    since every step after the matmul is in place there is one of them live plus its row
+    reductions. Getting this wrong is not a slowdown, it is an OOM inside the oracle --
+    which is how the first full-S run of this protocol failed, at q_block=1024 with 16
+    heads asking the driver for 7.75 GiB.
     """
-    per_row = max(1, heads * seq * dtype_bytes * 3)
+    per_row = max(1, heads * seq * dtype_bytes * 2)
     return int(max(8, min(1024, (free_bytes * budget) // per_row)))
 
 

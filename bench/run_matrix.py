@@ -461,10 +461,19 @@ def _capability_checks(out, ref, cand, cfg, tcfg, device, dtype, x0, m0, done,
                     qb = None if (oracle_q_block is None and divisor == 1) else \
                         max(8, (oracle_q_block or 256) // divisor)
                     with torch.inference_mode():
-                        y = cand(x0, m0)
+                        y = cand(x0, m0).double()
+                    # The graph's static buffers are two more [1, S, d_model] tensors and
+                    # the oracle is the largest allocation in the process. Drop them now
+                    # that the candidate's answer is in hand; nothing below calls it.
+                    for a in ("_graph", "_static_x", "_static_y", "_static_m",
+                              "_compiled_core"):
+                        if hasattr(cand, a):
+                            delattr(cand, a)
+                    _release("before the fp64 oracle")
+                    with torch.inference_mode():
                         o = blocked_reference_forward(cand, x0, m0, causal=cfg.causal,
                                                       q_block=qb)
-                        gap = (y.double() - o).abs().max().item()
+                        gap = (y - o).abs().max().item()
                         del o, y
                     oracle.append({"sequence": i, "seq_len": cfg.seq_len,
                                    "max_abs": gap, "q_block": qb,

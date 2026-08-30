@@ -16,14 +16,15 @@ exists; we compute all 32 sequences of it, and the answer is now checked against
 unmodified reference at the real sequence length rather than at proxy shapes; and there
 is still no speedup, because a ratio needs two measured times.**
 
-STATUS OF THE TWO ORACLES. The causal-prefix oracle (§2.1) has run at the real shape and
-passed. The blocked fp64 oracle (§2.2) is built, validated against the reference at
-S <= 4096, and has **not yet completed a full S=100000 run** — the GPU has been
-continuously occupied by other agents and its two attempts died on driver
-out-of-memory. Everything §2.2 claims about the oracle is measured; the one thing not yet
-measured is the candidate against it at S=100000. Re-running it is a queued single command
-(`bench/run_matrix.py --candidate v33_streamed_long --ids 14 --oracle-sequences 1`) and
-this document must not be read as if it had already returned.
+BOTH ORACLES HAVE NOW RUN AT THE REAL SHAPE. The headline number:
+
+```
+max |candidate - fp64 oracle|  at B=1, S=100000, every row  =  8.0913e-04
+certificate threshold (2.0e-3 - 8.09e-4)                    =  1.19e-03     CERTIFIES
+```
+
+525 s of fp64, peak 6.37 GiB. See §2.3 for why 1.19e-3 is the threshold and §2.4 for what
+the near-coincidence of 8.0913e-04 with the reference's own 8.086e-04 means.
 
 ---
 
@@ -215,6 +216,38 @@ that 8.09e-04 is a representation floor rather than a growing error, but it is a
 extrapolation and this document does not pretend otherwise. That residual belongs to the
 reference's own fp32 softmax over 100,000 keys, not to us.
 
+### 2.4 The measurement, and what its size means
+
+| S | `max abs(candidate - fp64 oracle)` | fp64 seconds | oracle peak | certifies (<= 1.19e-3) |
+|---|---|---|---|---|
+| 32768 | 7.9195e-04 | 31.3 | 3.39 GiB | **yes** |
+| **100000** | **8.0913e-04** | **525.1** | **6.37 GiB** | **yes** |
+
+So, by §2.3, at the announced sequence length and for **every query row including the
+last**:
+
+```
+|candidate - reference|  <=  8.091e-04 + 8.086e-04  =  1.618e-03  <  2.0e-3
+```
+
+Now look at the two terms. The candidate's distance from exact is **8.0913e-04**; the
+reference's own is **8.086e-04**. They agree to three digits, and they are near-identical
+because both are dominated by the same thing — TF32's 10-bit mantissa on outputs of
+magnitude ~0.8 ([L45]). **The candidate, with fp16 intermediates and flash attention over
+100,000 keys, is as close to the exact answer as the reference implementation is.** Its
+own arithmetic contributes almost nothing on top of the floor the baseline already sits
+on. Note also that the figure barely moves between S=32768 and S=100000 (+2%), which is
+the same flat-in-S signature and is the direct evidence the §2.3 extrapolation wanted.
+
+The cost of getting this: the oracle's first three attempts failed, and not for the
+reason they appeared to. Truncating the key axis at the causal diagonal halves the
+arithmetic and makes **every iteration a different allocation size** — ~1500 distinct
+multi-hundred-MB blocks at S=100000 that the caching allocator can never reuse. It failed
+with a *driver* `CUDA error: out of memory` at S=32768 with **14.18 GiB free**, which no
+retry ladder recovers from because a driver OOM poisons the context. Fixed-width tile
+plus in-place softmax — one allocation, reused every iteration — costs the 2x the causal
+truncation saved and is what makes the oracle exist rather than merely be described.
+
 ---
 
 ## 3. Batch slicing is exact, and the reference agrees
@@ -261,14 +294,14 @@ forward. **All 32 sequences are now actually run**, with the harness's own
 `generate_random_case` producing each one, and correctness is checked against the real
 reference at the real sequence length instead of at proxy shapes.
 
-Two things it does not show. The **full-batch call** — the single `forward` a grading
+One thing it does not show: the **full-batch call** — the single `forward` a grading
 harness makes — fails, as §1.2 says it must; the row records the stage and the driver's
-words. And the **fp64 oracle** did not complete on the first attempt: it died with a
-*driver* out-of-memory while another agent's process held ~15.8 GB, which the nvidia-smi
-contention check did not see (finding 26 / [L38] again, and the row was written with
-`gpu_exclusive=True` because our lock *was* held). The capability path now releases the
-allocator cache before the oracle and retries it at a quarter and a sixteenth of the
-query block.
+words.
+
+The fp64 oracle number in §2.4 was taken separately, at B=1, after the fragmentation fix
+(`scratchpad/oracle_fullS.py`, reproducible from `bench/feasibility.py` alone). The
+capability path now tears down the candidate's graph buffers before invoking it, so a
+future `--oracle-sequences 1` run carries the certificate on the row itself.
 
 ---
 
@@ -321,11 +354,14 @@ is not a working-set problem.
   head of one sequence needs 37.25 GiB; the full config needs 18.63 TiB. Derived from the
   reference's source and confirmed against the driver.
 - We compute it, at the announced shape, in a few GiB.
-- The answer is verified at the real sequence length **for query rows 0..4095** against
-  the unmodified reference, using the causal-prefix theorem — real model, real 100,000-token
-  input, the harness's own `compare_outputs` at the locked tolerance. Not proxy shapes.
-  (Once the fp64 oracle completes, and only then, "every row including the last" becomes
-  claimable. Until it does, say rows 0..4095.)
+- The answer is verified at the real sequence length, by two independent oracles:
+  **rows 0..4095 against the unmodified reference** (causal-prefix theorem: real model,
+  real 100,000-token input, the harness's own `compare_outputs`, max_abs 8.658e-04,
+  0 failed elements), and **every row including the last against a blocked fp64
+  evaluation of the reference's own arithmetic** (max_abs 8.0913e-04, inside the
+  1.19e-3 threshold that makes `|candidate - reference| < 2e-3` follow). Not proxy shapes.
+- That the candidate is **as close to exact as the reference is** — 8.0913e-04 against
+  8.086e-04 — because both sit on the same TF32 representation floor.
 - The frontier's batch-streaming gap was found and closed.
 
 **May not claim:**
@@ -334,11 +370,15 @@ is not a working-set problem.
   measured times; the denominator does not exist. Timing our own slower reimplementation
   of the baseline and dividing by it would be a number about us, not about the reference.
   `timing.speedup` is `None` and stays `None`.
-- A pass/fail against the reference for query rows beyond P=4096. The causal-prefix
-  theorem says nothing there, and the fp64 oracle — which would — has not completed at
-  S=100000. Even when it does, what it gives is a pass against the oracle plus a measured
-  and then extrapolated bound on the reference's own distance from exact (§2.3), never a
-  direct `|candidate - reference|`.
+- A **directly measured** `|candidate - reference|` at S=100000. What exists is a
+  measured `|candidate - oracle|` plus a bound on `|reference - oracle|` that is measured
+  at S <= 4096 and *extrapolated* to S=100000 on the strength of its being flat in S
+  (§2.3). The conclusion `< 2e-3` follows from those two, and the second one is an
+  extrapolation. Say so.
+- Anything about **B=32 correctness beyond the first sequence**. The oracle was run on
+  one sequence; batch elements are independent by construction and that independence is
+  tested (§3), but 31 of the 32 sequences are covered by the argument rather than by the
+  oracle.
 - That config 14 is runnable end to end on this card by anything. It is not: §1.2.
 
 **How it scores.** `weighted_score` gives an unmeasured config 1.0, and a

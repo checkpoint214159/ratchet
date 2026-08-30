@@ -248,6 +248,32 @@ class TestBlockedFp64Oracle:
             n = FZ.blocked_reference_forward(m, x, msk, causal=False, q_block=128)
         assert (c - n).abs().max().item() > 1e-1
 
+    def test_the_score_tile_is_the_same_shape_every_iteration(self):
+        """REGRESSION, and the reason the oracle exists at all rather than in principle.
+
+        Truncating the key axis at the causal diagonal halves the arithmetic and makes
+        every iteration a different allocation. At S=100000 that is ~1500 distinct
+        multi-hundred-MB blocks the caching allocator can never reuse, and it failed with
+        a driver `CUDA error: out of memory` at S=32768 with 14.18 GiB free -- not an
+        allocator OOM, a driver one, which no retry recovers from.
+
+        Fixed-width tile plus in-place softmax: reserved memory must stay within a small
+        multiple of ONE tile no matter how many iterations run.
+        """
+        import torch
+        torch.cuda.is_available() or pytest.skip("no CUDA")
+        S, d, heads, qb = 4096, 256, 4, 64
+        _ref, m, x, msk = self._setup(S=S, d=d, heads=heads)
+        torch.cuda.empty_cache()
+        before = torch.cuda.memory_reserved()
+        with torch.inference_mode():
+            FZ.blocked_reference_forward(m, x, msk, causal=True, q_block=qb)
+        grew = torch.cuda.memory_reserved() - before
+        one_tile = heads * qb * S * 8
+        assert grew < 12 * one_tile, (
+            f"reserved grew {grew/2**20:.0f} MB over {S//qb} iterations of a "
+            f"{one_tile/2**20:.0f} MB tile -- the tile shape is varying")
+
     def test_peak_memory_is_linear_in_sequence_not_quadratic(self):
         # The whole reason the oracle exists: it must not build an [S, S] tensor.
         import torch
