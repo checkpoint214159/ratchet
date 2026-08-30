@@ -4,6 +4,24 @@ Ratchet is a research-driven transformer optimization environment. It preserves 
 validated experiment in an append-only catalogue and turns the important evidence into a
 concise LaTeX research paper.
 
+It runs as **two deliberately separate lanes**, and knowing which one you are in is the
+first thing to get right:
+
+| | [`research/`](research/) | [`bench/`](bench/) |
+|---|---|---|
+| what | the fail-closed evidence archive | working measurements on real hardware |
+| gate | per-vendor qualification (`FG-01`); nothing can be marked `QUALIFIED` yet, so it admits only `NO_RUN` and `SYNTHETIC` | the graded harness's own correctness gate |
+| why | authored where no GPU was available; it must never fabricate a number | one machine has a CUDA device, and there is a deadline |
+| output | `research/paper/latest.pdf` | `bench/results.jsonl` + [`docs/findings/`](docs/findings/) |
+| env | `.venv`, CPU-only by default | system Python 3.10, torch 2.8.0+cu128, triton 3.4.0 |
+
+**Nothing in `bench/` is promoted into `research/archive/` implicitly.** Promotion needs
+the vendor qualification hierarchy written and ratified. Until then the two stay adjacent
+and honest about which is which — see [`bench/README.md`](bench/README.md).
+
+Most of this README documents the `research/` lane. If you are here to run the
+measured optimization loop, start at **[`ONBOARDING.md`](ONBOARDING.md)**.
+
 ## Fast, reproducible autoresearch setup
 
 Requirements: Linux or WSL2, Python 3.10+, Git, [uv](https://docs.astral.sh/uv/), and
@@ -34,6 +52,43 @@ candidate, invokes a backend, or manufactures a benchmark result.
 Open `research/paper/latest.pdf` after a successful run for the current research state:
 the reviewed literature, `EVT-000001` no-run evidence, its traceable future hypothesis,
 and the boundary against empirical claims.
+
+## The measured loop (`bench/`)
+
+An agent loop — an orchestrator that owns the GPU and the ledger, exploration agents that
+propose, implementation agents that build, and a verifier that attacks the result. It has
+been running since 2026-08-29.
+
+```bash
+python3 bench/matrix.py        # the 14 announced configs, as executable data
+python3 bench/ledger.py        # the live frontier + clade metaproductivity
+python3 -m pytest tests/bench/ # the loop's own invariants
+```
+
+`python3 bench/ledger.py` is the only answer to "how fast is it" that is worth quoting;
+any number written into a document is stale the moment another sweep lands.
+
+Four documents carry the method, and they are the transferable part of this project:
+
+- **[`docs/loop/method.md`](docs/loop/method.md)** — 24 rules distilled from every
+  measurement so far, each cited to the finding that paid for it. The highest-value file
+  in the repo; read it before any code.
+- [`docs/loop/architecture.md`](docs/loop/architecture.md) — the orchestrator and its
+  subagents, and why one GPU forces that shape.
+- [`docs/loop/runbook.md`](docs/loop/runbook.md) — one turn of the loop, as exact commands.
+- [`docs/loop/roles/`](docs/loop/roles/) — pasteable role prompts.
+
+The rules that bind hardest, stated here so they are not a surprise:
+
+- **Correctness runs before timing**, in the same process, and the tolerances are the
+  harness's own defaults. Never widened to make something pass.
+- **Only one process measures at a time**, holding `bench/gpu_lock.py`. Two processes on
+  one GPU produce two wrong numbers, not two measurements.
+- **A number that will change a decision comes through `bench/run_matrix.py`.** An ad-hoc
+  probe may propose; it may never conclude.
+- **`bench/results.jsonl` is append-only** and keyed to a commit sha; candidate branches
+  are never rebased, squashed, amended or force-pushed, because that silently reparents
+  the evolutionary tree.
 
 ## Research workflow
 
@@ -290,12 +345,23 @@ and fsync'd per row while the dashboard is running, so a torn final line is expe
 is skipped and flagged, never fatal. `bench/matrix.py` and `bench/candidates.REGISTRY`
 are read by shelling out to `python3`, so the dashboard never re-implements them.
 
-Six views: the git DAG as the evolution tree (merge commits included), the scoreboard
-keyed by `(commit, candidate, padding_ratio)` — never pooled across padding conditions —
-a log-scaled per-config heatmap, both baselines side by side (the ledger's speedups are
-against eager; the dashboard also computes `baseline_compiled_ms / candidate_ms`, which
-is the honest number), the failure rows against the locked 2e-3 budget, and the running
-learnings from `docs/findings/`.
+Six views: the **evolution tree**, the scoreboard keyed by
+`(commit, candidate, padding_ratio)` — never pooled across padding conditions — a
+log-scaled per-config heatmap, both baselines side by side, the failure rows against the
+locked 2e-3 budget, and the running learnings from `docs/findings/`.
+
+The tree draws the **declared lineage** — each candidate's registered parent, read via
+`dashboard/server/lineage.py` — and not git ancestry. Those two disagree, and the
+disagreement is the point: every candidate branch had been cut from the trunk's tip, so
+git ancestry said eighteen generations were one straight line while the registry knew the
+real branching structure. Drawing the git DAG showed a chain that was an artifact of
+branching discipline rather than of the search. See
+[`docs/findings/28-the-tree-was-a-chain.md`](docs/findings/28-the-tree-was-a-chain.md).
+
+The scoreboard's headline speedup is against the **`torch.compile` baseline**; the eager
+comparison is carried alongside as the saturated legacy number. Quoting the eager figure
+alone is the artifact this project exists to avoid — it once read 7.2x where the honest
+number was 1.69x.
 
 ## Agent and Beryl orientation
 
@@ -307,3 +373,11 @@ the installed-project command intentionally does not use `--development`.
 `HANDOFF.md` has been retired: its useful safety principles are preserved in this README,
 Beryl's canonical project context, and the documents above. Do not run `bootstrap.sh`; it
 is historical setup material and refuses to run inside the working repository.
+
+`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/` and `.codex/` are
+**generated shims**. Never hand-edit them; edit
+`.beryl/agent/tool-instruction-template.md` and run
+`.beryl/agent/scripts/sync-agent-env.sh`. For work in `bench/`, point your agent at
+[`docs/loop/roles/`](docs/loop/roles/) and [`docs/loop/method.md`](docs/loop/method.md);
+findings belong in `docs/findings/`, never in an agent's private memory, so the next
+person's agent can read them.
