@@ -107,24 +107,50 @@ def test_the_vendor_holds_the_ground_by_a_stated_margin():
     assert 0.0 < DECISIVE < 0.5
 
 
+def _executable_source(path: Path) -> str:
+    """The module's source with every comment and string literal removed.
+
+    Stripping only `#` lines is not enough and the difference is not academic: the first
+    version of this file failed on its own module docstring, which argues AGAINST tanh
+    and names the configs the census came from. Prose that cites a config as evidence is
+    the point of the docstring; what rule 2 forbids is CODE that looks at one.
+    """
+    import io
+    import tokenize
+    out = []
+    with open(path, "rb") as fh:
+        for tok in tokenize.tokenize(fh.readline):
+            if tok.type in (tokenize.COMMENT, tokenize.STRING, tokenize.NL):
+                continue
+            out.append(tok.string)
+    return " ".join(out)
+
+
 def test_no_config_ids_or_announced_shapes_in_the_predicate_source():
-    """CLAUDE.md rule 2, asserted on the source as test_v14_dispatch does. The docstring
-    cites configs by number as evidence; the CODE may not look at one."""
-    src = (REPO / "bench" / "kernels" / "proj_gemm.py").read_text()
-    body = src[src.index("def legal"):]
-    code = "\n".join(l for l in body.splitlines()
-                     if not l.strip().startswith("#") and '"""' not in l)
-    for forbidden in ("config", "cfg", "== 128", "== 8192", "10000", "100000"):
-        assert forbidden not in code.lower(), f"predicate mentions {forbidden!r}"
+    """CLAUDE.md rule 2, asserted on the source as test_v14_dispatch does."""
+    code = _executable_source(REPO / "bench" / "kernels" / "proj_gemm.py").lower()
+    for forbidden in ("config", "cfg", "8192", "16384", "10000", "100000", "384"):
+        assert forbidden not in code, f"the predicate mentions {forbidden!r}"
+
+
+def test_the_check_above_can_actually_fail():
+    """L38: verify that a check can FAIL before trusting that it passed. The stripper is
+    doing real work -- the module docstring contains every forbidden token."""
+    raw = (REPO / "bench" / "kernels" / "proj_gemm.py").read_text().lower()
+    assert "config" in raw and "8192" in raw, "the docstring should cite its evidence"
+    code = _executable_source(REPO / "bench" / "kernels" / "proj_gemm.py")
+    assert "roofline" not in code, "a docstring word survived the stripper"
+    assert "MAX_ACC_REGS_PER_THREAD" in code, "the stripper ate the code too"
 
 
 def test_the_gelu_is_the_exact_erf_form():
     """`approximate="none"`. The tanh approximation differs by up to ~1e-3 -- half the
     entire 2e-3 budget spent on an approximation nobody asked for -- and a previous probe
     kernel in this project got it wrong."""
+    code = _executable_source(REPO / "bench" / "kernels" / "proj_gemm.py")
+    assert "erf" in code
+    assert "tanh" not in code
     src = (REPO / "bench" / "kernels" / "proj_gemm.py").read_text()
-    assert "tl.erf" in src
-    assert "tanh" not in src
     assert "0.70710678118654752440" in src, "1/sqrt(2) to full double precision"
 
 

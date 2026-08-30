@@ -37,7 +37,7 @@ Inductor to fuse it into, and cuBLAS takes no epilogue -- finding 22's 68-SM vet
 every GEMM in this stack on cuBLAS/CUTLASS. Finding 39 already corrected finding 22 on
 exactly this point: that veto reading "was right about LayerNorm and wrong about GELU;
 GELU has no LayerNorm to hide in and is its own kernel on every layer of every config."
-It costs 12.14 us of device time AND four of the 35 graph nodes (~3.2 us at finding 33's
+It costs 12.14 us of device time AND four of the 35 graph nodes (~3.2 us at finding 39's
 0.798 us/node).
 
 THE PREDICATE IS A MEASUREMENT, NOT A SHAPE LITERAL
@@ -76,6 +76,19 @@ import triton.language as tl
 
 # The L2 swizzle width: how many M-tiles a program group walks before advancing in N.
 GROUP_M = 8
+
+
+def _cudagraph_bench():
+    """`do_bench_cudagraph` if this Triton has it. See `bench` inside `plan` for why the
+    predicate wants the graph-replay timer rather than the L2-flushing one."""
+    try:
+        from triton.testing import do_bench_cudagraph
+        return do_bench_cudagraph
+    except Exception:
+        return None
+
+
+_CUDAGRAPH_BENCH = _cudagraph_bench()
 
 
 # ------------------------------------------------------------------------ the kernel
@@ -305,6 +318,25 @@ def plan(m: int, k: int, n: int, gelu: bool, device, dtype=torch.float16,
 
         def bench(fn):
             fn()
+            # WHICH TIMER, AND WHY IT IS NOT `do_bench`.
+            # `do_bench` zeroes an L2-sized buffer between iterations and pays a real
+            # launch per call. The model does NEITHER: it runs inside a replayed CUDA
+            # graph whose weight arena finding 33 measured at 94.8% L2-resident. So
+            # `do_bench` measures a regime this call site is never in, and it measures it
+            # in the direction that flatters Triton -- an L2-cold probe understates the
+            # vendor, whose narrow-K kernel re-reads the same 32 KB weight matrix on
+            # every wave. `do_bench_cudagraph` replays a captured graph and does not
+            # flush L2 (CLAUDE.md), which is exactly the candidate's own condition.
+            # Measured consequence: under `do_bench` the qkv site read 1.05-1.18x and
+            # was taken about half the time; config 1 then measured 0.92-0.98x END TO
+            # END under the graded protocol while configs 9 and 10 gained. L33 -- a
+            # mechanism measured in isolation measures the isolation.
+            if _CUDAGRAPH_BENCH is not None:
+                try:
+                    return min(_CUDAGRAPH_BENCH(fn, rep=20, return_mode="min")
+                               for _ in range(2))
+                except Exception:
+                    pass
             return min(tt.do_bench(fn, warmup=10, rep=25, return_mode="min")
                        for _ in range(2))
 
