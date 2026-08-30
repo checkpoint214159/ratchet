@@ -178,6 +178,11 @@ def _v24(baseline_cls):
     return build(baseline_cls)
 
 
+def _v25(baseline_cls):
+    from .v25_fp16_accum import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -426,5 +431,18 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "SDPA returns ctx token-major-contiguous, so the 'head-major gather' it "
                 "was built to absorb does not exist. Expected end-to-end effect is "
                 "2-3% at config 6, inside the noise floor.",
+    ),
+    "v25_fp16_accum": CandidateSpec(
+        name="v25_fp16_accum", generation=25, parent="v18_capture_insurance",
+        build=_v25,
+        summary="fp16 MMA accumulation, probed per SITE and CLOSED. The hardware reading "
+                "is correct -- tl.dot(out_dtype=float16) emits f16.f16.f16.f16 mma and "
+                "measures 1.569x in an MMA-saturated loop -- but the fused FFN runs at "
+                "99.2% of measured HBM bandwidth and 35.3% of peak FLOPs, so the faster "
+                "instruction is off the critical path and config 6 measures 1.000x. And "
+                "the error fails everywhere it could pay: 3.2e-3 to 8.4e-3 against a "
+                "2.0e-3 budget from ONE site in ONE layer. Ships as fp32, i.e. identical "
+                "to v18, with the predicate that declines and the falsifier that measures "
+                "the refused path.",
     ),
 }
