@@ -60,6 +60,32 @@ score matrix). Dispatch's graph on/off is validated — the graph-off compute-bo
 | shape-aware `select`, device-calibrated | Innovation / Impact — the statement's dispatch problem |
 | honest matrix-vs-`torch.compile` measurement, one-run-at-a-time, correctness-gated | "Methodology is the scored artifact" |
 
+## The search loop — the dispatch table is measured, not asserted
+
+`tests/manual/search_loop.py` is a single-process port of the reference branch's parametric
+loop: **propose → gate(correctness) → measure(vs torch.compile) → record → select**, over
+the knobs the dispatch exposes (`use_graph` × compute `dtype`). It does not invent kernels;
+it tunes knobs, which a classical search does better than an LLM.
+
+Properties that make it a loop, not a sweep:
+- **Failures are data.** bf16 fails the correctness gate on every config and is written to
+  the ledger as a failing row, not skipped — that is how the loop *knows* fp16 is required.
+- **Promotion needs a margin** (3% noise floor), so it cannot report its own run-to-run
+  spread as progress.
+- **Append-only ledger** (`ledger/bench_results.jsonl`) with git provenance (sha, branch,
+  dirty) — one row per (config, point).
+
+Screen over a representative subset, and its measured table **agrees with the calibrated
+dispatch** — including the non-obvious call that config 13 (seq=1024) is *faster with the
+CUDA graph off*:
+
+    cfg2  launch-bound   -> fp16 + graph      2.26x   (graph 2.26x > no-graph 1.62x)
+    cfg11 hd8/16-head    -> fp16 + graph      3.10x
+    cfg13 attention      -> fp16 + NO graph   5.54x   (no-graph 5.54x > graph 5.37x)
+
+So the dispatch decisions are not hand-asserted heuristics — they are recoverable from a
+measured, auditable ledger.
+
 ## Honest boundaries
 
 - Config 14 (seq=100000) is excluded because the fp32 *reference* OOMs (same as the

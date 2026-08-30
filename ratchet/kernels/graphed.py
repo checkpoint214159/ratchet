@@ -30,30 +30,32 @@ _LP = torch.float16
 
 
 def _prime(self):
-    """Cache fp16 fused weights once. Held as plain attributes so strict load_state_dict
-    still matches the baseline keys."""
+    """Cache low-precision fused weights once. dtype is a dispatch knob (self._lp, default
+    fp16). Held as plain attributes so strict load_state_dict still matches baseline keys."""
+    lp = getattr(self, "_lp", _LP)
     self._cache = []
     for layer in self.layers:
         a = layer.attention
         self._cache.append((
-            torch.cat([a.q_proj.weight, a.k_proj.weight, a.v_proj.weight]).to(_LP).contiguous(),
-            torch.cat([a.q_proj.bias, a.k_proj.bias, a.v_proj.bias]).to(_LP).contiguous(),
-            a.out_proj.weight.to(_LP).contiguous(), a.out_proj.bias.to(_LP).contiguous(),
-            layer.ffn_in.weight.to(_LP).contiguous(), layer.ffn_in.bias.to(_LP).contiguous(),
-            layer.ffn_out.weight.to(_LP).contiguous(), layer.ffn_out.bias.to(_LP).contiguous(),
+            torch.cat([a.q_proj.weight, a.k_proj.weight, a.v_proj.weight]).to(lp).contiguous(),
+            torch.cat([a.q_proj.bias, a.k_proj.bias, a.v_proj.bias]).to(lp).contiguous(),
+            a.out_proj.weight.to(lp).contiguous(), a.out_proj.bias.to(lp).contiguous(),
+            layer.ffn_in.weight.to(lp).contiguous(), layer.ffn_in.bias.to(lp).contiguous(),
+            layer.ffn_out.weight.to(lp).contiguous(), layer.ffn_out.bias.to(lp).contiguous(),
         ))
     self._graph = None
 
 
 def _core(self, x, mask):
     causal = self.config.causal
+    lp = getattr(self, "_lp", _LP)
     for layer, cached in zip(self.layers, self._cache):
         a = layer.attention
         qkv_w, qkv_b, out_w, out_b, in_w, in_b, ffn_w, ffn_b = cached
         b, s, _ = x.shape
         d = a.d_model
 
-        qkv = linear_tf32(layer.norm1(x).to(_LP), qkv_w, qkv_b)      # fp16 fused QKV
+        qkv = linear_tf32(layer.norm1(x).to(lp), qkv_w, qkv_b)      # low-precision fused QKV
         q, k, v = qkv.split(d, dim=-1)
         q = q.view(b, s, a.num_heads, a.head_dim).transpose(1, 2).contiguous()
         k = k.view(b, s, a.num_heads, a.head_dim).transpose(1, 2).contiguous()
@@ -62,7 +64,7 @@ def _core(self, x, mask):
         ctx = ctx.transpose(1, 2).reshape(b, s, d)
         x = x + linear_tf32(ctx, out_w, out_b).float()              # residual in fp32
 
-        h = linear_tf32(layer.norm2(x).to(_LP), in_w, in_b, gelu=True)
+        h = linear_tf32(layer.norm2(x).to(lp), in_w, in_b, gelu=True)
         x = x + linear_tf32(h, ffn_w, ffn_b).float()
 
     return self.final_norm(x)
