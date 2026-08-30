@@ -208,6 +208,28 @@ def fits(seq_len: int, head_dim: int, block_m: int, num_warps: int,
 #     block_m * BN * 4  >=  (block_m + 2 * BN) * pad16(head_dim) * 2
 # which holds at head_dim 8 and 32 and fails at 64, 128 and 256. It is deliberately NOT
 # implemented until a full sweep confirms the regression is real.
+#
+# ANSWERED AT GENERATION 41 (finding 51), AND THE PREDICATE STAYS AS IT IS.
+# `bench/probes/g41_attn_audit/probe_three_arms.py` swept all three paths -- this kernel,
+# `attn_looped`, and `sdpa+repack` -- over their complete legal grids on all thirteen
+# runnable configs, L2-hot inside a captured graph, twice. The regression IS real and it
+# is confined to ONE shape:
+#
+#     hd=32/8 shapes (cfg 1,2,3,4,5,6,7,11,12)  sdpa is 0.20x-0.90x of this kernel
+#     hd=64   (cfg 10)                          sdpa is 1.119x of this kernel   <- real
+#     hd=128/256, S=1024/100000                 declined already
+#
+# So the discriminator above (`scores >= operands`) would have separated the measured
+# wins from the measured loss exactly as predicted -- and implementing it is still the
+# wrong move, for a reason the prediction could not have known: `attn_looped` reaches
+# 9.090 us on that same shape against sdpa's 9.988, so the answer at head_dim 64 is not
+# "use the vendor" but "use the other Triton form", which `attn_choice.autotune_looped`
+# already does by timing. Narrowing `pays` would remove the loop-free arm from a sweep
+# that is not choosing it anyway, and would silently narrow it on every other card.
+#
+# What was added instead is a floor, not a predicate: `attn_choice.autotune_vendor` times
+# the chosen tile against the vendor and hands the shape back if the vendor decisively
+# wins. A measurement can decline; a formula fitted to one row cannot un-decline.
 MIN_RESIDENT_BLOCKS = 4
 
 # A margin below which the timer cannot separate two tiles: these kernels run in 1-13 us,

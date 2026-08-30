@@ -54,6 +54,16 @@ It also means a genuine second result -- SDPA beating the incumbent single-tile 
 config 10 in the hot regime -- is deliberately left on the table for a separate change
 with its own evidence, rather than smuggled in on this one's measurement.
 
+    AMENDED AT GENERATION 41. That separate change is `autotune_vendor` below, and the
+    heading above now describes `autotune_looped` alone. The split is what keeps both
+    A/Bs attributable: `autotune_looped` still cannot select SDPA, and a shape it
+    declines still falls through to the parent's routine unchanged. The vendor became
+    selectable only through a SECOND routine, which times exactly two arms -- the tile
+    the parent already chose, and sdpa+repack -- and is asked only where the looped form
+    has already lost. The g41 audit measured all three paths on all thirteen runnable
+    configs, twice: the vendor wins on exactly one shape (config 10, 1.119x over
+    `single_tile`), and the looped form beats it there by a further 1.099x.
+
 THE PROBE ALLOCATION IS BOUNDED
 --------------------------------
 This sweep runs at prime time with the model already resident, and it allocates a real
@@ -293,6 +303,94 @@ def autotune_looped(seq_len: int, head_dim: int, heads: int, batch: int, device=
     if sdpa_ms is not None:
         why += f", and is {sdpa_ms / best_ms:.3f}x sdpa"
     return tile, why
+
+
+def autotune_vendor(seq_len: int, head_dim: int, heads: int, batch: int,
+                    incumbent_tile: tuple[int, int, int], device="cuda",
+                    reps: int = 2, collect: list | None = None) -> str:
+    """Should this shape STEP ASIDE and run `sdpa+repack` instead? Reason, or RAISE.
+
+    THE QUESTION THIS ANSWERS WAS PRE-REGISTERED AT GENERATION 23
+    -------------------------------------------------------------
+    `attn_single_tile`'s own source says of head_dim 64: *"the marginal case, sitting at
+    exactly MIN_RESIDENT_BLOCKS... deliberately NOT implemented until a full sweep
+    confirms the regression is real."* Finding 50 then measured, hot, `sdpa+repack` at
+    9.987 us against the incumbent single-tile kernel's 11.189 on config 10 -- and
+    deliberately did not act, because switching a shape to the vendor is a different
+    change from adding a second Triton form and bundling them would have made v40's A/B
+    unattributable.
+
+    `attn_single_tile.pays()` is a residency argument, and a residency argument is a
+    statement about whether the kernel CAN hide its latency -- not about whether the
+    vendor is slower. Where the two disagree, only a timing can say. This routine is that
+    timing, moved from a probe into the tuner, so the predicate stops being asserted on
+    the nine shapes nobody had measured it on.
+
+    TWO ARMS, ONE TRIAL BUDGET EACH -- WHICH IS HOW SDPA GETS AN EQUAL SWEEP
+    ------------------------------------------------------------------------
+    Finding 47 measured a 4.5% best-of-N-against-best-of-1 handicap and finding 48
+    committed it. The handicap is a winner's curse: a `min` over many noisy arms of one
+    parameterised family is biased low, and SDPA has no family to sweep -- it is one arm,
+    and always will be.
+
+    The equalisation is therefore not "sweep SDPA harder" (impossible) but **compare like
+    for like**: this routine times exactly TWO arms -- the incumbent tile that
+    `attn_single_tile.autotune_tile` already chose, and `sdpa+repack` -- with the same
+    `_time`, the same `reps`, and one arm's budget each. Neither side takes a minimum the
+    other does not. The looped form's sweep is a separate decision that has already run
+    and already lost by the time this is called.
+
+    That also means this routine never re-tunes the single-tile form. `incumbent_tile` is
+    passed in, chosen by the parent's own routine, run unchanged -- the same structural
+    guarantee `autotune_looped` has, and for the same reason: a shape this declines is
+    byte-identical to the parent, so an A/B over it is attributable.
+
+    `DECISIVE` IS THE INHERITED 10%, APPLIED IN THE INCUMBENT'S FAVOUR
+    ------------------------------------------------------------------
+    The vendor must beat what the model runs today by more than the margin below which
+    the timer cannot separate two arms. Ties go to the incumbent, so this can only ever
+    remove a kernel that is measurably losing -- never one that is merely level.
+    """
+    props = torch.cuda.get_device_properties(device)
+    dm = heads * head_dim
+    pb = probe_batch(batch, heads, props.multi_processor_count)
+
+    probe_bytes = pb * seq_len * 3 * dm * 2
+    budget = int(props.total_memory * PROBE_MEMORY_FRACTION)
+    if probe_bytes > budget:
+        raise ValueError(
+            f"tuning probe would allocate {probe_bytes/2**20:.0f} MiB against a "
+            f"{budget/2**20:.0f} MiB budget; not timing the vendor")
+
+    qkv = torch.randn(pb, seq_len, 3 * dm, device=device, dtype=torch.float16)
+    scale = head_dim ** -0.5
+    ref = _reference(qkv, heads, head_dim)
+    try:
+        bm, w, st = incumbent_tile
+        out, h = _single_with_handle(qkv, heads, head_dim, scale, bm, w, st)
+        torch.cuda.synchronize()
+        # Correctness before timing, even here: the incumbent is only the incumbent if
+        # it is right, and an arm that does not match must never win or lose a sweep.
+        if not torch.allclose(out.float(), ref.float(), atol=ATOL, rtol=RTOL):
+            raise ValueError(f"incumbent single_tile{incumbent_tile} did not match "
+                             f"the reference; not ranking it")
+        inc_ms = _time(lambda: _single_with_handle(
+            qkv, heads, head_dim, scale, bm, w, st)[0], reps)
+        sdpa_ms = _time(lambda: _reference(qkv, heads, head_dim), reps)
+    finally:
+        del qkv, ref
+
+    if collect is not None:
+        collect.append(("single_tile", tuple(incumbent_tile), inc_ms))
+        collect.append(("sdpa", (), sdpa_ms))
+
+    if sdpa_ms >= inc_ms * (1.0 - DECISIVE):
+        raise ValueError(
+            f"sdpa at {sdpa_ms*1e3:.3f} us did not clear single_tile{incumbent_tile} at "
+            f"{inc_ms*1e3:.3f} us by {DECISIVE:.0%} at batch {pb}")
+    return (f"sdpa+repack at {sdpa_ms*1e3:.3f} us beat single_tile{incumbent_tile} at "
+            f"{inc_ms*1e3:.3f} us decisively ({inc_ms/sdpa_ms:.3f}x), two arms at "
+            f"batch {pb}, one trial budget each")
 
 
 def _single_with_handle(qkv, heads, head_dim, scale, bm, w, st):

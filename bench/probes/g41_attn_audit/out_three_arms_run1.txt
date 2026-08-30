@@ -1,0 +1,693 @@
+device NVIDIA GeForce RTX 4070 Ti SUPER  SMs=66  L2=48 MB  REPS=3
+
+========================================================================================================
+config  1   B=64 H=4 hd=32 S=128
+  legal arms: 8 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 59 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    looped(32, 16, 2, 2)               8.357 us  regs=  62 spill=0 smem=4096
+    looped(32, 16, 2, 3)               8.672 us  regs=  62 spill=0 smem=6144
+    looped(64, 32, 4, 3)               8.724 us  regs=  80 spill=0 smem=12288
+    looped(32, 16, 2, 4)               8.771 us  regs=  63 spill=0 smem=8192
+    looped(64, 32, 4, 2)               8.808 us  regs=  80 spill=0 smem=8192
+    looped(64, 16, 4, 3)               8.962 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 2, 3)               9.127 us  regs= 109 spill=0 smem=8192
+    looped(64, 16, 4, 4)               9.192 us  regs=  62 spill=0 smem=10240
+    looped(64, 32, 4, 4)               9.197 us  regs=  80 spill=0 smem=16384
+    single_tile(64, 4, 1)              9.207 us  regs= 128 spill=0 smem=12288
+    looped(64, 16, 4, 2)               9.268 us  regs=  62 spill=0 smem=6144
+    looped(64, 16, 2, 4)               9.360 us  regs= 113 spill=0 smem=10240
+    looped(64, 16, 2, 2)               9.798 us  regs=  96 spill=0 smem=6144
+    looped(128, 32, 4, 2)              9.810 us  regs= 128 spill=0 smem=12288
+    looped(64, 32, 2, 3)               9.841 us  regs= 128 spill=0 smem=12288
+    looped(128, 32, 4, 3)              9.905 us  regs= 128 spill=0 smem=16384
+    looped(64, 32, 2, 2)               9.913 us  regs= 138 spill=0 smem=8192
+    looped(128, 32, 4, 4)              9.948 us  regs= 128 spill=0 smem=20480
+    looped(128, 64, 8, 3)             10.309 us  regs= 127 spill=0 smem=24576
+    looped(128, 16, 4, 2)             10.379 us  regs= 108 spill=0 smem=10240
+    looped(128, 16, 4, 3)             10.421 us  regs= 109 spill=0 smem=12288
+    looped(128, 64, 8, 2)             10.424 us  regs= 104 spill=0 smem=16384
+    looped(64, 32, 2, 4)              10.443 us  regs= 128 spill=0 smem=16384
+    looped(128, 16, 4, 4)             10.492 us  regs= 109 spill=0 smem=14336
+    looped(128, 32, 8, 3)             10.494 us  regs=  80 spill=0 smem=16384
+    looped(128, 64, 8, 4)             10.526 us  regs= 125 spill=0 smem=32768
+    looped(128, 64, 4, 4)             10.588 us  regs= 196 spill=0 smem=32768
+    looped(128, 64, 4, 3)             10.620 us  regs= 196 spill=0 smem=24576
+    looped(128, 64, 4, 2)             10.649 us  regs= 191 spill=0 smem=16384
+    sdpa()                            10.676 us  regs=   0 spill=0 smem=0   best-of-1 10.692  best-of-59 10.676
+    looped(128, 32, 8, 4)             10.679 us  regs=  80 spill=0 smem=20480
+    looped(128, 32, 8, 2)             10.800 us  regs=  80 spill=0 smem=12288
+    looped(128, 16, 8, 3)             11.008 us  regs=  64 spill=0 smem=12288
+    single_tile(64, 2, 1)             11.049 us  regs= 255 spill=0 smem=12288
+    looped(128, 16, 8, 4)             11.092 us  regs=  64 spill=0 smem=14336
+    looped(128, 16, 8, 2)             11.165 us  regs=  64 spill=0 smem=10240
+    single_tile(32, 2, 1)             11.231 us  regs= 129 spill=0 smem=10240
+    looped(128, 16, 2, 2)             12.135 us  regs= 175 spill=0 smem=10240
+    looped(128, 32, 2, 3)             12.838 us  regs= 250 spill=0 smem=16384
+    looped(128, 32, 2, 4)             13.021 us  regs= 248 spill=0 smem=20480
+    looped(128, 32, 2, 2)             13.027 us  regs= 235 spill=0 smem=12288
+    looped(128, 16, 2, 3)             13.172 us  regs= 168 spill=0 smem=12288
+    looped(128, 16, 2, 4)             13.395 us  regs= 168 spill=0 smem=14336
+    looped(32, 16, 4, 3)              13.542 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 4, 2)              13.587 us  regs=  60 spill=0 smem=4096
+    looped(32, 16, 4, 4)              13.620 us  regs=  62 spill=0 smem=8192
+    single_tile(16, 4, 1)             15.793 us  regs=  56 spill=0 smem=12288
+    single_tile(32, 4, 1)             15.798 us  regs= 116 spill=0 smem=10240
+    single_tile(16, 2, 1)             15.811 us  regs=  96 spill=0 smem=12288
+    looped(64, 32, 8, 3)              16.003 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 8, 2)              16.098 us  regs=  80 spill=0 smem=8192
+    looped(64, 32, 8, 4)              16.366 us  regs=  80 spill=0 smem=16384
+    looped(64, 16, 8, 3)              16.769 us  regs=  62 spill=0 smem=8192
+    single_tile(64, 8, 1)             16.869 us  regs= 103 spill=0 smem=12288
+    looped(64, 16, 8, 2)              16.992 us  regs=  62 spill=0 smem=6144
+    looped(64, 16, 8, 4)              17.048 us  regs=  62 spill=0 smem=10240
+    looped(32, 16, 8, 3)              25.586 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 8, 2)              26.042 us  regs=  60 spill=0 smem=4096
+    looped(32, 16, 8, 4)              26.052 us  regs=  62 spill=0 smem=8192
+    single_tile(32, 8, 1)             32.408 us  regs= 112 spill=0 smem=10240
+    (3 arms dropped: ['spills -- dropped'])
+
+  what the model runs today         single_tile(64, 4, 1)       9.207 us
+  best single_tile                  (64, 4, 1)                  9.207 us     1.000x incumbent
+  best looped                       (32, 16, 2, 2)              8.357 us     1.102x incumbent
+  sdpa+repack (best-of-N)           ()                         10.676 us     0.862x incumbent
+  sdpa+repack (best-of-1)                                      10.692 us     0.861x incumbent   [winner's-curse term 0.15%]
+  flushed cross-check (never divided into a hot number): single_tile=22.528  looped=26.592  sdpa=29.696
+
+========================================================================================================
+config  2   B=1 H=4 hd=32 S=128
+  legal arms: 8 single_tile, 0 looped, 1 sdpa   |  admitted+timed: 8 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    single_tile(16, 4, 1)              1.929 us  regs=  56 spill=0 smem=12288
+    single_tile(16, 2, 1)              2.293 us  regs=  96 spill=0 smem=12288
+    single_tile(32, 4, 1)              2.417 us  regs= 116 spill=0 smem=10240
+    single_tile(64, 4, 1)              2.476 us  regs= 128 spill=0 smem=12288
+    single_tile(32, 2, 1)              2.500 us  regs= 129 spill=0 smem=10240
+    single_tile(64, 8, 1)              3.378 us  regs= 103 spill=0 smem=12288
+    single_tile(32, 8, 1)              3.456 us  regs= 112 spill=0 smem=10240
+    single_tile(64, 2, 1)              3.749 us  regs= 255 spill=0 smem=12288
+    sdpa()                             3.856 us  regs=   0 spill=0 smem=0   best-of-1 3.856  best-of-8 3.856
+
+  what the model runs today         single_tile(64, 4, 1)       2.476 us
+  best single_tile                  (16, 4, 1)                  1.929 us     1.283x incumbent
+  best looped                       --                      
+  sdpa+repack (best-of-N)           ()                          3.856 us     0.642x incumbent
+  sdpa+repack (best-of-1)                                       3.856 us     0.642x incumbent   [winner's-curse term 0.00%]
+  flushed cross-check (never divided into a hot number): single_tile=5.120  sdpa=6.144
+
+========================================================================================================
+config  3   B=4 H=4 hd=32 S=128
+  legal arms: 8 single_tile, 0 looped, 1 sdpa   |  admitted+timed: 8 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    single_tile(64, 4, 1)              2.551 us  regs= 128 spill=0 smem=12288
+    single_tile(32, 4, 1)              2.599 us  regs= 116 spill=0 smem=10240
+    single_tile(16, 4, 1)              2.601 us  regs=  56 spill=0 smem=12288
+    single_tile(16, 2, 1)              2.660 us  regs=  96 spill=0 smem=12288
+    single_tile(32, 2, 1)              2.691 us  regs= 129 spill=0 smem=10240
+    single_tile(64, 8, 1)              3.463 us  regs= 103 spill=0 smem=12288
+    single_tile(32, 8, 1)              3.634 us  regs= 112 spill=0 smem=10240
+    single_tile(64, 2, 1)              3.827 us  regs= 255 spill=0 smem=12288
+    sdpa()                             4.335 us  regs=   0 spill=0 smem=0   best-of-1 4.335  best-of-8 4.335
+
+  what the model runs today         single_tile(64, 4, 1)       2.551 us
+  best single_tile                  (64, 4, 1)                  2.551 us     1.000x incumbent
+  best looped                       --                      
+  sdpa+repack (best-of-N)           ()                          4.335 us     0.589x incumbent
+  sdpa+repack (best-of-1)                                       4.335 us     0.589x incumbent   [winner's-curse term 0.00%]
+  flushed cross-check (never divided into a hot number): single_tile=7.168  sdpa=7.168
+
+========================================================================================================
+config  4   B=16 H=4 hd=32 S=128
+  legal arms: 8 single_tile, 27 looped, 1 sdpa   |  admitted+timed: 35 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    single_tile(64, 4, 1)              3.807 us  regs= 128 spill=0 smem=12288
+    looped(32, 16, 2, 3)               3.862 us  regs=  62 spill=0 smem=6144
+    looped(64, 32, 4, 4)               3.901 us  regs=  80 spill=0 smem=16384
+    looped(64, 16, 4, 3)               3.904 us  regs=  62 spill=0 smem=8192
+    looped(64, 32, 4, 3)               3.912 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 4, 2)               3.945 us  regs=  80 spill=0 smem=8192
+    looped(32, 16, 2, 4)               3.977 us  regs=  63 spill=0 smem=8192
+    looped(64, 16, 4, 4)               4.025 us  regs=  62 spill=0 smem=10240
+    looped(64, 32, 2, 3)               4.141 us  regs= 128 spill=0 smem=12288
+    looped(64, 16, 2, 3)               4.158 us  regs= 109 spill=0 smem=8192
+    looped(64, 32, 2, 4)               4.208 us  regs= 128 spill=0 smem=16384
+    sdpa()                             4.216 us  regs=   0 spill=0 smem=0   best-of-1 4.219  best-of-35 4.216
+    single_tile(64, 2, 1)              4.334 us  regs= 255 spill=0 smem=12288
+    looped(64, 16, 2, 4)               4.335 us  regs= 113 spill=0 smem=10240
+    looped(64, 32, 2, 2)               4.356 us  regs= 138 spill=0 smem=8192
+    looped(32, 16, 2, 2)               4.410 us  regs=  62 spill=0 smem=4096
+    single_tile(32, 2, 1)              4.431 us  regs= 129 spill=0 smem=10240
+    looped(64, 16, 4, 2)               4.472 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 4, 3)               5.239 us  regs=  62 spill=0 smem=6144
+    single_tile(16, 4, 1)              5.277 us  regs=  56 spill=0 smem=12288
+    looped(32, 16, 4, 4)               5.294 us  regs=  62 spill=0 smem=8192
+    single_tile(64, 8, 1)              5.469 us  regs= 103 spill=0 smem=12288
+    looped(32, 16, 4, 2)               5.530 us  regs=  60 spill=0 smem=4096
+    single_tile(32, 4, 1)              5.531 us  regs= 116 spill=0 smem=10240
+    looped(64, 16, 2, 2)               5.577 us  regs=  96 spill=0 smem=6144
+    single_tile(16, 2, 1)              5.780 us  regs=  96 spill=0 smem=12288
+    looped(64, 32, 8, 4)               5.883 us  regs=  80 spill=0 smem=16384
+    looped(64, 32, 8, 3)               5.939 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 8, 2)               5.947 us  regs=  80 spill=0 smem=8192
+    looped(64, 16, 8, 3)               6.503 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 8, 2)               6.561 us  regs=  62 spill=0 smem=6144
+    looped(64, 16, 8, 4)               6.598 us  regs=  62 spill=0 smem=10240
+    looped(32, 16, 8, 3)               8.843 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 8, 4)               8.997 us  regs=  62 spill=0 smem=8192
+    looped(32, 16, 8, 2)               9.139 us  regs=  60 spill=0 smem=4096
+    single_tile(32, 8, 1)              9.347 us  regs= 112 spill=0 smem=10240
+
+  what the model runs today         single_tile(64, 4, 1)       3.807 us
+  best single_tile                  (64, 4, 1)                  3.807 us     1.000x incumbent
+  best looped                       (32, 16, 2, 3)              3.862 us     0.986x incumbent
+  sdpa+repack (best-of-N)           ()                          4.216 us     0.903x incumbent
+  sdpa+repack (best-of-1)                                       4.219 us     0.902x incumbent   [winner's-curse term 0.07%]
+  flushed cross-check (never divided into a hot number): single_tile=10.240  looped=11.264  sdpa=12.288
+
+========================================================================================================
+config  5   B=128 H=4 hd=32 S=128
+  legal arms: 8 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 59 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    looped(32, 16, 2, 3)              14.437 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 2, 2)              14.487 us  regs=  62 spill=0 smem=4096
+    looped(32, 16, 2, 4)              14.708 us  regs=  63 spill=0 smem=8192
+    looped(64, 32, 4, 3)              14.867 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 4, 2)              14.970 us  regs=  80 spill=0 smem=8192
+    looped(64, 32, 4, 4)              15.363 us  regs=  80 spill=0 smem=16384
+    looped(64, 16, 4, 2)              15.908 us  regs=  62 spill=0 smem=6144
+    looped(64, 16, 4, 3)              15.927 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 2, 3)              15.935 us  regs= 109 spill=0 smem=8192
+    looped(64, 16, 4, 4)              16.115 us  regs=  62 spill=0 smem=10240
+    looped(64, 32, 2, 2)              16.281 us  regs= 138 spill=0 smem=8192
+    looped(64, 16, 2, 4)              16.294 us  regs= 113 spill=0 smem=10240
+    looped(64, 32, 2, 3)              16.389 us  regs= 128 spill=0 smem=12288
+    single_tile(64, 4, 1)             16.631 us  regs= 128 spill=0 smem=12288
+    looped(64, 16, 2, 2)              17.112 us  regs=  96 spill=0 smem=6144
+    looped(64, 32, 2, 4)              17.319 us  regs= 128 spill=0 smem=16384
+    looped(128, 32, 4, 3)             17.387 us  regs= 128 spill=0 smem=16384
+    looped(128, 32, 4, 2)             17.449 us  regs= 128 spill=0 smem=12288
+    looped(128, 32, 4, 4)             17.582 us  regs= 128 spill=0 smem=20480
+    looped(128, 16, 4, 3)             18.762 us  regs= 109 spill=0 smem=12288
+    looped(128, 16, 4, 2)             18.774 us  regs= 108 spill=0 smem=10240
+    looped(128, 32, 8, 3)             18.841 us  regs=  80 spill=0 smem=16384
+    looped(128, 16, 4, 4)             18.842 us  regs= 109 spill=0 smem=14336
+    looped(128, 64, 8, 3)             18.849 us  regs= 127 spill=0 smem=24576
+    looped(128, 32, 8, 2)             19.014 us  regs=  80 spill=0 smem=12288
+    looped(128, 32, 8, 4)             19.082 us  regs=  80 spill=0 smem=20480
+    looped(128, 64, 8, 4)             19.251 us  regs= 125 spill=0 smem=32768
+    looped(128, 64, 4, 3)             19.382 us  regs= 196 spill=0 smem=24576
+    looped(128, 64, 8, 2)             19.397 us  regs= 104 spill=0 smem=16384
+    looped(128, 64, 4, 4)             19.520 us  regs= 196 spill=0 smem=32768
+    sdpa()                            19.575 us  regs=   0 spill=0 smem=0   best-of-1 19.609  best-of-59 19.575
+    single_tile(32, 2, 1)             19.884 us  regs= 129 spill=0 smem=10240
+    looped(128, 16, 8, 2)             19.963 us  regs=  64 spill=0 smem=10240
+    looped(128, 16, 8, 3)             19.976 us  regs=  64 spill=0 smem=12288
+    single_tile(64, 2, 1)             19.992 us  regs= 255 spill=0 smem=12288
+    looped(128, 16, 8, 4)             20.191 us  regs=  64 spill=0 smem=14336
+    looped(128, 64, 4, 2)             20.203 us  regs= 191 spill=0 smem=16384
+    looped(32, 16, 4, 2)              23.873 us  regs=  60 spill=0 smem=4096
+    looped(128, 16, 2, 2)             23.881 us  regs= 175 spill=0 smem=10240
+    looped(32, 16, 4, 3)              23.986 us  regs=  62 spill=0 smem=6144
+    looped(128, 16, 2, 3)             24.348 us  regs= 168 spill=0 smem=12288
+    looped(32, 16, 4, 4)              24.488 us  regs=  62 spill=0 smem=8192
+    looped(128, 16, 2, 4)             24.785 us  regs= 168 spill=0 smem=14336
+    looped(128, 32, 2, 3)             24.888 us  regs= 250 spill=0 smem=16384
+    looped(128, 32, 2, 2)             25.032 us  regs= 235 spill=0 smem=12288
+    looped(128, 32, 2, 4)             25.289 us  regs= 248 spill=0 smem=20480
+    looped(64, 32, 8, 3)              28.298 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 8, 2)              28.657 us  regs=  80 spill=0 smem=8192
+    looped(64, 32, 8, 4)              29.010 us  regs=  80 spill=0 smem=16384
+    single_tile(16, 2, 1)             29.861 us  regs=  96 spill=0 smem=12288
+    looped(64, 16, 8, 3)              29.924 us  regs=  62 spill=0 smem=8192
+    single_tile(32, 4, 1)             30.212 us  regs= 116 spill=0 smem=10240
+    looped(64, 16, 8, 2)              30.267 us  regs=  62 spill=0 smem=6144
+    single_tile(16, 4, 1)             31.201 us  regs=  56 spill=0 smem=12288
+    looped(64, 16, 8, 4)              31.366 us  regs=  62 spill=0 smem=10240
+    single_tile(64, 8, 1)             32.298 us  regs= 103 spill=0 smem=12288
+    looped(32, 16, 8, 2)              47.938 us  regs=  60 spill=0 smem=4096
+    looped(32, 16, 8, 3)              48.086 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 8, 4)              48.156 us  regs=  62 spill=0 smem=8192
+    single_tile(32, 8, 1)             62.653 us  regs= 112 spill=0 smem=10240
+    (3 arms dropped: ['spills -- dropped'])
+
+  what the model runs today         single_tile(64, 4, 1)      16.631 us
+  best single_tile                  (64, 4, 1)                 16.631 us     1.000x incumbent
+  best looped                       (32, 16, 2, 3)             14.437 us     1.152x incumbent
+  sdpa+repack (best-of-N)           ()                         19.575 us     0.850x incumbent
+  sdpa+repack (best-of-1)                                      19.609 us     0.848x incumbent   [winner's-curse term 0.18%]
+  flushed cross-check (never divided into a hot number): single_tile=36.864  looped=40.960  sdpa=47.104
+
+========================================================================================================
+config  6   B=10000 H=4 hd=32 S=128   [swept at capped batch 5461]
+  legal arms: 8 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 59 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    looped(32, 16, 2, 4)            1145.071 us  regs=  63 spill=0 smem=8192
+    looped(64, 32, 4, 4)            1145.076 us  regs=  80 spill=0 smem=16384
+    single_tile(64, 4, 1)           1145.117 us  regs= 128 spill=0 smem=12288
+    looped(128, 64, 8, 3)           1145.557 us  regs= 127 spill=0 smem=24576
+    looped(128, 64, 8, 4)           1145.751 us  regs= 125 spill=0 smem=32768
+    looped(128, 64, 4, 4)           1145.758 us  regs= 196 spill=0 smem=32768
+    looped(128, 64, 4, 3)           1145.853 us  regs= 196 spill=0 smem=24576
+    looped(128, 32, 4, 3)           1146.045 us  regs= 128 spill=0 smem=16384
+    looped(128, 32, 8, 3)           1146.185 us  regs=  80 spill=0 smem=16384
+    looped(128, 32, 4, 4)           1146.193 us  regs= 128 spill=0 smem=20480
+    looped(64, 32, 2, 2)            1146.392 us  regs= 138 spill=0 smem=8192
+    looped(64, 32, 2, 4)            1146.479 us  regs= 128 spill=0 smem=16384
+    looped(128, 32, 8, 4)           1146.481 us  regs=  80 spill=0 smem=20480
+    looped(128, 32, 4, 2)           1146.531 us  regs= 128 spill=0 smem=12288
+    looped(128, 16, 4, 3)           1146.587 us  regs= 109 spill=0 smem=12288
+    looped(64, 32, 4, 3)            1146.636 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 4, 2)            1146.685 us  regs=  80 spill=0 smem=8192
+    looped(64, 32, 2, 3)            1146.978 us  regs= 128 spill=0 smem=12288
+    looped(128, 16, 4, 4)           1146.978 us  regs= 109 spill=0 smem=14336
+    looped(128, 16, 8, 3)           1147.124 us  regs=  64 spill=0 smem=12288
+    looped(64, 16, 2, 3)            1147.319 us  regs= 109 spill=0 smem=8192
+    looped(128, 64, 8, 2)           1147.563 us  regs= 104 spill=0 smem=16384
+    single_tile(64, 2, 1)           1147.648 us  regs= 255 spill=0 smem=12288
+    looped(64, 16, 4, 3)            1148.148 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 4, 4)            1148.148 us  regs=  62 spill=0 smem=10240
+    looped(128, 16, 8, 4)           1148.301 us  regs=  64 spill=0 smem=14336
+    looped(32, 16, 2, 2)            1148.381 us  regs=  62 spill=0 smem=4096
+    looped(64, 16, 4, 2)            1148.489 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 2, 3)            1148.684 us  regs=  62 spill=0 smem=6144
+    looped(128, 32, 8, 2)           1149.155 us  regs=  80 spill=0 smem=12288
+    looped(64, 16, 2, 2)            1149.941 us  regs=  96 spill=0 smem=6144
+    looped(128, 64, 4, 2)           1150.089 us  regs= 191 spill=0 smem=16384
+    looped(128, 32, 2, 3)           1152.230 us  regs= 250 spill=0 smem=16384
+    looped(128, 16, 4, 2)           1152.293 us  regs= 108 spill=0 smem=10240
+    looped(128, 16, 2, 3)           1152.585 us  regs= 168 spill=0 smem=12288
+    looped(128, 32, 2, 4)           1153.560 us  regs= 248 spill=0 smem=20480
+    looped(128, 16, 2, 4)           1154.438 us  regs= 168 spill=0 smem=14336
+    looped(128, 16, 8, 2)           1154.536 us  regs=  64 spill=0 smem=10240
+    looped(128, 16, 2, 2)           1155.305 us  regs= 175 spill=0 smem=10240
+    looped(32, 16, 4, 3)            1156.242 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 4, 2)            1178.234 us  regs=  60 spill=0 smem=4096
+    looped(32, 16, 4, 4)            1183.832 us  regs=  62 spill=0 smem=8192
+    looped(128, 32, 2, 2)           1185.946 us  regs= 235 spill=0 smem=12288
+    looped(64, 32, 8, 3)            1205.787 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 8, 4)            1213.798 us  regs=  80 spill=0 smem=16384
+    looped(64, 16, 8, 3)            1232.384 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 8, 4)            1239.872 us  regs=  62 spill=0 smem=10240
+    single_tile(32, 2, 1)           1240.207 us  regs= 129 spill=0 smem=10240
+    looped(64, 16, 2, 4)            1286.339 us  regs= 113 spill=0 smem=10240
+    looped(64, 32, 8, 2)            1298.170 us  regs=  80 spill=0 smem=8192
+    single_tile(32, 4, 1)           1372.900 us  regs= 116 spill=0 smem=10240
+    single_tile(64, 8, 1)           1399.507 us  regs= 103 spill=0 smem=12288
+    looped(64, 16, 8, 2)            1442.645 us  regs=  62 spill=0 smem=6144
+    single_tile(16, 2, 1)           1654.232 us  regs=  96 spill=0 smem=12288
+    single_tile(16, 4, 1)           1700.923 us  regs=  56 spill=0 smem=12288
+    looped(32, 16, 8, 3)            1977.941 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 8, 4)            2005.221 us  regs=  62 spill=0 smem=8192
+    looped(32, 16, 8, 2)            2076.084 us  regs=  60 spill=0 smem=4096
+    sdpa()                          2094.535 us  regs=   0 spill=0 smem=0   best-of-1 2097.149  best-of-59 2094.535
+    single_tile(32, 8, 1)           2666.752 us  regs= 112 spill=0 smem=10240
+    (3 arms dropped: ['spills -- dropped'])
+
+  what the model runs today         single_tile(64, 4, 1)    1145.117 us
+  best single_tile                  (64, 4, 1)               1145.117 us     1.000x incumbent
+  best looped                       (32, 16, 2, 4)           1145.071 us     1.000x incumbent
+  sdpa+repack (best-of-N)           ()                       2094.535 us     0.547x incumbent
+  sdpa+repack (best-of-1)                                    2097.149 us     0.546x incumbent   [winner's-curse term 0.12%]
+  flushed cross-check (never divided into a hot number): single_tile=1183.744  looped=1185.696  sdpa=2160.640
+  REAL-BATCH re-check of the selected arms: single_tile(64, 4, 1)=2093.140  looped(32, 16, 2, 4)=2094.702  sdpa()=3834.197
+
+========================================================================================================
+config  7   B=64 H=4 hd=8 S=128
+  legal arms: 8 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 62 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    looped(64, 32, 4, 2)               6.041 us  regs=  62 spill=0 smem=4096
+    looped(64, 32, 4, 3)               6.185 us  regs=  64 spill=0 smem=6144
+    looped(64, 32, 2, 2)               6.317 us  regs=  96 spill=0 smem=4096
+    single_tile(64, 4, 1)              6.556 us  regs=  94 spill=0 smem=6144
+    looped(64, 32, 4, 4)               6.594 us  regs=  56 spill=0 smem=8192
+    looped(128, 64, 4, 2)              6.779 us  regs= 128 spill=0 smem=8192
+    looped(32, 16, 2, 2)               6.821 us  regs=  48 spill=0 smem=2048
+    looped(128, 32, 4, 3)              6.850 us  regs=  96 spill=0 smem=8192
+    looped(64, 16, 4, 2)               6.854 us  regs=  46 spill=0 smem=3072
+    looped(32, 16, 2, 3)               6.864 us  regs=  48 spill=0 smem=3072
+    looped(128, 64, 8, 2)              6.873 us  regs=  80 spill=0 smem=8192
+    looped(64, 16, 4, 3)               6.919 us  regs=  46 spill=0 smem=4096
+    looped(128, 32, 4, 2)              6.924 us  regs=  96 spill=0 smem=6144
+    looped(128, 64, 4, 3)              6.966 us  regs= 128 spill=0 smem=12288
+    looped(128, 64, 8, 3)              6.971 us  regs=  80 spill=0 smem=12288
+    looped(128, 32, 8, 2)              6.985 us  regs=  64 spill=0 smem=6144
+    looped(128, 32, 8, 3)              6.996 us  regs=  60 spill=0 smem=8192
+    looped(128, 64, 4, 4)              7.007 us  regs= 128 spill=0 smem=16384
+    looped(128, 32, 8, 4)              7.047 us  regs=  64 spill=0 smem=10240
+    looped(64, 16, 4, 4)               7.070 us  regs=  46 spill=0 smem=5120
+    looped(128, 32, 4, 4)              7.153 us  regs=  96 spill=0 smem=10240
+    looped(32, 16, 2, 4)               7.236 us  regs=  48 spill=0 smem=4096
+    looped(64, 16, 2, 2)               7.248 us  regs=  72 spill=0 smem=3072
+    looped(128, 64, 8, 4)              7.282 us  regs=  80 spill=0 smem=16384
+    looped(64, 32, 2, 3)               7.346 us  regs=  89 spill=0 smem=6144
+    looped(128, 64, 2, 2)              7.359 us  regs= 254 spill=0 smem=8192
+    looped(128, 16, 4, 3)              7.371 us  regs=  72 spill=0 smem=6144
+    looped(64, 32, 2, 4)               7.433 us  regs=  96 spill=0 smem=8192
+    looped(128, 16, 4, 4)              7.467 us  regs=  72 spill=0 smem=7168
+    looped(128, 64, 2, 4)              7.641 us  regs= 255 spill=0 smem=16384
+    single_tile(32, 2, 1)              7.642 us  regs=  96 spill=0 smem=5120
+    single_tile(64, 2, 1)              7.665 us  regs= 184 spill=0 smem=6144
+    looped(64, 16, 2, 3)               7.674 us  regs=  68 spill=0 smem=4096
+    looped(128, 64, 2, 3)              7.694 us  regs= 255 spill=0 smem=12288
+    looped(128, 32, 2, 2)              7.709 us  regs= 165 spill=0 smem=6144
+    looped(128, 32, 2, 3)              7.721 us  regs= 172 spill=0 smem=8192
+    looped(128, 16, 2, 3)              7.891 us  regs= 122 spill=0 smem=6144
+    looped(64, 16, 2, 4)               7.925 us  regs=  68 spill=0 smem=5120
+    looped(128, 16, 2, 4)              7.954 us  regs= 122 spill=0 smem=7168
+    looped(128, 16, 2, 2)              8.257 us  regs= 127 spill=0 smem=5120
+    looped(128, 16, 4, 2)              8.268 us  regs=  68 spill=0 smem=5120
+    looped(128, 32, 2, 4)              8.288 us  regs= 178 spill=0 smem=10240
+    looped(128, 16, 8, 2)              8.671 us  regs=  48 spill=0 smem=6144
+    looped(128, 16, 8, 3)              8.677 us  regs=  48 spill=0 smem=6144
+    looped(128, 16, 8, 4)              8.677 us  regs=  48 spill=0 smem=6144
+    looped(32, 16, 4, 3)              10.320 us  regs=  47 spill=0 smem=3072
+    looped(32, 16, 4, 4)              10.442 us  regs=  48 spill=0 smem=4096
+    looped(64, 32, 8, 3)              10.771 us  regs=  64 spill=0 smem=6144
+    single_tile(32, 4, 1)             10.796 us  regs=  95 spill=0 smem=5120
+    looped(64, 32, 8, 2)              10.905 us  regs=  72 spill=0 smem=4096
+    looped(32, 16, 4, 2)              11.017 us  regs=  48 spill=0 smem=2048
+    sdpa()                            11.537 us  regs=   0 spill=0 smem=0   best-of-1 11.566  best-of-62 11.537
+    looped(64, 32, 8, 4)              11.584 us  regs=  72 spill=0 smem=8192
+    single_tile(16, 2, 1)             11.735 us  regs=  91 spill=0 smem=4608
+    single_tile(64, 8, 1)             12.042 us  regs=  92 spill=0 smem=8192
+    looped(64, 16, 8, 4)              12.428 us  regs=  47 spill=0 smem=2624
+    looped(64, 16, 8, 2)              12.429 us  regs=  47 spill=0 smem=2624
+    looped(64, 16, 8, 3)              12.438 us  regs=  47 spill=0 smem=2624
+    looped(32, 16, 8, 4)              18.694 us  regs=  48 spill=0 smem=1600
+    looped(32, 16, 8, 3)              18.698 us  regs=  48 spill=0 smem=1600
+    looped(32, 16, 8, 2)              18.743 us  regs=  48 spill=0 smem=1600
+    single_tile(16, 4, 1)             19.058 us  regs=  91 spill=0 smem=4608
+    single_tile(32, 8, 1)             22.165 us  regs=  89 spill=0 smem=7168
+
+  what the model runs today         single_tile(64, 4, 1)       6.556 us
+  best single_tile                  (64, 4, 1)                  6.556 us     1.000x incumbent
+  best looped                       (64, 32, 4, 2)              6.041 us     1.085x incumbent
+  sdpa+repack (best-of-N)           ()                         11.537 us     0.568x incumbent
+  sdpa+repack (best-of-1)                                      11.566 us     0.567x incumbent   [winner's-curse term 0.25%]
+  flushed cross-check (never divided into a hot number): single_tile=13.312  looped=12.288  sdpa=21.504
+
+========================================================================================================
+config  8   B=64 H=4 hd=256 S=128
+  legal arms: 0 single_tile, 24 looped, 1 sdpa   |  admitted+timed: 10 Triton arms
+  shipped v38 plan: sdpa
+========================================================================================================
+    sdpa()                           115.181 us  regs=   0 spill=0 smem=0   best-of-1 115.200  best-of-10 115.181
+    looped(32, 16, 4, 3)             115.205 us  regs= 206 spill=0 smem=50176
+    looped(32, 16, 4, 2)             118.366 us  regs= 176 spill=0 smem=33792
+    looped(32, 16, 4, 4)             121.600 us  regs= 206 spill=0 smem=66560
+    looped(32, 16, 8, 3)             123.952 us  regs= 128 spill=0 smem=50176
+    looped(64, 32, 8, 2)             127.925 us  regs= 250 spill=0 smem=69632
+    looped(32, 16, 8, 2)             130.282 us  regs= 128 spill=0 smem=33792
+    looped(32, 16, 8, 4)             153.062 us  regs= 128 spill=0 smem=66560
+    looped(64, 16, 8, 3)             168.630 us  regs= 250 spill=0 smem=67584
+    looped(64, 16, 8, 4)             168.778 us  regs= 250 spill=0 smem=83968
+    looped(64, 16, 8, 2)             173.935 us  regs= 250 spill=0 smem=51200
+    (14 arms dropped: ['compile/run', 'spills -- dropped'])
+
+  what the model runs today         sdpa()                    115.181 us
+  best single_tile                  --                      
+  best looped                       (32, 16, 4, 3)            115.205 us     1.000x incumbent
+  sdpa+repack (best-of-N)           ()                        115.181 us     1.000x incumbent
+  sdpa+repack (best-of-1)                                     115.200 us     1.000x incumbent   [winner's-curse term 0.02%]
+  flushed cross-check (never divided into a hot number): looped=130.048  sdpa=132.096
+
+========================================================================================================
+config  9   B=64 H=1 hd=128 S=128
+  legal arms: 0 single_tile, 27 looped, 1 sdpa   |  admitted+timed: 21 Triton arms
+  shipped v38 plan: sdpa
+========================================================================================================
+    sdpa()                             9.446 us  regs=   0 spill=0 smem=0   best-of-1 9.463  best-of-21 9.446
+    looped(64, 32, 4, 2)              11.473 us  regs= 236 spill=0 smem=36864
+    looped(32, 16, 2, 2)              12.098 us  regs= 168 spill=0 smem=17408
+    looped(32, 16, 4, 2)              13.549 us  regs= 122 spill=0 smem=17408
+    looped(32, 16, 4, 3)              14.168 us  regs= 125 spill=0 smem=25600
+    looped(32, 16, 2, 3)              14.623 us  regs= 168 spill=0 smem=25600
+    looped(64, 16, 4, 2)              15.722 us  regs= 203 spill=0 smem=26624
+    looped(64, 16, 4, 3)              15.853 us  regs= 203 spill=0 smem=34816
+    looped(32, 16, 4, 4)              15.921 us  regs= 125 spill=0 smem=33792
+    looped(64, 16, 4, 4)              16.291 us  regs= 203 spill=0 smem=43008
+    looped(64, 32, 4, 3)              16.782 us  regs= 238 spill=0 smem=53248
+    looped(32, 16, 2, 4)              17.031 us  regs= 168 spill=0 smem=33792
+    looped(64, 32, 4, 4)              17.254 us  regs= 240 spill=0 smem=69632
+    looped(64, 32, 8, 3)              19.534 us  regs= 167 spill=0 smem=53248
+    looped(64, 32, 8, 4)              19.775 us  regs= 166 spill=0 smem=69632
+    looped(64, 32, 8, 2)              20.057 us  regs= 168 spill=0 smem=36864
+    looped(32, 16, 8, 3)              22.279 us  regs= 102 spill=0 smem=25600
+    looped(32, 16, 8, 4)              22.538 us  regs= 102 spill=0 smem=33792
+    looped(32, 16, 8, 2)              23.492 us  regs= 101 spill=0 smem=17408
+    looped(64, 16, 8, 3)              31.374 us  regs= 165 spill=0 smem=34816
+    looped(64, 16, 8, 4)              31.951 us  regs= 166 spill=0 smem=43008
+    looped(64, 16, 8, 2)              32.852 us  regs= 169 spill=0 smem=26624
+    (6 arms dropped: ['spills -- dropped'])
+
+  what the model runs today         sdpa()                      9.446 us
+  best single_tile                  --                      
+  best looped                       (64, 32, 4, 2)             11.473 us     0.823x incumbent
+  sdpa+repack (best-of-N)           ()                          9.446 us     1.000x incumbent
+  sdpa+repack (best-of-1)                                       9.463 us     0.998x incumbent   [winner's-curse term 0.18%]
+  flushed cross-check (never divided into a hot number): looped=22.528  sdpa=22.336
+
+========================================================================================================
+config 10   B=64 H=2 hd=64 S=128
+  legal arms: 5 single_tile, 48 looped, 1 sdpa   |  admitted+timed: 53 Triton arms
+  shipped v38 plan: single_tile(32, 4, 1)
+========================================================================================================
+    looped(64, 32, 4, 4)               9.090 us  regs= 122 spill=0 smem=32768
+    looped(64, 32, 4, 2)               9.460 us  regs= 116 spill=0 smem=16384
+    looped(128, 32, 8, 3)              9.571 us  regs= 121 spill=0 smem=32768
+    looped(64, 32, 4, 3)               9.602 us  regs= 122 spill=0 smem=24576
+    looped(128, 32, 8, 2)              9.693 us  regs= 124 spill=0 smem=24576
+    looped(64, 16, 4, 3)               9.857 us  regs=  95 spill=0 smem=16384
+    looped(64, 16, 4, 2)               9.920 us  regs=  92 spill=0 smem=12288
+    sdpa()                             9.988 us  regs=   0 spill=0 smem=0   best-of-1 10.017  best-of-53 9.988
+    looped(64, 16, 4, 4)              10.063 us  regs=  92 spill=0 smem=20480
+    looped(128, 32, 8, 4)             10.108 us  regs= 121 spill=0 smem=40960
+    looped(128, 64, 4, 2)             10.132 us  regs= 255 spill=0 smem=32768
+    looped(128, 32, 4, 2)             10.280 us  regs= 186 spill=0 smem=24576
+    looped(64, 32, 2, 2)              10.433 us  regs= 184 spill=0 smem=16384
+    looped(128, 16, 8, 3)             10.542 us  regs=  95 spill=0 smem=24576
+    looped(128, 16, 8, 4)             10.596 us  regs=  95 spill=0 smem=28672
+    looped(128, 16, 8, 2)             10.608 us  regs=  94 spill=0 smem=20480
+    looped(64, 16, 2, 2)              10.614 us  regs= 172 spill=0 smem=12288
+    looped(32, 16, 2, 2)              10.730 us  regs= 101 spill=0 smem=9216
+    looped(128, 64, 4, 3)             10.771 us  regs= 255 spill=0 smem=49152
+    looped(64, 16, 2, 3)              11.146 us  regs= 168 spill=0 smem=16384
+    single_tile(32, 4, 1)             11.176 us  regs=  96 spill=0 smem=24576
+    looped(128, 16, 4, 4)             11.205 us  regs= 168 spill=0 smem=28672
+    looped(128, 16, 4, 2)             11.215 us  regs= 163 spill=0 smem=20480
+    looped(128, 32, 4, 3)             11.220 us  regs= 243 spill=0 smem=32768
+    looped(128, 64, 8, 4)             11.267 us  regs= 166 spill=0 smem=65536
+    looped(64, 16, 2, 4)              11.277 us  regs= 168 spill=0 smem=20480
+    looped(128, 16, 4, 3)             11.296 us  regs= 168 spill=0 smem=24576
+    looped(128, 64, 8, 2)             11.313 us  regs= 169 spill=0 smem=32768
+    looped(128, 64, 8, 3)             11.317 us  regs= 166 spill=0 smem=49152
+    single_tile(32, 8, 1)             11.331 us  regs=  59 spill=0 smem=24576
+    looped(128, 32, 4, 4)             11.434 us  regs= 243 spill=0 smem=40960
+    looped(64, 32, 2, 3)              11.576 us  regs= 236 spill=0 smem=24576
+    looped(32, 16, 2, 3)              12.178 us  regs= 114 spill=0 smem=13312
+    looped(64, 32, 2, 4)              12.423 us  regs= 236 spill=0 smem=32768
+    single_tile(32, 2, 1)             13.091 us  regs= 164 spill=0 smem=24576
+    looped(32, 16, 2, 4)              13.774 us  regs= 114 spill=0 smem=17408
+    single_tile(16, 4, 1)             14.148 us  regs=  80 spill=0 smem=20480
+    looped(128, 16, 2, 3)             14.170 us  regs= 255 spill=0 smem=24576
+    looped(64, 32, 8, 3)              14.729 us  regs= 121 spill=0 smem=24576
+    looped(128, 64, 4, 4)             14.808 us  regs= 255 spill=0 smem=65536
+    looped(128, 16, 2, 2)             14.835 us  regs= 255 spill=0 smem=20480
+    looped(64, 32, 8, 2)              14.919 us  regs= 122 spill=0 smem=16384
+    looped(64, 32, 8, 4)              15.096 us  regs= 123 spill=0 smem=32768
+    looped(128, 16, 2, 4)             15.137 us  regs= 255 spill=0 smem=28672
+    looped(32, 16, 4, 4)              15.350 us  regs=  95 spill=0 smem=17408
+    looped(32, 16, 4, 3)              15.448 us  regs=  94 spill=0 smem=13312
+    looped(64, 16, 8, 3)              15.465 us  regs=  92 spill=0 smem=16384
+    looped(32, 16, 4, 2)              15.535 us  regs=  92 spill=0 smem=9216
+    looped(64, 16, 8, 4)              15.661 us  regs=  92 spill=0 smem=20480
+    single_tile(16, 2, 1)             16.040 us  regs= 150 spill=0 smem=20480
+    looped(64, 16, 8, 2)              16.735 us  regs=  92 spill=0 smem=12288
+    looped(32, 16, 8, 2)              26.877 us  regs=  80 spill=0 smem=9216
+    looped(32, 16, 8, 3)              26.983 us  regs=  80 spill=0 smem=13312
+    looped(32, 16, 8, 4)              29.187 us  regs=  95 spill=0 smem=17408
+
+  what the model runs today         single_tile(32, 4, 1)      11.176 us
+  best single_tile                  (32, 4, 1)                 11.176 us     1.000x incumbent
+  best looped                       (64, 32, 4, 4)              9.090 us     1.229x incumbent
+  sdpa+repack (best-of-N)           ()                          9.988 us     1.119x incumbent
+  sdpa+repack (best-of-1)                                      10.017 us     1.116x incumbent   [winner's-curse term 0.29%]
+  flushed cross-check (never divided into a hot number): single_tile=23.488  looped=20.480  sdpa=24.576
+
+========================================================================================================
+config 11   B=64 H=16 hd=8 S=128
+  legal arms: 8 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 62 Triton arms
+  shipped v38 plan: single_tile(64, 4, 1)
+========================================================================================================
+    looped(64, 32, 2, 2)              18.696 us  regs=  96 spill=0 smem=4096
+    looped(64, 32, 4, 2)              19.142 us  regs=  62 spill=0 smem=4096
+    looped(64, 32, 4, 3)              19.805 us  regs=  64 spill=0 smem=6144
+    looped(64, 32, 2, 4)              20.022 us  regs=  96 spill=0 smem=8192
+    single_tile(64, 4, 1)             20.293 us  regs=  94 spill=0 smem=6144
+    looped(64, 32, 2, 3)              20.365 us  regs=  89 spill=0 smem=6144
+    looped(64, 16, 2, 2)              20.835 us  regs=  72 spill=0 smem=3072
+    looped(128, 64, 4, 3)             20.987 us  regs= 128 spill=0 smem=12288
+    looped(128, 64, 4, 4)             21.033 us  regs= 128 spill=0 smem=16384
+    looped(128, 64, 4, 2)             21.102 us  regs= 128 spill=0 smem=8192
+    looped(64, 32, 4, 4)              21.335 us  regs=  56 spill=0 smem=8192
+    looped(128, 32, 4, 2)             22.167 us  regs=  96 spill=0 smem=6144
+    looped(64, 16, 2, 3)              22.304 us  regs=  68 spill=0 smem=4096
+    looped(32, 16, 2, 2)              22.553 us  regs=  48 spill=0 smem=2048
+    looped(128, 32, 4, 4)             22.583 us  regs=  96 spill=0 smem=10240
+    looped(64, 16, 4, 2)              22.603 us  regs=  46 spill=0 smem=3072
+    looped(128, 32, 4, 3)             22.605 us  regs=  96 spill=0 smem=8192
+    looped(64, 16, 2, 4)              22.987 us  regs=  68 spill=0 smem=5120
+    looped(128, 64, 8, 2)             23.517 us  regs=  80 spill=0 smem=8192
+    looped(64, 16, 4, 3)              23.540 us  regs=  46 spill=0 smem=4096
+    looped(128, 16, 2, 3)             23.862 us  regs= 122 spill=0 smem=6144
+    looped(128, 32, 8, 2)             23.890 us  regs=  64 spill=0 smem=6144
+    looped(128, 64, 8, 3)             24.038 us  regs=  80 spill=0 smem=12288
+    looped(128, 16, 2, 4)             24.194 us  regs= 122 spill=0 smem=7168
+    single_tile(64, 2, 1)             24.222 us  regs= 184 spill=0 smem=6144
+    looped(32, 16, 2, 3)              24.330 us  regs=  48 spill=0 smem=3072
+    looped(128, 16, 4, 3)             24.387 us  regs=  72 spill=0 smem=6144
+    looped(128, 32, 2, 2)             24.418 us  regs= 165 spill=0 smem=6144
+    looped(128, 64, 2, 3)             24.464 us  regs= 255 spill=0 smem=12288
+    looped(128, 16, 2, 2)             24.473 us  regs= 127 spill=0 smem=5120
+    single_tile(32, 2, 1)             24.678 us  regs=  96 spill=0 smem=5120
+    looped(128, 16, 4, 4)             24.790 us  regs=  72 spill=0 smem=7168
+    looped(128, 64, 2, 4)             24.873 us  regs= 255 spill=0 smem=16384
+    looped(64, 16, 4, 4)              24.900 us  regs=  46 spill=0 smem=5120
+    looped(128, 64, 8, 4)             25.112 us  regs=  80 spill=0 smem=16384
+    looped(128, 32, 8, 3)             25.181 us  regs=  60 spill=0 smem=8192
+    looped(128, 32, 8, 4)             25.384 us  regs=  64 spill=0 smem=10240
+    looped(128, 16, 4, 2)             25.601 us  regs=  68 spill=0 smem=5120
+    looped(128, 64, 2, 2)             25.673 us  regs= 254 spill=0 smem=8192
+    looped(32, 16, 2, 4)              26.056 us  regs=  48 spill=0 smem=4096
+    looped(128, 32, 2, 3)             27.196 us  regs= 172 spill=0 smem=8192
+    looped(128, 32, 2, 4)             27.788 us  regs= 178 spill=0 smem=10240
+    looped(128, 16, 8, 4)             28.263 us  regs=  48 spill=0 smem=6144
+    looped(128, 16, 8, 2)             28.285 us  regs=  48 spill=0 smem=6144
+    looped(128, 16, 8, 3)             28.799 us  regs=  48 spill=0 smem=6144
+    looped(32, 16, 4, 3)              34.839 us  regs=  47 spill=0 smem=3072
+    looped(32, 16, 4, 2)              35.218 us  regs=  48 spill=0 smem=2048
+    looped(32, 16, 4, 4)              35.559 us  regs=  48 spill=0 smem=4096
+    looped(64, 32, 8, 3)              35.852 us  regs=  64 spill=0 smem=6144
+    looped(64, 32, 8, 2)              36.764 us  regs=  72 spill=0 smem=4096
+    single_tile(32, 4, 1)             38.116 us  regs=  95 spill=0 smem=5120
+    looped(64, 16, 8, 2)              39.208 us  regs=  47 spill=0 smem=2624
+    looped(64, 16, 8, 3)              39.278 us  regs=  47 spill=0 smem=2624
+    looped(64, 32, 8, 4)              39.409 us  regs=  72 spill=0 smem=8192
+    looped(64, 16, 8, 4)              39.981 us  regs=  47 spill=0 smem=2624
+    sdpa()                            40.370 us  regs=   0 spill=0 smem=0   best-of-1 40.449  best-of-62 40.370
+    single_tile(16, 2, 1)             43.123 us  regs=  91 spill=0 smem=4608
+    single_tile(64, 8, 1)             44.688 us  regs=  92 spill=0 smem=8192
+    looped(32, 16, 8, 2)              64.492 us  regs=  48 spill=0 smem=1600
+    looped(32, 16, 8, 4)              64.548 us  regs=  48 spill=0 smem=1600
+    looped(32, 16, 8, 3)              64.683 us  regs=  48 spill=0 smem=1600
+    single_tile(16, 4, 1)             71.702 us  regs=  91 spill=0 smem=4608
+    single_tile(32, 8, 1)             84.180 us  regs=  89 spill=0 smem=7168
+
+  what the model runs today         single_tile(64, 4, 1)      20.293 us
+  best single_tile                  (64, 4, 1)                 20.293 us     1.000x incumbent
+  best looped                       (64, 32, 2, 2)             18.696 us     1.085x incumbent
+  sdpa+repack (best-of-N)           ()                         40.370 us     0.503x incumbent
+  sdpa+repack (best-of-1)                                      40.449 us     0.502x incumbent   [winner's-curse term 0.19%]
+  flushed cross-check (never divided into a hot number): single_tile=39.936  looped=39.872  sdpa=55.296
+
+========================================================================================================
+config 12   B=64 H=4 hd=32 S=32
+  legal arms: 5 single_tile, 9 looped, 1 sdpa   |  admitted+timed: 14 Triton arms
+  shipped v38 plan: single_tile(32, 2, 1)
+========================================================================================================
+    single_tile(32, 2, 1)              2.107 us  regs=  52 spill=0 smem=4096
+    looped(32, 16, 2, 2)               2.169 us  regs=  64 spill=0 smem=4096
+    looped(32, 16, 2, 4)               2.193 us  regs=  67 spill=0 smem=8192
+    looped(32, 16, 2, 3)               2.215 us  regs=  66 spill=0 smem=6144
+    single_tile(16, 2, 1)              2.394 us  regs=  40 spill=0 smem=3072
+    single_tile(32, 4, 1)              2.478 us  regs=  45 spill=0 smem=4608
+    looped(32, 16, 4, 2)               2.621 us  regs=  64 spill=0 smem=4096
+    single_tile(16, 4, 1)              2.668 us  regs=  35 spill=0 smem=3584
+    single_tile(32, 8, 1)              3.412 us  regs=  40 spill=0 smem=4352
+    looped(32, 16, 4, 3)               3.785 us  regs=  66 spill=0 smem=6144
+    looped(32, 16, 4, 4)               4.027 us  regs=  66 spill=0 smem=8192
+    looped(32, 16, 8, 3)               5.126 us  regs=  66 spill=0 smem=6144
+    looped(32, 16, 8, 4)               5.296 us  regs=  66 spill=0 smem=8192
+    looped(32, 16, 8, 2)               5.804 us  regs=  64 spill=0 smem=4096
+    sdpa()                            10.534 us  regs=   0 spill=0 smem=0   best-of-1 11.030  best-of-14 10.534
+
+  what the model runs today         single_tile(32, 2, 1)       2.107 us
+  best single_tile                  (32, 2, 1)                  2.107 us     1.000x incumbent
+  best looped                       (32, 16, 2, 2)              2.169 us     0.971x incumbent
+  sdpa+repack (best-of-N)           ()                         10.534 us     0.200x incumbent
+  sdpa+repack (best-of-1)                                      11.030 us     0.191x incumbent   [winner's-curse term 4.70%]
+  flushed cross-check (never divided into a hot number): single_tile=8.192  looped=8.192  sdpa=17.312
+
+========================================================================================================
+config 13   B=64 H=4 hd=32 S=1024
+  legal arms: 0 single_tile, 54 looped, 1 sdpa   |  admitted+timed: 51 Triton arms
+  shipped v38 plan: sdpa
+========================================================================================================
+    looped(64, 32, 4, 3)             265.942 us  regs=  80 spill=0 smem=12288
+    looped(64, 32, 4, 4)             268.358 us  regs=  80 spill=0 smem=16384
+    looped(64, 32, 4, 2)             273.490 us  regs=  80 spill=0 smem=8192
+    sdpa()                           280.034 us  regs=   0 spill=0 smem=0   best-of-1 283.190  best-of-51 280.034
+    looped(128, 64, 4, 2)            282.246 us  regs= 168 spill=0 smem=16384
+    looped(64, 32, 2, 3)             284.429 us  regs= 128 spill=0 smem=12288
+    looped(128, 32, 4, 3)            285.793 us  regs= 128 spill=0 smem=16384
+    looped(128, 64, 4, 4)            286.755 us  regs= 176 spill=0 smem=32768
+    looped(64, 16, 2, 3)             288.038 us  regs= 109 spill=0 smem=8192
+    looped(128, 64, 4, 3)            288.701 us  regs= 176 spill=0 smem=24576
+    looped(128, 32, 4, 2)            288.731 us  regs= 128 spill=0 smem=12288
+    looped(128, 32, 4, 4)            289.054 us  regs= 128 spill=0 smem=20480
+    looped(64, 16, 4, 4)             290.106 us  regs=  62 spill=0 smem=10240
+    looped(64, 16, 4, 2)             290.186 us  regs=  62 spill=0 smem=6144
+    looped(64, 32, 2, 2)             292.548 us  regs= 138 spill=0 smem=8192
+    looped(64, 32, 2, 4)             292.826 us  regs= 128 spill=0 smem=16384
+    looped(64, 16, 4, 3)             293.776 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 2, 4)             295.333 us  regs= 113 spill=0 smem=10240
+    looped(32, 16, 2, 2)             296.442 us  regs=  62 spill=0 smem=4096
+    looped(128, 32, 8, 3)            299.008 us  regs=  80 spill=0 smem=16384
+    looped(32, 16, 2, 3)             299.162 us  regs=  62 spill=0 smem=6144
+    looped(128, 64, 8, 4)            299.192 us  regs= 103 spill=0 smem=32768
+    looped(128, 32, 8, 4)            299.872 us  regs=  80 spill=0 smem=20480
+    looped(128, 64, 8, 3)            300.807 us  regs= 109 spill=0 smem=24576
+    looped(128, 16, 4, 3)            302.001 us  regs= 111 spill=0 smem=12288
+    looped(32, 16, 2, 4)             303.630 us  regs=  63 spill=0 smem=8192
+    looped(128, 32, 8, 2)            304.678 us  regs=  80 spill=0 smem=12288
+    looped(64, 16, 2, 2)             305.217 us  regs=  96 spill=0 smem=6144
+    looped(128, 16, 4, 2)            306.405 us  regs= 108 spill=0 smem=10240
+    looped(128, 16, 4, 4)            306.695 us  regs= 111 spill=0 smem=14336
+    looped(128, 16, 8, 3)            308.074 us  regs=  64 spill=0 smem=12288
+    looped(128, 16, 8, 4)            310.300 us  regs=  64 spill=0 smem=14336
+    looped(128, 64, 8, 2)            310.544 us  regs= 121 spill=0 smem=16384
+    looped(128, 16, 8, 2)            335.170 us  regs=  64 spill=0 smem=10240
+    looped(128, 16, 2, 4)            380.826 us  regs= 168 spill=0 smem=14336
+    looped(128, 16, 2, 2)            384.114 us  regs= 168 spill=0 smem=10240
+    looped(128, 16, 2, 3)            386.731 us  regs= 168 spill=0 smem=12288
+    looped(128, 32, 2, 2)            399.226 us  regs= 249 spill=0 smem=12288
+    looped(128, 32, 2, 4)            408.542 us  regs= 247 spill=0 smem=20480
+    looped(128, 32, 2, 3)            409.207 us  regs= 249 spill=0 smem=16384
+    looped(32, 16, 4, 4)             522.562 us  regs=  62 spill=0 smem=8192
+    looped(32, 16, 4, 2)             523.442 us  regs=  60 spill=0 smem=4096
+    looped(64, 32, 8, 4)             525.084 us  regs=  80 spill=0 smem=16384
+    looped(64, 32, 8, 3)             529.112 us  regs=  80 spill=0 smem=12288
+    looped(32, 16, 4, 3)             533.504 us  regs=  62 spill=0 smem=6144
+    looped(64, 32, 8, 2)             536.528 us  regs=  80 spill=0 smem=8192
+    looped(64, 16, 8, 3)             564.149 us  regs=  62 spill=0 smem=8192
+    looped(64, 16, 8, 2)             579.250 us  regs=  62 spill=0 smem=6144
+    looped(64, 16, 8, 4)             593.485 us  regs=  62 spill=0 smem=10240
+    looped(32, 16, 8, 3)            1057.876 us  regs=  62 spill=0 smem=6144
+    looped(32, 16, 8, 4)            1063.936 us  regs=  62 spill=0 smem=8192
+    looped(32, 16, 8, 2)            1085.719 us  regs=  60 spill=0 smem=4096
+    (3 arms dropped: ['spills -- dropped'])
+
+  what the model runs today         sdpa()                    280.034 us
+  best single_tile                  --                      
+  best looped                       (64, 32, 4, 3)            265.942 us     1.053x incumbent
+  sdpa+repack (best-of-N)           ()                        280.034 us     1.000x incumbent
+  sdpa+repack (best-of-1)                                     283.190 us     0.989x incumbent   [winner's-curse term 1.13%]
+  flushed cross-check (never divided into a hot number): looped=265.216  sdpa=291.840
+
+wrote bench/probes/g41_attn_audit/three_arms_run1.json

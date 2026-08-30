@@ -233,7 +233,30 @@ def _v40(baseline_cls):
     return build(baseline_cls)
 
 
+def _v41(baseline_cls):
+    from .v41_vendor_aware_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
+    "v41_vendor_aware_attn": CandidateSpec(
+        name="v41_vendor_aware_attn", generation=41, parent="v40_looped_attn",
+        build=_v41,
+        summary="THE CHOOSER MAY NOW STEP ASIDE FOR THE VENDOR. `attn_single_tile."
+                "pays()` is a residency argument -- whether OUR loop-free kernel can "
+                "hide its latency -- and it was being read as if it also said the vendor "
+                "was slower. It does not. Where the plan is still the single-tile "
+                "kernel, the chosen tile is timed hot against sdpa+repack, two arms with "
+                "one trial budget each, and the shape goes to the vendor if the vendor "
+                "clears v23's inherited DECISIVE 10%. The g41 audit measured all three "
+                "paths on all thirteen runnable configs, twice: the vendor wins on "
+                "exactly ONE shape (config 10, 1.119x over single_tile) and the looped "
+                "form already beats it there, so this fires on ZERO announced configs "
+                "and is byte-identical to v40. It is a guard on the fallback path, "
+                "worth +0.0000 as shipped and ~+0.0035 in the branch where "
+                "`autotune_looped` declines config 10.",
+    ),
+
     "v40_looped_attn": CandidateSpec(
         name="v40_looped_attn", generation=40, parent="v38_stream_fallback", build=_v40,
         summary="A SECOND ATTENTION TILE SHAPE, CHOSEN BY A SYMMETRIC SWEEP. Adds a "

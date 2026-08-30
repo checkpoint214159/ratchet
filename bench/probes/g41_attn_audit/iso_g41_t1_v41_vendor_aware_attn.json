@@ -1,0 +1,228 @@
+[
+ {
+  "config_id": 5,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v41_vendor_aware_attn"
+  ],
+  "median_of_min_rounds": {
+   "v41_vendor_aware_attn": 0.4362240135669708
+  },
+  "min_of_min_rounds": {
+   "v41_vendor_aware_attn": 0.4331519901752472
+  },
+  "per_round": {
+   "v41_vendor_aware_attn": [
+    {
+     "round": 0,
+     "median": 0.4413439929485321,
+     "min": 0.43827199935913086
+    },
+    {
+     "round": 1,
+     "median": 0.43724799156188965,
+     "min": 0.4331519901752472
+    },
+    {
+     "round": 2,
+     "median": 0.4362240135669708,
+     "min": 0.4341759979724884
+    },
+    {
+     "round": 3,
+     "median": 0.436256006360054,
+     "min": 0.4352000057697296
+    },
+    {
+     "round": 4,
+     "median": 0.4362240135669708,
+     "min": 0.4331519901752472
+    }
+   ]
+  },
+  "correctness": {
+   "v41_vendor_aware_attn": {
+    "passed": true,
+    "max_abs": 0.0012663602828979492,
+    "launch_reason": "declined: 256 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on ffn_in | qkv: vendor: 24.81 us against the best of 18 tiles at 23.27 us (1.066x, inside the 10% margin) | out: vendor: 10.42 us against the best of 18 tiles at 9.43 us (1.104x, inside the 10% margin) | ffn_in: triton (64, 64, 64, 4, 3) at 11.31 us beats the vendor's 14.95 us decisively (1.321x over 18 tiles); spills=0 regs=96 | ffn_out: vendor: 10.42 us against the best of 18 tiles at 9.43 us (1.104x, inside the 10% margin)",
+    "gemm_sites": [
+     "ffn_in"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 6,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v41_vendor_aware_attn"
+  ],
+  "median_of_min_rounds": {
+   "v41_vendor_aware_attn": 72.27699279785156
+  },
+  "min_of_min_rounds": {
+   "v41_vendor_aware_attn": 71.37484741210938
+  },
+  "per_round": {
+   "v41_vendor_aware_attn": [
+    {
+     "round": 0,
+     "median": 92.09804916381836,
+     "min": 89.1484146118164
+    },
+    {
+     "round": 1,
+     "median": 85.07341003417969,
+     "min": 79.8924789428711
+    },
+    {
+     "round": 2,
+     "median": 79.65849685668945,
+     "min": 77.45331573486328
+    },
+    {
+     "round": 3,
+     "median": 73.96556854248047,
+     "min": 71.37484741210938
+    },
+    {
+     "round": 4,
+     "median": 72.27699279785156,
+     "min": 71.3891830444336
+    }
+   ]
+  },
+  "correctness": {
+   "v41_vendor_aware_attn": {
+    "passed": true,
+    "max_abs": 0.0014469027519226074,
+    "launch_reason": "declined: above the amortization crossover, so the segment is throughput-bound and later waves already hide the launches",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 92.93 us against the best of 18 tiles at 114.32 us (0.813x, inside the 10% margin) [probe M=67584 of 1280000] | out: vendor: 32.18 us against the best of 18 tiles at 31.34 us (1.027x, inside the 10% margin) [probe M=67584 of 1280000]",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 8,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v41_vendor_aware_attn"
+  ],
+  "median_of_min_rounds": {
+   "v41_vendor_aware_attn": 6.600288152694702
+  },
+  "min_of_min_rounds": {
+   "v41_vendor_aware_attn": 6.577151775360107
+  },
+  "per_round": {
+   "v41_vendor_aware_attn": [
+    {
+     "round": 0,
+     "median": 6.594048023223877,
+     "min": 6.574079990386963
+    },
+    {
+     "round": 1,
+     "median": 6.600288152694702,
+     "min": 6.577151775360107
+    },
+    {
+     "round": 2,
+     "median": 6.602352142333984,
+     "min": 6.577151775360107
+    },
+    {
+     "round": 3,
+     "median": 6.602752208709717,
+     "min": 6.5966081619262695
+    },
+    {
+     "round": 4,
+     "median": 6.606399774551392,
+     "min": 6.597631931304932
+    }
+   ]
+  },
+  "correctness": {
+   "v41_vendor_aware_attn": {
+    "passed": true,
+    "max_abs": 0.0012198090553283691,
+    "launch_reason": "declined: d_model=1024 ffn_dim=1024 exceeds 101376 B opt-in smem",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 586.16 us against the best of 18 tiles at 578.47 us (1.013x, inside the 10% margin) | out: vendor: 204.74 us against the best of 18 tiles at 198.60 us (1.031x, inside the 10% margin) | ffn_in: vendor: 222.42 us against the best of 18 tiles at 205.71 us (1.081x, inside the 10% margin) | ffn_out: vendor: 204.74 us against the best of 18 tiles at 198.60 us (1.031x, inside the 10% margin)",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 13,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v41_vendor_aware_attn"
+  ],
+  "median_of_min_rounds": {
+   "v41_vendor_aware_attn": 3.3064959049224854
+  },
+  "min_of_min_rounds": {
+   "v41_vendor_aware_attn": 3.2931840419769287
+  },
+  "per_round": {
+   "v41_vendor_aware_attn": [
+    {
+     "round": 0,
+     "median": 3.31059193611145,
+     "min": 3.2962560653686523
+    },
+    {
+     "round": 1,
+     "median": 3.323904037475586,
+     "min": 3.31059193611145
+    },
+    {
+     "round": 2,
+     "median": 3.3064959049224854,
+     "min": 3.2962560653686523
+    },
+    {
+     "round": 3,
+     "median": 3.3151999711990356,
+     "min": 3.2931840419769287
+    },
+    {
+     "round": 4,
+     "median": 3.3464319705963135,
+     "min": 3.314687967300415
+    }
+   ]
+  },
+  "correctness": {
+   "v41_vendor_aware_attn": {
+    "passed": true,
+    "max_abs": 0.0012556910514831543,
+    "launch_reason": "declined: above the amortization crossover, so the segment is throughput-bound and later waves already hide the launches",
+    "gemm_reason": "declined: the vendor won every site | qkv: vendor: 90.73 us against the best of 18 tiles at 110.72 us (0.819x, inside the 10% margin) | out: vendor: 31.62 us against the best of 18 tiles at 30.28 us (1.044x, inside the 10% margin)",
+    "gemm_sites": [],
+    "gemm_engaged": false,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ }
+]

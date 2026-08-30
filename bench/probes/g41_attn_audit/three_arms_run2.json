@@ -1,0 +1,7919 @@
+{
+ "device": "NVIDIA GeForce RTX 4070 Ti SUPER",
+ "sms": 66,
+ "reps": 3,
+ "configs": {
+  "1": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 8,
+    "n_looped_legal": 54,
+    "n_admitted": 59,
+    "sdpa_best_of_1_ms": 0.010705686699801955,
+    "sdpa_best_of_N_ms": 0.010696991744448658,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 64",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.009258845844100007
+    },
+    "best_looped": {
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "ms": 0.008457799950506153
+    },
+    "incumbent_ms": 0.009258845844100007,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.02252800017595291,
+     "looped": 0.026623999699950218,
+     "sdpa": 0.02969600073993206
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.016034699036392618,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.015937577749473682,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.011312528413197737,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.01594263399651831,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.03266980941981486,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.011081256294347456,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.009258845844100007,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.016930346555903253,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.008457799950506153,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.008681009774192228,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.008734461955330734,
+     "n_regs": 63,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.013605786893314447,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01350710786888341,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.013840684494652306,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.025994541758847044,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02564596996029084,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02618008682094387,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009848213014493876,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.009167965629335802,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.009393290605239902,
+     "n_regs": 113,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009313090723956205,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.008987011828735193,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.009123244764784426,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01699482297825418,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.016733707525791265,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.017128871608746016,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009949205301454945,
+     "n_regs": 138,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.009876965819639935,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01049873861168985,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.00886303219431555,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.00875214059832103,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.00925718915146009,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.016180322583199225,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.016076550693415702,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01649976907030324,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.012154728419698247,
+     "n_regs": 175,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.013215846422186308,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.013448573755875728,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010424513187048571,
+     "n_regs": 108,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.010434910870980526,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010560062899819284,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.011206007278834454,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01105014676970195,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.011166808113854282,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.013043751556907544,
+     "n_regs": 235,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.013020566326410552,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.013022492138572457,
+     "n_regs": 248,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009824717172892614,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.009933497658513342,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010012636892932534,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010874050965850084,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.010577620072116307,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010714818333936059,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01065860635813685,
+     "n_regs": 191,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01067425895705675,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01060624092106489,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010443512199003415,
+     "n_regs": 104,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.010377247523898861,
+     "n_regs": 127,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010555419516056142,
+     "n_regs": 125,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.010696991744448658,
+     "hot_ms_best_of_1": 0.010705686699801955,
+     "n_trials": 59,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "2": {
+   "meta": {
+    "batch_probed": 1,
+    "n_single_legal": 8,
+    "n_looped_legal": 0,
+    "n_admitted": 8,
+    "sdpa_best_of_1_ms": 0.003853019410203004,
+    "sdpa_best_of_N_ms": 0.003853019410203004,
+    "capped": false,
+    "real_batch": 1,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 1",
+    "best_single_tile": {
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "ms": 0.0019330485063849144
+    },
+    "best_looped": null,
+    "incumbent_ms": 0.002475220855180319,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.004288000054657459,
+     "sdpa": 0.006144000217318535
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0022972349662939927,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0019330485063849144,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0025029526115459984,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0024244222331272895,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0034636236657169545,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0037530218262270274,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.002475220855180319,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0033870769101519917,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.003853019410203004,
+     "hot_ms_best_of_1": 0.003853019410203004,
+     "n_trials": 8,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "3": {
+   "meta": {
+    "batch_probed": 4,
+    "n_single_legal": 8,
+    "n_looped_legal": 0,
+    "n_admitted": 8,
+    "sdpa_best_of_1_ms": 0.004645925981027109,
+    "sdpa_best_of_N_ms": 0.0043354576590371,
+    "capped": false,
+    "real_batch": 4,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 4",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.002558600309207968
+    },
+    "best_looped": null,
+    "incumbent_ms": 0.002558600309207968,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.0071680000983178616,
+     "sdpa": 0.0081599997356534
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.002655700566296909,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0026016880612854563,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0026976185382446114,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0025992587732430847,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0036372748705057,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0038344589146700773,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.002558600309207968,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0034645821330550734,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.0043354576590371,
+     "hot_ms_best_of_1": 0.004645925981027109,
+     "n_trials": 8,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "4": {
+   "meta": {
+    "batch_probed": 16,
+    "n_single_legal": 8,
+    "n_looped_legal": 27,
+    "n_admitted": 35,
+    "sdpa_best_of_1_ms": 0.004224133317487953,
+    "sdpa_best_of_N_ms": 0.004223999977111817,
+    "capped": false,
+    "real_batch": 16,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 16",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.0038103024514936318
+    },
+    "best_looped": {
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "ms": 0.003868282844723274
+    },
+    "incumbent_ms": 0.0038103024514936318,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.010239999741315842,
+     "looped": 0.011264000087976456,
+     "sdpa": 0.01228800043463707
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.005780981466109988,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0052799531143077096,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.004442030901735929,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.005536883295356453,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.00935930817485159,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.004333015774073226,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0038103024514936318,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.005480808566554709,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.0044140423045438875,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.003868282844723274,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.003976644773628717,
+     "n_regs": 63,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.005535157763726824,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.005236244931512949,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.005298737285418906,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009149267432394992,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.008847079211718416,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.008996861456564899,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.005552521866300832,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.004161971957743669,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.00433156003502651,
+     "n_regs": 113,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.004470530265176781,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.003906898797596789,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.004025871465629048,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006564132695121812,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006503783904754363,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.006600155394493378,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.0043515564044178875,
+     "n_regs": 138,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.004137979594017018,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.004209287321887254,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.003947192224962958,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.003911714565563319,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.0039007139089346516,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.005945181442519366,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.005932930537632533,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.0058854401111602785,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.004223999977111817,
+     "hot_ms_best_of_1": 0.004224133317487953,
+     "n_trials": 35,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "5": {
+   "meta": {
+    "batch_probed": 128,
+    "n_single_legal": 8,
+    "n_looped_legal": 54,
+    "n_admitted": 59,
+    "sdpa_best_of_1_ms": 0.019594709236783334,
+    "sdpa_best_of_N_ms": 0.01958797879787307,
+    "capped": false,
+    "real_batch": 128,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 66",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.016661189546521078
+    },
+    "best_looped": {
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "ms": 0.014424813526733794
+    },
+    "incumbent_ms": 0.016661189546521078,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.03686400130391121,
+     "looped": 0.04095999896526337,
+     "sdpa": 0.04710400104522705
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.02992109664664941,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.031172558625958524,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.019907453166904735,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.030192083645361075,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.06349784689177253,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.01992848908402912,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.016661189546521078,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.03247260250420955,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.014562050280132665,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.014424813526733794,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.014758835357873618,
+     "n_regs": 63,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02394412434684126,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.024151082288727182,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.024502661789314182,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.04775901292086629,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.047486433690908006,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.04841473952946569,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01717817056469801,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.016076342546131054,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01642964937009534,
+     "n_regs": 113,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.016198552247853958,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.015934560151226754,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.016277059878943102,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.030218789629647785,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.030010602263366284,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.030610482322978465,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.016105345216824243,
+     "n_regs": 138,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.016386265599973786,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.017388463588890474,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.015006399389889308,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.014884473175130865,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015471941804232663,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.028841595428351924,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.028211801358968905,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02883395222323027,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02387619604829882,
+     "n_regs": 175,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.024330921153248163,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.024713406547570763,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.018816821622532724,
+     "n_regs": 108,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.018772469693598366,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.018795665689934057,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.020078056549357477,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.019980061688436055,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02014622809011725,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.025055552399632242,
+     "n_regs": 235,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02488747610854296,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.025285264630338332,
+     "n_regs": 248,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01744271206378202,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.017498118855128777,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01766914834155254,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.019247946531876274,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01905215138624489,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.019187322396179783,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.020223621024773052,
+     "n_regs": 191,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01939489164620714,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.019565094462441056,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.019518191502567082,
+     "n_regs": 104,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.018843333979925048,
+     "n_regs": 127,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.019361718739593324,
+     "n_regs": 125,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.01958797879787307,
+     "hot_ms_best_of_1": 0.019594709236783334,
+     "n_trials": 59,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "6": {
+   "meta": {
+    "batch_probed": 5461,
+    "n_single_legal": 8,
+    "n_looped_legal": 54,
+    "n_admitted": 59,
+    "sdpa_best_of_1_ms": 2.09771052273837,
+    "sdpa_best_of_N_ms": 2.0946880340576173,
+    "capped": true,
+    "real_batch": 10000,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 66",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 1.1450758434477306
+    },
+    "best_looped": {
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "ms": 1.145514624459403
+    },
+    "incumbent_ms": 1.1450758434477306,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 1.1847679615020752,
+     "looped": 1.1857919692993164,
+     "sdpa": 2.159615993499756
+    },
+    "real_batch_recheck": {
+     "single_tile(64, 4, 1)": 2.093149011785334,
+     "looped(128, 64, 8, 3)": 2.0939695184881035,
+     "sdpa()": 3.8338454564412436
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.6547840118408204,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.7006446293422155,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.2403873644377057,
+     "n_regs": 129,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.3677795198228624,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 2.670919895172119,
+     "n_regs": 112,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.147652580624535,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.1450758434477306,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 1.3964427312215169,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1481874556768508,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1508480310440063,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.147248767671131,
+     "n_regs": 63,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.3354821638627485,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.2195747920445033,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1783268338158017,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 2.302720069885254,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.9677012761433919,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 2.003114700317383,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1498392195928664,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1473553975423176,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1476602100190663,
+     "n_regs": 113,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.14585599899292,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1482940855480375,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.148725327991304,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.3469816095688765,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.2335616111755372,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.236088472254136,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1463923681349981,
+     "n_regs": 138,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.148927961077009,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1463268824986048,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1470262436639695,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1465295155843098,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1455939156668526,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.2950666215684679,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.205299186706543,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.213696002960205,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1552639915829612,
+     "n_regs": 175,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1527801695324125,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1529676346551805,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1621912093389601,
+     "n_regs": 108,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1481477646600633,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.148050308227539,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1542400121688843,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1490560259137834,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1492894116569967,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1835904121398926,
+     "n_regs": 235,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.152190435500372,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1532190413702101,
+     "n_regs": 248,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1465874626522972,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1459809257870628,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1461973644438244,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1471512204124814,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1461378733317058,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1465874626522972,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 34
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1500982557024275,
+     "n_regs": 191,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.1458468664260137,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1457005455380393,
+     "n_regs": 196,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.1476449512300038,
+     "n_regs": 104,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.145514624459403,
+     "n_regs": 127,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.1458423251197452,
+     "n_regs": 125,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 2.0946880340576173,
+     "hot_ms_best_of_1": 2.09771052273837,
+     "n_trials": 59,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "7": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 8,
+    "n_looped_legal": 54,
+    "n_admitted": 62,
+    "sdpa_best_of_1_ms": 0.011573972767346527,
+    "sdpa_best_of_N_ms": 0.01156598550302011,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 64",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.006554350426037706
+    },
+    "best_looped": {
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "ms": 0.00603819905171975
+    },
+    "incumbent_ms": 0.006554350426037706,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.013311999849975109,
+     "looped": 0.01228800043463707,
+     "sdpa": 0.021503999829292297
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.011753679057698191,
+     "n_regs": 91,
+     "n_spills": 0,
+     "smem": 4608
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.01903337426483631,
+     "n_regs": 91,
+     "n_spills": 0,
+     "smem": 4608
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.007645866718698055,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.010773612942758085,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.022162346085547017,
+     "n_regs": 89,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.007674422285972385,
+     "n_regs": 184,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.006554350426037706,
+     "n_regs": 94,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.012014829046357938,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006849513666049854,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 2048
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006857091669916775,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007232628564179194,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.011006257971938776,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 2048
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01033641497294108,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010430430265044066,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01870527668857436,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.018709124446206687,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.018689474080208397,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.00726176526721129,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.007692082441661914,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007936753859101323,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006863637294817331,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006931588643459028,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.00706950355978573,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.012427753746792038,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.012418098137026927,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.012450563447765498,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006319434353799531,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.007344744956656678,
+     "n_regs": 89,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007399292879326399,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.00603819905171975,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006177108777863324,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.006594705901689977,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010888352806185499,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01077188334418732,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.011582407785292289,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.008237350518536416,
+     "n_regs": 127,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.007899168329594614,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007968672257825516,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.008278599124987684,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.007361961274425964,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007467905260956696,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.008675052925891673,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.008675589330643944,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.008676056848292337,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.007699210878828882,
+     "n_regs": 165,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.007729951346792826,
+     "n_regs": 172,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.008301429701029586,
+     "n_regs": 178,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006932523180160844,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.0068534605874678925,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007164091554306845,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006985935472672985,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006993098154555272,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007037297779361144,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.0073517073824556165,
+     "n_regs": 254,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.00770294189453125,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007643428870609828,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006781535215953195,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.006971781904047186,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007011902768437456,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.006876050675245616,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.0069744017121341085,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.007286153848354633,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.01156598550302011,
+     "hot_ms_best_of_1": 0.011573972767346527,
+     "n_trials": 62,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "8": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 0,
+    "n_looped_legal": 24,
+    "n_admitted": 10,
+    "sdpa_best_of_1_ms": 0.11504856521534808,
+    "sdpa_best_of_N_ms": 0.11502179519906229,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "sdpa",
+    "v38_why": "no viable tile",
+    "best_single_tile": null,
+    "best_looped": {
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "ms": 0.11537066535770613
+    },
+    "incumbent_ms": 0.11502179519906229,
+    "incumbent": "sdpa()",
+    "flushed_ms": {
+     "looped": 0.130048006772995,
+     "sdpa": 0.13312000036239624
+    }
+   },
+   "rows": [
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 2
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 4
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 4
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.11850697982714371,
+     "n_regs": 176,
+     "n_spills": 0,
+     "smem": 33792
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.11537066535770613,
+     "n_regs": 206,
+     "n_spills": 0,
+     "smem": 50176
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.1210561628958479,
+     "n_regs": 206,
+     "n_spills": 0,
+     "smem": 66560
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.13057089866475857,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 33792
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.12441566586494446,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 50176
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.15289599895477296,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 66560
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 26
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 28
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.1746424822740152,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 51200
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.16879166642280474,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 67584
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.16929358652193252,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 83968
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 62
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 102400, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.1281803901949077,
+     "n_regs": 250,
+     "n_spills": 0,
+     "smem": 69632
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 102400, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 142
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 102400, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 118784, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 106496, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "compile/run: out of resource: shared memory, Required: 139264, Hardware limit: 101376. Red"
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.11502179519906229,
+     "hot_ms_best_of_1": 0.11504856521534808,
+     "n_trials": 10,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "9": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 0,
+    "n_looped_legal": 27,
+    "n_admitted": 21,
+    "sdpa_best_of_1_ms": 0.00939658470805275,
+    "sdpa_best_of_N_ms": 0.009395020825045926,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "sdpa",
+    "v38_why": "no viable tile",
+    "best_single_tile": null,
+    "best_looped": {
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "ms": 0.011460191525590305
+    },
+    "incumbent_ms": 0.009395020825045926,
+    "incumbent": "sdpa()",
+    "flushed_ms": {
+     "looped": 0.02252800017595291,
+     "sdpa": 0.02252800017595291
+    }
+   },
+   "rows": [
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.012229757919949078,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.014647931157947776,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 25600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.017042501837806364,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 33792
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.013561612194024244,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.014192051019150609,
+     "n_regs": 125,
+     "n_spills": 0,
+     "smem": 25600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015934751558436655,
+     "n_regs": 125,
+     "n_spills": 0,
+     "smem": 33792
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02340480688164485,
+     "n_regs": 101,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02229244174159525,
+     "n_regs": 102,
+     "n_spills": 0,
+     "smem": 25600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02253975141311309,
+     "n_regs": 102,
+     "n_spills": 0,
+     "smem": 33792
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 12
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 10
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 8
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.015703213108217644,
+     "n_regs": 203,
+     "n_spills": 0,
+     "smem": 26624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.015852539030240403,
+     "n_regs": 203,
+     "n_spills": 0,
+     "smem": 34816
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01627933101367746,
+     "n_regs": 203,
+     "n_spills": 0,
+     "smem": 43008
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.032837495249064014,
+     "n_regs": 169,
+     "n_spills": 0,
+     "smem": 26624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.031257531774325636,
+     "n_regs": 165,
+     "n_spills": 0,
+     "smem": 34816
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.031945111279819104,
+     "n_regs": 166,
+     "n_spills": 0,
+     "smem": 43008
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 30
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 18
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.011460191525590305,
+     "n_regs": 236,
+     "n_spills": 0,
+     "smem": 36864
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01674421276666422,
+     "n_regs": 238,
+     "n_spills": 0,
+     "smem": 53248
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01718559236368263,
+     "n_regs": 240,
+     "n_spills": 0,
+     "smem": 69632
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.019973287073552302,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 36864
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.019382245177200292,
+     "n_regs": 167,
+     "n_spills": 0,
+     "smem": 53248
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.019758307486263966,
+     "n_regs": 166,
+     "n_spills": 0,
+     "smem": 69632
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.009395020825045926,
+     "hot_ms_best_of_1": 0.00939658470805275,
+     "n_trials": 21,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "10": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 5,
+    "n_looped_legal": 48,
+    "n_admitted": 53,
+    "sdpa_best_of_1_ms": 0.010005709704230814,
+    "sdpa_best_of_N_ms": 0.009968374671603409,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "single_tile(32, 4, 1)",
+    "v38_why": "derived tile (32, 4, 1), confirmed against 5 tiles at batch 64",
+    "best_single_tile": {
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "ms": 0.011166526687866779
+    },
+    "best_looped": {
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "ms": 0.009081216958852915
+    },
+    "incumbent_ms": 0.011166526687866779,
+    "incumbent": "single_tile(32, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.023552000522613525,
+     "looped": 0.020479999482631683,
+     "sdpa": 0.024671999737620354
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.016046802740987503,
+     "n_regs": 150,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.014263184844951152,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.013089680179382144,
+     "n_regs": 164,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.011166526687866779,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.011311044977672064,
+     "n_regs": 59,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010815795778407694,
+     "n_regs": 101,
+     "n_spills": 0,
+     "smem": 9216
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.012153368341557495,
+     "n_regs": 114,
+     "n_spills": 0,
+     "smem": 13312
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.013739348483657134,
+     "n_regs": 114,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.015577062933673058,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 9216
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01542695078944963,
+     "n_regs": 94,
+     "n_spills": 0,
+     "smem": 13312
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015385371114333088,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.026814943022499867,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 9216
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.0269855486233305,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 13312
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.029200475994903264,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 17408
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010664904246522496,
+     "n_regs": 172,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01110561010314197,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.011286374030074453,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.00997492390633067,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.009861134257924724,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010115465476678128,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.016728353359706283,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.015492580384939027,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015677841302040765,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010426362509418204,
+     "n_regs": 184,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.011582003004837237,
+     "n_regs": 236,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.012467945230851653,
+     "n_regs": 236,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009474334021107403,
+     "n_regs": 116,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.009595720238960985,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.009081216958852915,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.014925801682804465,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01472316900381265,
+     "n_regs": 121,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015077882044032147,
+     "n_regs": 123,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.014936510552751256,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.014204299488006689,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.015199781923877949,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 28672
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01119388710523344,
+     "n_regs": 163,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01131845099075467,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01123382114782566,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 28672
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010606917006826493,
+     "n_regs": 94,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.010547397879841523,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.010590395744571292,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 28672
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.01028159416390572,
+     "n_regs": 186,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.011222106443668882,
+     "n_regs": 243,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01146046033395463,
+     "n_regs": 243,
+     "n_spills": 0,
+     "smem": 40960
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.009695339334180673,
+     "n_regs": 124,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.00958425239057571,
+     "n_regs": 121,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.01012951700779836,
+     "n_regs": 121,
+     "n_spills": 0,
+     "smem": 40960
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.010135848259291268,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.010789137052613485,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 49152
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.014823878135757092,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 65536
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.011299775418150032,
+     "n_regs": 169,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.01132799968246586,
+     "n_regs": 166,
+     "n_spills": 0,
+     "smem": 49152
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.011267758565981724,
+     "n_regs": 166,
+     "n_spills": 0,
+     "smem": 65536
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.009968374671603409,
+     "hot_ms_best_of_1": 0.010005709704230814,
+     "n_trials": 53,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "11": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 8,
+    "n_looped_legal": 54,
+    "n_admitted": 62,
+    "sdpa_best_of_1_ms": 0.04037183684271735,
+    "sdpa_best_of_N_ms": 0.04036324410825162,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "single_tile(64, 4, 1)",
+    "v38_why": "derived tile (64, 4, 1), confirmed against 8 tiles at batch 16",
+    "best_single_tile": {
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "ms": 0.02030246997113948
+    },
+    "best_looped": {
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "ms": 0.018641474281240095
+    },
+    "incumbent_ms": 0.02030246997113948,
+    "incumbent": "single_tile(64, 4, 1)",
+    "flushed_ms": {
+     "single_tile": 0.03993599861860275,
+     "looped": 0.03891199827194214,
+     "sdpa": 0.055296000093221664
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.04327089525424813,
+     "n_regs": 91,
+     "n_spills": 0,
+     "smem": 4608
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.07208639979362488,
+     "n_regs": 91,
+     "n_spills": 0,
+     "smem": 4608
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.024703125747298327,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.038094884875674806,
+     "n_regs": 95,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.08482325121704559,
+     "n_regs": 89,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.024248844264541318,
+     "n_regs": 184,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.02030246997113948,
+     "n_regs": 94,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      64,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.04461548643292121,
+     "n_regs": 92,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02281641203259665,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 2048
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.024858596521022517,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.026145505850405426,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.03521139049961556,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 2048
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.03470317767755225,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.03554973151740127,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.06404257740199401,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.06431266276041667,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.06575303826450317,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 1600
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.020891497796932553,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.022244352340698242,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.023152230215854334,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02254864477342175,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.023616884575515498,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.024989252505095108,
+     "n_regs": 46,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.03906782654216856,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.039139168254344534,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.0393081065770742,
+     "n_regs": 47,
+     "n_spills": 0,
+     "smem": 2624
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.018641474281240095,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.019959892637564106,
+     "n_regs": 89,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.020059671565366286,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.019044837984802616,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.019710943452386002,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.021278764255534467,
+     "n_regs": 56,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.036214122622031865,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.035980296698142226,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.03929445788700281,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.024375819237992792,
+     "n_regs": 127,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02389152272815479,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.024336221132725065,
+     "n_regs": 122,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02597932688957822,
+     "n_regs": 68,
+     "n_spills": 0,
+     "smem": 5120
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02469651936452626,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02479750245482057,
+     "n_regs": 72,
+     "n_spills": 0,
+     "smem": 7168
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.028837131731437916,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.028183534307387268,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02817263491772491,
+     "n_regs": 48,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02440079569300532,
+     "n_regs": 165,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.027270362280696802,
+     "n_regs": 172,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.027908565598350643,
+     "n_regs": 178,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.022174327931505568,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02232524871826172,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.022681933934571314,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02386607047214041,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.025363468490870653,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.025734463658530837,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02563600854559259,
+     "n_regs": 254,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02454698848824436,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.02496363693501526,
+     "n_regs": 255,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.021325871065089003,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02092118129551968,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.021166023951898084,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.02346267779011372,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.02397956807820036,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.025022673112875503,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.04036324410825162,
+     "hot_ms_best_of_1": 0.04037183684271735,
+     "n_trials": 62,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "12": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 5,
+    "n_looped_legal": 9,
+    "n_admitted": 14,
+    "sdpa_best_of_1_ms": 0.01056077106889472,
+    "sdpa_best_of_N_ms": 0.010532820965610656,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "single_tile(32, 2, 1)",
+    "v38_why": "derived tile (32, 2, 1), confirmed against 5 tiles at batch 64",
+    "best_single_tile": {
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "ms": 0.0020977202178425873
+    },
+    "best_looped": {
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "ms": 0.002166598866888359
+    },
+    "incumbent_ms": 0.0020977202178425873,
+    "incumbent": "single_tile(32, 2, 1)",
+    "flushed_ms": {
+     "single_tile": 0.008191999979317188,
+     "looped": 0.008191999979317188,
+     "sdpa": 0.01740800030529499
+    }
+   },
+   "rows": [
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0023945409613409584,
+     "n_regs": 40,
+     "n_spills": 0,
+     "smem": 3072
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      16,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.002654281418646693,
+     "n_regs": 35,
+     "n_spills": 0,
+     "smem": 3584
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      2,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0020977202178425873,
+     "n_regs": 52,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      4,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.002475636418570172,
+     "n_regs": 45,
+     "n_spills": 0,
+     "smem": 4608
+    },
+    {
+     "form": "single_tile",
+     "tile": [
+      32,
+      8,
+      1
+     ],
+     "status": "ok",
+     "hot_ms": 0.0034035529653117444,
+     "n_regs": 40,
+     "n_spills": 0,
+     "smem": 4352
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.002166598866888359,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.002202725344961816,
+     "n_regs": 66,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.0021901115214623674,
+     "n_regs": 67,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.0026213334252436957,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.0034291480345462126,
+     "n_regs": 66,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.003553659165347064,
+     "n_regs": 66,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.00484566568379693,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.004633191508725059,
+     "n_regs": 66,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.0047917588116371465,
+     "n_regs": 66,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.010532820965610656,
+     "hot_ms_best_of_1": 0.01056077106889472,
+     "n_trials": 14,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  },
+  "13": {
+   "meta": {
+    "batch_probed": 64,
+    "n_single_legal": 0,
+    "n_looped_legal": 54,
+    "n_admitted": 51,
+    "sdpa_best_of_1_ms": 0.28223850025850183,
+    "sdpa_best_of_N_ms": 0.2802507288315717,
+    "capped": false,
+    "real_batch": 64,
+    "v38_plan": "sdpa",
+    "v38_why": "no viable tile",
+    "best_single_tile": null,
+    "best_looped": {
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "ms": 0.26741879485374276
+    },
+    "incumbent_ms": 0.2802507288315717,
+    "incumbent": "sdpa()",
+    "flushed_ms": {
+     "looped": 0.2662400007247925,
+     "sdpa": 0.29388800263404846
+    }
+   },
+   "rows": [
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.2967996252588479,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.321256228855678,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.3211691842150332,
+     "n_regs": 63,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.5292861121041434,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.5280426570347377,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.5305038079982851,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 1.124298095703125,
+     "n_regs": 60,
+     "n_spills": 0,
+     "smem": 4096
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 1.059914155439897,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      32,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 1.0614225214177913,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.3043031692504883,
+     "n_regs": 96,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.2919411364896798,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.2975697072347005,
+     "n_regs": 113,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.29620293725894975,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.2862609556351585,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.2899520111083984,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.578329610824585,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 6144
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.5611012621623713,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.565897360080626,
+     "n_regs": 62,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.28971885499500094,
+     "n_regs": 138,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.28634073704849056,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.294798227004063,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.2750118439456066,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.26741879485374276,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.2683977172488258,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.5359163717790083,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 8192
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.52623931397783,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      64,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.5229681650797526,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.3867039978504181,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.3868903190858902,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.3775471884106833,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.30803970143764836,
+     "n_regs": 108,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.30375210242935374,
+     "n_regs": 111,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.30702483026604904,
+     "n_regs": 111,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.33838681613697724,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 10240
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.3096763170682467,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      16,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.30998139768033417,
+     "n_regs": 64,
+     "n_spills": 0,
+     "smem": 14336
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.399242494927078,
+     "n_regs": 249,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.40977067947387696,
+     "n_regs": 249,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      2,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.4067850921113612,
+     "n_regs": 247,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.28662289020627046,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.28784113838559106,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.2905287858916492,
+     "n_regs": 128,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.3062956921465985,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 12288
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.2974220601523795,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      32,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.30370790530473757,
+     "n_regs": 80,
+     "n_spills": 0,
+     "smem": 20480
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      2
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 48
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      3
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 50
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      2,
+      4
+     ],
+     "status": "spills -- dropped",
+     "n_spills": 50
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.279928645868411,
+     "n_regs": 168,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.2871295928955078,
+     "n_regs": 176,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      4,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.2885432127045422,
+     "n_regs": 176,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      2
+     ],
+     "status": "ok",
+     "hot_ms": 0.3099479433856433,
+     "n_regs": 121,
+     "n_spills": 0,
+     "smem": 16384
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      3
+     ],
+     "status": "ok",
+     "hot_ms": 0.3001238994109325,
+     "n_regs": 109,
+     "n_spills": 0,
+     "smem": 24576
+    },
+    {
+     "form": "looped",
+     "tile": [
+      128,
+      64,
+      8,
+      4
+     ],
+     "status": "ok",
+     "hot_ms": 0.299120601219467,
+     "n_regs": 103,
+     "n_spills": 0,
+     "smem": 32768
+    },
+    {
+     "form": "sdpa",
+     "tile": [],
+     "status": "ok",
+     "hot_ms": 0.2802507288315717,
+     "hot_ms_best_of_1": 0.28223850025850183,
+     "n_trials": 51,
+     "n_regs": 0,
+     "n_spills": 0,
+     "smem": 0
+    }
+   ]
+  }
+ }
+}

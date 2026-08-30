@@ -1,0 +1,47 @@
+
+=== config 1 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            224.26     223.23       1.0000x  out,ffn_in,ffn_out
+v41_vendor_aware_attn      225.28     224.26       0.9955x  out,ffn_in,ffn_out
+
+=== config 2 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn             48.13      47.10       1.0000x  -
+v41_vendor_aware_attn       47.10      47.07       1.0217x  -
+
+=== config 3 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            140.29     139.26       1.0000x  qkv
+v41_vendor_aware_attn      142.34     141.31       0.9856x  qkv
+
+=== config 4 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn             81.92      80.90       1.0000x  qkv,out
+v41_vendor_aware_attn       81.92      80.90       1.0000x  qkv,out
+
+=== config 7 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn             77.82      76.80       1.0000x  qkv,out
+v41_vendor_aware_attn       77.82      76.80       1.0000x  qkv,out
+
+=== config 9 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            226.30     224.26       1.0000x  out,ffn_in,ffn_out
+v41_vendor_aware_attn      225.28     224.26       1.0045x  out,ffn_in,ffn_out
+
+=== config 10 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            223.23     221.18       1.0000x  out,ffn_in,ffn_out
+v41_vendor_aware_attn      223.23     222.21       1.0000x  out,ffn_in,ffn_out
+
+=== config 11 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn            269.31     268.29       1.0000x  out,ffn_in,ffn_out
+v41_vendor_aware_attn      269.31     268.29       1.0000x  out,ffn_in,ffn_out
+
+=== config 12 (all arms correct) ===
+arm                     median us     min us vs v40_looped_attn  sites
+v40_looped_attn             74.75      73.73       1.0000x  qkv,out
+v41_vendor_aware_attn       74.75      73.73       1.0000x  qkv,out
+
+wrote bench/probes/g41_attn_audit/abba_g41_run2.json
