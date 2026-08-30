@@ -180,15 +180,19 @@ def accuracy_report() -> None:
 
 # ----------------------------------------------------------------------- 4. the timing
 
-def timing_report() -> None:
+def timing_report(lock_timeout_s: float = 2700.0) -> None:
     """INDICATIVE ONLY. The baseline arm is compiled so the widen and the add are fused,
-    which is what the real candidate's split path gets from Inductor (L33/L41)."""
+    which is what the real candidate's split path gets from Inductor (L33/L41).
+
+    Blocks for the lock rather than failing on it: several agents share one GPU and
+    finding 26 / L38 is that a number taken alongside another benchmark is not a number.
+    """
     import triton.testing as tt
     from bench.gpu_lock import gpu_lock
 
     print("\n4. TIMING -- the segment, INDICATIVE ONLY, never a verdict\n")
     props = torch.cuda.get_device_properties("cuda")
-    with gpu_lock("probe_outproj_epilogue"):
+    with gpu_lock("probe_outproj_epilogue", timeout_s=lock_timeout_s):
         print(f"{'shape':<30} {'split (compiled)':>18} {'fused':>10} {'gain':>7}")
         for c in MATRIX:
             ok, _ = applies(c.seq_len, c.head_dim, c.heads, c.batch_size, props)
