@@ -207,6 +207,11 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
         "arms_isolated": True, "clocks_locked": False,
     }
     out["memory"] = {"peak_MB": cand_peak, "baseline_peak_MB": base_peak}
+
+    # AFTER timing, never during: the profiler perturbs execution. This records WHY, so a
+    # later reader can diff two candidates' kernel breakdowns instead of re-deriving them
+    # from prose in a finding.
+    out["profile"] = {"candidate": kernel_profile(candidate, xt, mt)}
     return out
 
 
@@ -582,6 +587,63 @@ def run_child(config_id: int, candidate: str, padding: float = 0.0,
             "correctness": None, "timing": None, "memory": None, "notes": tail.strip()}
 
 
+def kernel_profile(model, x, mask, top: int = 12) -> dict:
+    """A per-kernel breakdown for ONE forward, recorded alongside the timing.
+
+    WHY THIS IS IN THE LEDGER AND NOT JUST IN A PROBE
+    -------------------------------------------------
+    Every explanation this project has produced for WHY a candidate won or lost came from
+    an ad-hoc profile that was then written into prose in a finding. The number was
+    queryable; the mechanism was not. So two candidates could not be diffed after the
+    fact, and the research agents received the mechanism only as someone's summary of it.
+
+    The profile is the evidence for the L36 question -- did the mechanism actually run --
+    and for L33 -- what fraction of real forward time does this op occupy. Both have been
+    load-bearing repeatedly: an agent's first screen read -18.9% and only a profile showed
+    Dynamo had dropped the frame to eager while our CUDA graph faithfully captured eager
+    ops; the LayerNorm bucket was argued about for a day before anyone counted its bytes.
+
+    NOT TIMED, DELIBERATELY. The profiler perturbs execution, so this runs AFTER all
+    timing is complete and its own durations are recorded as `profiled_ms` -- explicitly
+    NOT the measurement. Never compare `profiled_ms` across rows; that is what
+    `timing.candidate_ms` is for.
+
+    LIMIT OF THIS INSTRUMENT. `ncu` is unavailable under WSL2 (ERR_NVGPUCTRPERM denies GPU
+    performance counters), so there is no occupancy, register-pressure or achieved-bandwidth
+    data here -- only kernel names, launch counts and device time. Anything stronger has to
+    be established by CONTRAST between two arms with identical instruction streams, which
+    is how finding 33 measured weight traffic.
+    """
+    import torch                                  # imported per-function in this module
+    from torch.profiler import profile, ProfilerActivity
+    try:
+        with torch.inference_mode():
+            for _ in range(3):
+                model(x, mask)
+            torch.cuda.synchronize()
+            with profile(activities=[ProfilerActivity.CUDA]) as prof:
+                model(x, mask)
+                torch.cuda.synchronize()
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {e}"[:200]}
+
+    ev = [e for e in prof.key_averages() if e.device_time_total > 0]
+    total_us = sum(e.device_time_total for e in ev)
+    ev.sort(key=lambda e: -e.device_time_total)
+    kernels = [{"name": e.key[:70], "launches": e.count,
+                "us": round(e.device_time_total, 1),
+                "pct": round(100.0 * e.device_time_total / total_us, 2) if total_us else 0.0}
+               for e in ev[:top]]
+    return {
+        "profiled_ms": round(total_us / 1000.0, 4),   # NOT the measurement
+        "launches": sum(e.count for e in ev),
+        "distinct_kernels": len(ev),
+        "memcpy_launches": sum(e.count for e in ev if "Memcpy" in e.key),
+        "kernels": kernels,
+        "truncated": len(ev) > top,
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidate", required=True)
@@ -737,7 +799,8 @@ def main() -> int:
                                  ).strip(),
                                  provenance_override=run_prov,
                                  extra={k: r[k] for k in
-                                        ("baseline", "signature_floor", "capability")
+                                        ("baseline", "signature_floor", "capability",
+                                         "profile")
                                         if k in r} or None)
             if args.json_out:
                 # Carry correctness too. status=="ok" already IMPLIES it passed (an
