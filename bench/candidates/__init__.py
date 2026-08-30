@@ -143,6 +143,11 @@ def _v23(baseline_cls):
     return build(baseline_cls)
 
 
+def _v26(baseline_cls):
+    from .v26_causal_correct import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -287,6 +292,14 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "the 613.7 GB/s bandwidth roofline -- they cannot be sped up, only "
                 "deleted. Traffic per token 28*D -> 12*D. Op-level 2.51x-3.84x; L33 bounds "
                 "the end-to-end gain at ~1.35x on config 6.",
+    ),
+    "v26_causal_correct": CandidateSpec(
+        name="v26_causal_correct", generation=26, parent="v23_single_tile_attn", build=_v26,
+        summary="Honours config.causal. Every candidate from v5 to v23 hardcoded "
+                "is_causal=True and returned three-quarters of its output wrong on a "
+                "non-causal input -- while the reference benchmark's own DEFAULT is "
+                "causal=False. Non-causal now delegates to the unmodified baseline: "
+                "exactly right on a shape we do not expect, fast on the fourteen we do.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,

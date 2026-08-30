@@ -655,3 +655,27 @@ Also established: the pointwise bucket is NOT the opportunity the profile sugges
 Inductor was already fusing it well enough that deleting it changes nothing. On config 6 --
 84% of wall time -- what remains is attention. See docs/findings/29.
 
+
+## L42 — Test the settings the harness DEFAULTS to, not the ones the spec implies (2026-08-30)
+
+Every candidate from v5 to v23 hardcoded `is_causal=True`. On a non-causal input the
+frontier returned **3/4 of its output wrong** (max_abs 1.67e+00 vs a 2e-3 tolerance), with
+all 177 tests green -- because every announced config is causal so nothing exercised the
+other branch. **But the reference benchmark's own default is `causal: bool = False`.**
+Everything we ever measured used a setting the harness does not default to. L24 at its
+most literal. Fixed in v26 by delegating non-causal to the unmodified baseline.
+
+The audit rule is now **7 for 7**: padding ratio, eager baseline, dtype, input scale,
+allocation context, process contention, causal flag. Always the same question -- *what does
+this depend on that we never varied?* Not one was found by the search loop.
+
+**For any flag, dtype or mode the harness exposes, its DEFAULT is a separate test case from
+the value the specification implies, and it is the more dangerous one, because it is what
+runs when nobody passes an argument.**
+
+Also, accidentally: v26's causal path is byte-identical to v23's, so its sweep re-measured
+the same code and got **3.015x -> 3.103x, +2.9% on the geomean** with total wall time
+unchanged. Configs above a millisecond reproduced within 0.6%; every deviation came from
+sub-millisecond rows. Direct evidence for [L29]'s floor, and a caution that the geomean
+weights a 0.06 ms config equally with a 57 ms one. See docs/findings/32.
+
