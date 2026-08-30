@@ -203,6 +203,16 @@ def _v33(baseline_cls):
     return build(baseline_cls)
 
 
+def _v34(baseline_cls):
+    from .v34_launch_bound import build
+    return build(baseline_cls)
+
+
+def _v35(baseline_cls):
+    from .v35_recombined import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v33_streamed_long": CandidateSpec(
         name="v33_streamed_long", generation=33, parent="v26_causal_correct", build=_v33,
@@ -518,5 +528,31 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "from finding 25's bandwidth crossover and fires exactly where it "
                 "declines (configs 2, 3, 4, 12). Reuses v19's norm-fused megakernel and "
                 "elides a provably-dead mask memcpy. 36 -> 20 kernels.",
+    ),
+    "v34_launch_bound": CandidateSpec(
+        name="v34_launch_bound", generation=34, parent="v26_causal_correct", build=_v34,
+        summary="The frontier launches 36 kernels per forward on EVERY config -- "
+                "censused at 2, 8 and 12 with an identical decomposition -- and a graph "
+                "node costs 0.798 us on this card whatever it computes, so 28.7 us is a "
+                "floor and 47% of config 2's entire wall. Adds a second, disjoint fusion "
+                "predicate: fuse when the whole segment fits the device in ONE WAVE, "
+                "where per-launch latency is pure overhead. That is the opposite reason "
+                "from finding 25's bandwidth crossover and fires exactly where it "
+                "declines (configs 2, 3, 4, 12). Reuses v19's norm-fused megakernel and "
+                "elides a provably-dead mask memcpy. 36 -> 20 kernels.",
+    ),
+    "v35_recombined": CandidateSpec(
+        name="v35_recombined", generation=35, parent="v33_streamed_long", build=_v35,
+        summary="RECOMBINATION of the two live children of v26: v33's shape-latch fix "
+                "and restored batch streaming, with v34_launch_bound's one-wave fusion "
+                "stacked underneath it (contributor, as v17 declared v16). Composes by "
+                "layering, not by copying -- v33's dispatch was factored into "
+                "`build_on` so exactly one copy of each mechanism exists. The merge's "
+                "own content is the binding the two could not see: v34 latches five more "
+                "attributes to the input shape than v33's reset enumerates, so a model "
+                "re-decided at a new batch size would have run a megakernel tiled for "
+                "the old one. Also re-derives the MASK state on a shape change, which "
+                "v34's mask elision makes load-bearing, and settles the launch decision "
+                "on the streamed path against the slice that runs.",
     ),
 }
