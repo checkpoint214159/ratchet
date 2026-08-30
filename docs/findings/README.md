@@ -29,6 +29,7 @@ the note. Where something is inferred rather than measured, it says so.
 | [14](14-the-graded-protocol-agrees.md) | The benchmark's own timing agrees with ours; and max-autotune was never active | 2026-08-29 |
 | [13](13-we-are-fp32-only.md) | Every candidate assumes an fp32 model; fp16 crashes or fails the gate | 2026-08-29 |
 | [12](12-the-baseline-was-wrong.md) | **Our baseline was eager. Honest speedup is 1.69x, not 7.2x, and we lose 2 configs.** | 2026-08-29 |
+| [33](33-the-weights-were-already-in-l2.md) | L2 persistence is inert: the weights hit L2 by natural reuse, saving 94.8% of the worst case already | 2026-08-30 |
 
 Related, and deliberately elsewhere:
 

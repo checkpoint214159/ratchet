@@ -679,3 +679,52 @@ unchanged. Configs above a millisecond reproduced within 0.6%; every deviation c
 sub-millisecond rows. Direct evidence for [L29]'s floor, and a caution that the geomean
 weights a 0.06 ms config equally with a 57 ms one. See docs/findings/32.
 
+
+
+## L43 — Price the COMPULSORY traffic before proposing a cache fix (2026-08-30)
+
+A-06 proposed pinning the fp16 weight arena in L2 with a persisting-access window, priced
+at up to 23% of config 6 on the assumption that a 327 MB activation stream evicts it.
+Measured by contrast (`ncu` is unavailable under WSL2 — `ERR_NVGPUCTRPERM`): the frontier's
+FFN kernel runs **2.1% above a pure-streaming floor measured on its own activation
+traffic**, and forcing the weights to miss — a 32 MiB arena instead of 64 KiB — costs
+**+75%**. The real kernel is already saving **94.8% of the full-miss worst case**.
+Installing the window changes it by **−0.25%**. cuBLAS's QKV projection is in the same
+position: +2.2% over its floor against a +75% worst case.
+
+Two general things, both cheaper than the probe that established them:
+
+**A cache optimization's ceiling is the RE-fetched traffic, never the total.** Persistence
+converts capacity and conflict misses into hits; the first read of a byte is compulsory and
+survives any policy. The whole four-layer weight set is 768 KiB — 0.002% of what config 6
+moves — so even a perfect cache had nothing to win. That bound is arithmetic and needed no
+GPU.
+
+**The reuse distance was derivable in one line ([L37]).** A weight line is re-referenced
+once per CTA, and a CTA touches 80 KB of activation, so the weight tile is touched ~600
+times per sweep of a 48 MiB L2. A line touched 600 times per sweep is never the LRU victim.
+The probe's measured crossover confirms it: resident at a 1 MiB arena, evicted at 32 MiB —
+the boundary is exactly where the reuse distance crosses the cache size.
+
+**And writing that condition as a test immediately found the row it does not cover.**
+Config 8's four-layer weight set is **48.00 MiB, equal to this card's L2 to the byte** — the
+one announced shape where eviction is genuinely possible. Prose would have shipped the
+generalization; the assertion failed on it. Measured directly: a window over the whole arena
+is **-0.62%**, because config 8's GEMMs run at **93-98.5% of measured tensor-core peak** and
+are compute-bound, 3.8-5.4x above their bandwidth floor. A memory-system policy has no time
+to give back there however the cache behaves. Fourth member of the [L36]/[L38]/[L40] family
+in three days, and the first time the executable check was written *before* the claim
+escaped into a finding rather than after.
+
+**Both positive controls fired ([L38]), and that is what makes the null usable.** The
+32 MiB arm proves the contrast can see weight traffic at all; the same arm plus a window
+goes **4.728 → 2.707 ms, +42.7%**, proving the ctypes shim, the driver path and sm_89 all
+work. *The feature works and has nothing to do* is a much stronger claim than *we measured
+nothing*, and it costs one extra arm.
+
+The [L33] objection ("a mechanism measured in isolation measures the isolation") is
+answered by direction, not by an end-to-end run: the FFN megakernel is the most favourable
+site in the model for this idea, isolation *inflates*, and **an inflated null is still a
+null.** That is the one case where an isolated probe may be decisive without spending a
+sweep — and this negative also disposes of the same intuition that produced v3's L2-sized
+chunking, killed by the g10 ablation ([L17]). See docs/findings/33.
