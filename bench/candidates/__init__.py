@@ -163,6 +163,11 @@ def _v20(baseline_cls):
     return build(baseline_cls)
 
 
+def _v21(baseline_cls):
+    from .v21_double_buffered import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -371,5 +376,19 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "stride jumping by 3*D. The tax is 1.78x of attention at config 6 and "
                 "cannot be repacked away (.contiguous() costs more than it saves). Tuned "
                 "kernel beats cuBLAS+strided by 1.163x on the segment.",
+    ),
+    "v21_double_buffered": CandidateSpec(
+        name="v21_double_buffered", generation=21, parent="v18_capture_insurance",
+        build=_v21,
+        summary="Kills the graph's output copy. The frontier clones _static_y on every "
+                "call because the next replay overwrites it; a profile puts Memcpy DtoD "
+                "at 6.6% of config 6's forward, about half of it that clone. Two "
+                "graphExecs sharing one memory pool give two distinct output buffers, "
+                "and a liveness check before each clobber preserves anything the caller "
+                "still holds (rebinding it onto fresh memory) or retires the buffer and "
+                "falls back to the compiled callable. Double buffering ALONE would only "
+                "be safe by accident (L24); the liveness check is what makes it correct "
+                "for callers the harness does not model. Ceiling ~3% on config 6, ~2.5% "
+                "on 13, ~0 elsewhere -- INSIDE the noise floor by construction.",
     ),
 }
