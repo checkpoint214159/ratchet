@@ -183,6 +183,11 @@ def _v25(baseline_cls):
     return build(baseline_cls)
 
 
+def _v28(baseline_cls):
+    from .v28_layer_megakernel import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -444,5 +449,20 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "2.0e-3 budget from ONE site in ONE layer. Ships as fp32, i.e. identical "
                 "to v18, with the predicate that declines and the falsifier that measures "
                 "the refused path.",
+    ),
+    "v28_layer_megakernel": CandidateSpec(
+        name="v28_layer_megakernel", generation=28, parent="v26_causal_correct",
+        build=_v28,
+        summary="Attention and the FFN in ONE launch -- the whole layer as a single "
+                "Triton kernel: LN1, Q|K|V, causal attention, out-proj, fp32 residual, "
+                "LN2, both FFN GEMMs and the second residual, with nothing between the "
+                "first load and the final store touching HBM. Reconciles A-03/B-01/B-07: "
+                "B-07's scope is already built (v17/v19) and measured flat, so the open "
+                "question is fusing ACROSS the GEMMs, which deletes the QKV buffer -- "
+                "25% of config 6's layer traffic and the one piece nothing has reached. "
+                "31.5 GB -> 7.9 GB on config 6, which moves it PAST the 144 FLOP/B ridge "
+                "and makes the answer depend on achieved tensor-core utilisation, not on "
+                "traffic: break-even is 20% of peak. The register file binds, not smem, "
+                "and the tile is swept with the compiler's own n_spills as a filter.",
     ),
 }
