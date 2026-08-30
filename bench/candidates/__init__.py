@@ -148,6 +148,11 @@ def _v26(baseline_cls):
     return build(baseline_cls)
 
 
+def _v27(baseline_cls):
+    from .v27_qkv_fused_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -307,6 +312,19 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "memory, never from config ids. Chooses a streamed path when the working "
                 "set would not fit and v13 otherwise, and reports is_tuned so an untuned "
                 "path is never presented as a tuned one.",
+    ),
+    "v27_qkv_fused_attn": CandidateSpec(
+        name="v27_qkv_fused_attn", generation=27, parent="v26_causal_correct", build=_v27,
+        summary="The Q|K|V projection fused INTO the attention kernel: one launch loads "
+                "the normalized input tile, projects its own head's Q, K and V in "
+                "registers and attends, so the [B, S, 3*d_model] buffer -- written by a "
+                "cuBLAS GEMM at 15.4% of config 6 and read straight back -- never "
+                "exists. A program owns ONE head, so its weight slice is 24 KB at "
+                "head_dim 32, not the 96 KB of the whole matrix; the binding operand is "
+                "the input tile, which refuses d_model 1024 and seq_len 1024. Declines "
+                "config 11 on a byte count: 16 heads each re-reading the input tile "
+                "move more than the buffer they delete. Op-level 1.29x on config 6's "
+                "shape, 1.50x on config 7; the geomean should look flat (L33).",
     ),
     "v23_single_tile_attn": CandidateSpec(
         name="v23_single_tile_attn", generation=23, parent="v18_capture_insurance",
