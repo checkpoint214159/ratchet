@@ -20,7 +20,16 @@ def _ref():
 
 
 def test_kernel_matches_the_split_and_transpose_it_replaces():
-    """Exact same values, different layout. This is a LAYOUT change, not a math change."""
+    """Same values within tolerance, different layout -- a LAYOUT change, not a math one.
+
+    This asserted `torch.equal` originally and passed, which was luck: the first tiling
+    happened to accumulate in the same order as cuBLAS. Retuning block_n from 64 to 128
+    (which took the kernel from 0.88x to 1.163x) changed the reduction order and broke it.
+
+    Bit-identity was never the right contract. Two GEMM implementations are not required
+    to agree to the last ulp of fp16; they are required to agree inside the locked
+    tolerance, which is what the oracle checks and what this now checks.
+    """
     torch.manual_seed(0)
     B, S, D, H = 8, 64, 128, 4
     hd, M = D // H, B * S
@@ -32,7 +41,12 @@ def test_kernel_matches_the_split_and_transpose_it_replaces():
     qr, kr, vr = (t.view(B, S, H, hd).transpose(1, 2) for t in qkv.split(D, dim=-1))
     q, k, v = qkv_headmajor(xn, w.t().contiguous(), bi, B, S, H)
     for got, want, nm in ((q, qr, "q"), (k, kr, "k"), (v, vr, "v")):
-        assert torch.equal(got, want.contiguous()), f"{nm} differs"
+        w = want.contiguous()
+        d = (got.float() - w.float()).abs()
+        ok = (d <= 2e-3) | (d <= 2e-2 * w.float().abs())
+        assert ok.all(), f"{nm}: {(~ok).sum().item()} outside tolerance, max_abs {d.max():.3e}"
+        # The layout claim is separate from the numeric one, and is exact.
+        assert got.shape == w.shape and got.is_contiguous()
 
 
 def test_the_outputs_are_actually_contiguous():
