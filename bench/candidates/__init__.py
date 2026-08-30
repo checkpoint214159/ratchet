@@ -148,6 +148,11 @@ def _v26(baseline_cls):
     return build(baseline_cls)
 
 
+def _v29(baseline_cls):
+    from .v29_copy_elimination import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -300,6 +305,22 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "non-causal input -- while the reference benchmark's own DEFAULT is "
                 "causal=False. Non-causal now delegates to the unmodified baseline: "
                 "exactly right on a shape we do not expect, fast on the fourteen we do.",
+    ),
+    "v29_copy_elimination": CandidateSpec(
+        name="v29_copy_elimination", generation=29, parent="v26_causal_correct",
+        build=_v29,
+        summary="Removes the CUDA graph's output clone, which a fresh profile of v26 puts "
+                "at roughly half of a 7.2% Memcpy DtoD bill on config 6. Not by deleting "
+                "it -- that is finding 24 -- but by asking, before each replay, whether "
+                "anything still refers to the tensor handed out last time: nothing does, "
+                "no copy; the caller holds it un-aliased, rebind it onto a clone (the "
+                "parent's cost); the caller holds an un-rebindable alias, stop handing the "
+                "buffer out. Ports cand/g21/double-buffered onto the current frontier, "
+                "drops its second buffer (structurally absent on configs 6 and 13, the "
+                "only shapes where the copy is worth anything), calibrates the alias "
+                "sensor instead of hardcoding its threshold, and makes an alias event cost "
+                "the parent rather than the compiled fallback. Ceiling ~3.6% on config 6, "
+                "INSIDE the noise floor: not resolvable by the screen or by a geomean.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
