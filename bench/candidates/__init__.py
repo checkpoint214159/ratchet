@@ -218,7 +218,28 @@ def _v36(baseline_cls):
     return build(baseline_cls)
 
 
+def _v37(baseline_cls):
+    from .v37_recombined2 import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
+    "v37_recombined2": CandidateSpec(
+        name="v37_recombined2", generation=37, parent="v36_gemm_gelu", build=_v37,
+        summary="THE SECOND RECOMBINATION. v26's two lines rejoin: v36's projection "
+                "GEMMs and GELU epilogue (the declared parent) with v35_recombined's "
+                "shape-latch fix, batch streaming and reset discipline as the "
+                "contributor -- the relationship v17 declared to v16 and v35 declared "
+                "to v34. Neither is an ancestor of the other; their merge-base is v32. "
+                "The merge's own content is the reset: v36 latches NINE more attributes "
+                "to the input shape than v35's five (five gemm_* flags and four tile "
+                "tuples), so v37 derives the reset set FROM THE CLASSES -- every "
+                "class-body attribute introduced above v26 -- instead of naming them, "
+                "and asserts it covers v35's declared list. It also settles the GEMM "
+                "plan on the streamed path against the slice that runs, after the two "
+                "fusion decisions it reads.",
+    ),
+
     "v36_gemm_gelu": CandidateSpec(
         name="v36_gemm_gelu", generation=36, parent="v34_launch_bound", build=_v36,
         summary="THE FIRST HAND-WRITTEN PROJECTION GEMM. Censused at config 9 -- the #1 "

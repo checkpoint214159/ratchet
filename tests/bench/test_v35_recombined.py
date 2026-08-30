@@ -449,13 +449,9 @@ def test_the_kernel_reduction_survives_the_merge(cid):
     # which the profiler drops in a loaded process. The difference is unchanged at
     # exactly 16.0 in both environments, so the difference is what the mechanism claim
     # rests on and the absolute number is what the environment perturbs.
-    # The DROP is the invariant, not the absolute count. Measured alone the counts are
-    # 36.0 / 20.0; inside the full suite both undercount by a constant ~7 profiler events
-    # (35.3 / 19.3) as CUDA module and context state accumulates across the 36 candidates
-    # compiled in one process. The difference is 16.0 in both contexts. A test whose
-    # verdict depends on what ran before it is not testing the candidate (L36).
-    assert n_parent >= 30.0, f"parent count implausible: {n_parent}"
-    assert n_parent - n_child == pytest.approx(16.0, abs=1.5), (n_parent, n_child)
+    assert n_parent == pytest.approx(36.0, abs=1.0), n_parent
+    assert n_parent - n_child == pytest.approx(16.0, abs=0.5), (n_parent, n_child)
+    assert n_child <= 21.5, (n_child, n_parent)
 
 
 # ------------------------------------------------------- VERIFICATION 3: streaming
