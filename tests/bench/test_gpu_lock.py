@@ -79,3 +79,18 @@ def test_run_matrix_refuses_on_contention_rather_than_warning():
     src = (Path(__file__).resolve().parents[2] / "bench" / "run_matrix.py").read_text()
     assert "REFUSING" in src and "contention_report" in src
     assert "return 3" in src, "contention must exit non-zero, not fall through"
+
+
+def test_every_measured_row_records_whether_the_run_held_the_lock():
+    """With several agents on one GPU, a row that cannot say whether it had exclusive
+    access is a row nobody can trust later.
+
+    The nvidia-smi detector cannot answer 'was this clean?' -- finding 26 measured it
+    reporting a live CUDA process on one trial and nothing seven seconds later. Our own
+    lock CAN answer 'did this run have exclusive access by our protocol?', which is the
+    question that matters, so that is what gets written down.
+    """
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[2] / "bench" / "run_matrix.py").read_text()
+    assert "gpu_exclusive" in src
+    assert "gpu_exclusive={gpu_exclusive}" in src, "it must reach the ledger notes"

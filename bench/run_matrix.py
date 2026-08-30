@@ -259,6 +259,14 @@ def main() -> int:
               f"capability probe rather than a timing measurement.")
         return 3
 
+    # Whether this run held the GPU lock is recorded on every row. The nvidia-smi
+    # contention detector is unreliable on WSL2 (finding 26) so it cannot answer "was
+    # this clean?", but OUR OWN LOCK can answer "did this run have exclusive access by
+    # our protocol?" -- which is the question a later reader actually needs. With several
+    # agents on one GPU, a row without it is suspect, and the v20 sweep proved why: a
+    # config on a byte-identical fallback path read +7.2%.
+    gpu_exclusive = not args.allow_contended
+
     props = torch.cuda.get_device_properties(0)
     env = {"device": props.name, "cc": f"sm_{props.major}{props.minor}",
            "torch": torch.__version__, "cuda": torch.version.cuda,
@@ -300,7 +308,8 @@ def main() -> int:
                                  timing=r.get("timing"), correctness=r.get("correctness"),
                                  memory=r.get("memory"), env=env,
                                  config=BY_ID[cid].to_dict(),
-                                 notes=(f"padding_ratio={args.padding} dtype={args.dtype} "
+                                 notes=(f"gpu_exclusive={gpu_exclusive} "
+                                    f"padding_ratio={args.padding} dtype={args.dtype} "
                                         f"input_scale={args.input_scale} " + r.get("notes", "") + (
                                      f" params={json.dumps(tuned_params)}" if tuned_params else "")
                                  ).strip(),
