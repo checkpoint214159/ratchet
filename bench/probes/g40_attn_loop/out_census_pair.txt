@@ -1,0 +1,24 @@
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+
+config 10: paired census, 3 ABBA rounds, 200 warmup, 20 profiled forwards
+
+  v38_stream_fallback    form=single_tile tile=(32, 4, 1)
+  v40_looped_attn        form=looped      tile=(64, 32, 4, 4)
+
+  arm                    wall us (min of rounds)   device us   gap us
+  v38_stream_fallback                       0.23      206.35  -206.12
+  v40_looped_attn                           0.22      198.58  -198.36
+  ratio v38/v40                           1.0410      1.0391
+
+  bucket                v38 us/fwd  v40 us/fwd     delta
+  attention                  40.84       33.26     -7.58
+  copy                        7.17        7.00     -0.17
+  layernorm                  42.96       43.00     +0.04
+  projection GEMM           115.38      115.32     -0.05
+
+  attention kernels, per call:
+    v38_stream_fallback   _attn_single_tile                           4.0 calls    40.84 us/fwd   10.211 us/call
+    v40_looped_attn       _attn_looped                                4.0 calls    33.26 us/fwd    8.315 us/call

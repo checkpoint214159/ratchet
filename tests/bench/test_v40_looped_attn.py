@@ -202,11 +202,21 @@ def test_input_scale_tail_is_no_worse_than_the_parents():
 def test_where_the_looped_form_declines_v40_runs_exactly_what_v38_runs(config_id):
     """The blast radius, asserted rather than asserted-to-be-small.
 
-    `attn_choice` never SELECTS sdpa -- it only uses it as a bar -- so a config the
-    looped form does not win must keep the parent's plan verbatim. This is what makes
-    the ABBA control arms meaningful: on those configs the two candidates are running
-    identical kernels with identical tiles, and finding 49's addendum says the
-    instrument then resolves them to the hundredth of a microsecond.
+    `attn_choice` never SELECTS sdpa -- it only uses it as a bar -- and when the looped
+    form does not clear the bar, `_decide_attn` calls the PARENT'S OWN `_decide_attn`
+    rather than reimplementing it. So a config the looped form does not win keeps v38's
+    plan by construction. This is what makes the ABBA control arms meaningful.
+
+    WHAT THIS TEST DOES NOT ASSERT, AND WHY. It compares `attn_used` and the FORM, not
+    the exact tile. Tile equality holds -- `bench/probes/g40_attn_loop/probe_which_form.py`
+    builds both arms adjacently in a fresh process and reports identical tiles on all ten
+    non-looped configs -- but it is not assertable HERE, because v23's `autotune_tile`
+    times candidate tiles with `do_bench` and is only deterministic within a comparable
+    process state. Measured: five independent builds of v38 in a clean process return
+    `(64, 4, 1)` five times on config 2, and the same assertion fails when the two builds
+    are separated by fifty other GPU tests. Asserting tile equality across that gap is
+    asserting the PARENT's tuner is state-independent, which is a different claim, is not
+    true, and is not this candidate's to make.
     """
     m40, base, cfg, ref = _built(config_id)
     res = _run(m40, base, cfg, ref)
@@ -223,8 +233,11 @@ def test_where_the_looped_form_declines_v40_runs_exactly_what_v38_runs(config_id
         m38(x, mask)
     assert m40.attn_used == m38.attn_used, (
         f"v40 attn_used={m40.attn_used} vs v38 {m38.attn_used}: {m40.attn_reason}")
-    assert m40.attn_tile == m38.attn_tile, (
-        f"v40 tile={m40.attn_tile} vs v38 {m38.attn_tile}: {m40.attn_reason}")
+    assert m40.attn_form != "looped"
+    # The decision must have come from the parent's routine, not a reimplementation of
+    # it -- that is the structural guarantee, and it is visible in the reason string
+    # because `super()._decide_attn` writes its own text before v40 appends to it.
+    assert "looped declined:" in m40.attn_reason, m40.attn_reason
 
 
 def test_inherits_v38s_stream_path():

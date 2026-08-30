@@ -52,6 +52,38 @@ The hot-regime ratio **replicates to 0.2% across runs** and the incumbent's hot 
         config 10   2.33x -> 2.408x
         Delta weighted_score            =  +0.0056
 
+WHAT IT ACTUALLY MEASURED
+-------------------------
+`bench/abba.py --rounds 5 --warmup 200`, both arms resident, cold round discarded, TWO
+independent runs, with configs 1, 3 and 9 carrying byte-identical code in both arms as the
+in-run control:
+
+    cfg 10   231.42 us -> 223.23    1.0367x  and  1.0365x     replicates to 0.02%
+    cfg  4    87.04    ->  87.04    1.0000x  /  0.9933x       engages, no effect
+    cfg 12    75.78    ->  76.80    0.9867x  /  1.0000x       engages, no effect
+    cfg 1/3/9  CONTROL, identical code       0.9808x-1.0000x
+
+Every control difference is zero or exactly ONE 1.024 us event-timer quantum -- the raw
+medians are all multiples of it. Config 10's delta is 8.19 us = EIGHT quanta, twice.
+
+And the saving is attributable. `probe_census_pair.py` profiles both arms in ONE process,
+ABBA-interleaved:
+
+    bucket             v38 us/fwd   v40 us/fwd    delta
+    attention              40.84        33.26     -7.58     <- the whole difference
+    layernorm              42.96        43.00     +0.04
+    projection GEMM       115.38       115.32     -0.05
+    copy                    7.17         7.00     -0.17
+    per call:  _attn_single_tile 10.211 us -> _attn_looped 8.315 us  =  1.228x
+
+**Delta weighted_score = +0.0061** (config 10 only; 2.33 -> 2.4153). Configs 4 and 12
+score zero, and the other ten configs are byte-identical to the parent.
+
+    NOTE FOR WHOEVER SWEEPS THIS. The prime-time sweep compiles and times 5-48 looped
+    tiles plus the single-tile grid plus sdpa, so first-forward time is 14-67 s per
+    config. That is exactly the construction-time work finding 45 showed `run_matrix`'s
+    ISOLATED arm misreports by 2-4x. RANK THIS ON THE INTERLEAVED ARM.
+
 TWO RESULTS THAT WERE NOT ASKED FOR, AND ONE OVERTURNS FINDING 48
 ------------------------------------------------------------------
 * **Config 9 is CLOSED, and finding 48's +0.0021 for it is withdrawn.** Its looped winner

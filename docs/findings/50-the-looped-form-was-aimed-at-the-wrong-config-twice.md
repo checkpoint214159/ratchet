@@ -1,6 +1,6 @@
 # 50 — The looped attention form was aimed at the wrong config twice, and the census is what found the right one
 
-**Date:** 2026-08-30. **Generation:** 40. **Branch:** `cand/g40/attn-loop-census`.
+**Date:** 2026-08-31. **Generation:** 40. **Branch:** `cand/g40/attn-loop-census`.
 **Parent:** `v38_stream_fallback` (`7cee27c`). **Candidate:** `v40_looped_attn`.
 **Picks up:** the proposal finding 48 opened and declined to build.
 
@@ -83,7 +83,194 @@ roughly thirty times resolvable. The ±7% figure is a property of the old protoc
 the hardware, and treating it as a hardware constant is what closed this lever the first
 time.
 
-<!-- MEASUREMENT SECTION: filled in below from the ABBA run -->
+## FOUR THINGS THE BUILD FOUND THAT THE PLAN DID NOT
+
+### The margin was being applied against the wrong thing, and it declined the target config
+
+The first working chooser required a challenger to beat `min(derived_single_tile, sdpa)`
+by `DECISIVE`. On config 10 that **declined the looped form** — the one config the
+candidate exists for — because the same arm is 1.228x the incumbent but only **1.096x
+sdpa**, and 1.096 is inside 10%.
+
+The bug is conceptual, not arithmetic. `DECISIVE` exists to ask *"is the gain over the
+status quo bigger than the noise?"*, so it belongs against **what the model runs today**.
+Asking it against the best available alternative is a different and much stricter
+question, and it silently converts "the incumbent holds the ground" into "the incumbent
+and every alternative hold the ground". SDPA belongs in the rule as a **floor** — never
+ship a Triton kernel the vendor beats — not as a second 10% margin. Caught only because
+`test_config_10_selects_the_looped_form` asserts the mechanism engaged [L36]; every
+correctness test passed with the kernel switched off.
+
+### Changing the tuner's timer silently re-tuned a kernel the candidate was not about
+
+Switching the chooser to the hot timer made it return `single_tile(16, 2, 1)` on config 2
+where v38 runs `(64, 4, 1)` — because the hot timer sees that tile win by 1.124x and the
+flushed timer v23 uses does not. Plausibly an improvement, and entirely beside the point:
+it would have ridden into the ledger on this candidate's row, and it would have destroyed
+the byte-identical control arm the ranking depends on.
+
+The fix is structural rather than careful: `attn_choice.autotune_looped` can return
+exactly one thing — "use the looped form with this tile" — and **every other outcome
+raises, whereupon the candidate calls v23's `_decide_attn` unchanged**. Shapes the looped
+kernel does not win are then identical to the parent by construction, not by inspection.
+The single-tile re-tune is written up as a proposal instead.
+
+### v23's tuner is deterministic, but only within a process state
+
+The "byte-identical" control claim was first written as a test asserting v40 and v38
+settle on the same TILE on config 2. It passes in a fresh process and fails when the two
+builds are separated by fifty other GPU tests in the same process.
+
+Measured directly: five independent builds of v38 in a clean process return `(64, 4, 1)`
+five times on config 2, `(64, 4, 1)` five times on config 3 and `(32, 2, 1)` five times on
+config 12. **`autotune_tile` is deterministic — and it is deterministic against a
+comparable process state, not absolutely**, because it ranks tiles with `do_bench` at
+shapes whose arms differ by less than the timer resolves, under a 10% `DECISIVE` margin
+that a warm allocator or a loaded L2 can move an arm across.
+
+So tile equality is real and is verified where it can be — `probe_which_form.py` builds
+both arms adjacently in a fresh process and reports identical tiles on all ten non-looped
+configs — but it is not assertable inside a long test session. The test asserts the
+structural guarantee instead: that the decision came from the parent's own routine.
+
+### The input-scale failure was inherited, and checking that took one probe
+
+`input_scale=0.1` on config 10 fails the locked tolerance: 298 of 1048576 elements,
+max_abs 3.851e-03. Asserting an absolute pass there was testing the harness, not the
+candidate. `probe_input_scale.py` compares the two arms over 3 seeds x 5 scales:
+
+```
+seed  scale     v38 max_abs  failed   v40 max_abs  failed   verdict
+1234    0.1       3.923e-03     323     3.923e-03     323   BOTH FAIL -- inherited
+4321    0.1       3.770e-03     291     3.770e-03     307   BOTH FAIL -- inherited
+   7    0.1       4.062e-03     327     4.062e-03     292   BOTH FAIL -- inherited
+   (all 12 rows at scale >= 0.5: both pass)
+rows where v40 fails and v38 does not: 0 of 15
+```
+
+**`max_abs` is identical to four significant figures in every row**, which says the
+dominant error at that scale is not in attention at all. The tolerance was not touched;
+the test was rewritten to assert a difference against the parent, which is the claim that
+was actually available. This is CLAUDE.md's standing hazard behaving exactly as documented.
+
+## THE MEASUREMENT
+
+### Where the candidate differs at all
+
+`bench/probes/g40_attn_loop/probe_which_form.py` builds both arms on all thirteen runnable
+configs and reports the plan each settles on. **v40 differs from v38 on exactly three
+configs — 4, 10 and 12 — and is byte-identical on the other ten**, including config 6, which
+is 83% of the matrix's wall time and cannot pay for a regression. That is by construction,
+not by luck: `autotune_looped` can only ever return the looped form, and every other
+outcome falls through to v23's `_decide_attn` run unchanged.
+
+```
+cfg    B   H   hd    S   v38 plan              v40 plan                  same?
+  4   16   4   32  128   single_tile(64,4,1)   looped(32,16,2,3)          no     1.153x op-level
+ 10   64   2   64  128   single_tile(32,4,1)   looped(64,32,4,4)          no     1.226x op-level
+ 12   64   4   32   32   single_tile(32,2,1)   looped(32,16,2,4)          no     1.313x op-level
+  1,2,3,5,6,7,11  single_tile, identical tile                            YES
+  8,9,13          sdpa, both                                             YES
+```
+
+Config 10's prime-time chooser independently selects `(64, 32, 4, 4)` at a measured 1.226x
+— the same tile and the same ratio the offline symmetric sweep found (1.228x). Every
+selected tile has `n_spills = 0`, read off the `CompiledKernel` (ncu is unavailable under
+WSL2).
+
+### The A/B, replicated, with byte-identical controls in the run
+
+`bench/abba.py --rounds 5 --warmup 200`, both arms resident, cold round discarded, two
+independent runs. Configs 1, 3 and 9 carry byte-identical code in both arms and are the
+in-run control:
+
+```
+cfg              v38 median   v40 median     run 1     run 2      what it is
+ 10                 231.42       223.23    1.0367x   1.0365x    THE TARGET
+  4                  87.04        87.04    1.0000x   0.9933x    engages, no effect
+ 12                  75.78        76.80    0.9867x   1.0000x    engages, no effect
+  1                 224.26       225.28    0.9955x   1.0000x    CONTROL (identical code)
+  3                  52.22        53.25    0.9808x   0.9808x    CONTROL (identical code)
+  9                 224.26       225.28    0.9955x   1.0000x    CONTROL (identical code)
+```
+
+**Config 10 replicates to 0.02%** (1.0367x, 1.0365x). The controls bound the floor
+directly: every control difference is zero or exactly **one 1.024 µs event-timer quantum**
+— visible in the raw medians, which are all multiples of it (52.22, 223.23, 224.26,
+225.28). Config 10's delta is **8.19 µs = eight quanta**, in both runs. It is outside the
+floor by a factor of eight, and the floor was measured in the same run rather than quoted
+from another one.
+
+Configs 4 and 12 engage the mechanism and deliver nothing end to end, in either direction.
+Config 4 also illustrates why the controls matter: its *baseline* arm read 87.04 µs in run
+1 and 151.55 µs in run 2 — a 1.74x move on byte-identical reference code between runs, with
+both arms moving together. Nothing about config 4 is resolvable by this instrument.
+
+### The device census, and the contradiction it produced first
+
+Running `probe_census.py` separately on each arm appeared to refute the whole result:
+
+```
+arm                     wall      device    attention (x4)
+v38_stream_fallback   251.90 us  222.50 us   44.14   _attn_single_tile
+v40_looped_attn       237.57     223.64      45.98   _attn_looped
+```
+
+v40 faster at the wall, *slower* on the device, with its attention kernel apparently 1.8
+µs/fwd **worse** — while the ABBA said 1.0366x twice. Those are two different processes,
+which is precisely the comparison finding 42 showed is unsafe.
+
+`probe_census_pair.py` builds both arms in one process, settles both, and profiles them in
+ABBA order. The contradiction disappears entirely and the mechanism is confirmed:
+
+```
+bucket                v38 us/fwd  v40 us/fwd     delta
+attention                  40.84       33.26     -7.58     <- the whole difference
+copy                        7.17        7.00     -0.17
+layernorm                  42.96       43.00     +0.04
+projection GEMM           115.38      115.32     -0.05
+
+per call:  _attn_single_tile 10.211 us  ->  _attn_looped 8.315 us   = 1.228x
+device total ratio 1.0391      wall ratio 1.0410
+```
+
+**Per call, in the model, the ratio is 1.228x — the op-level hot figure to three decimal
+places** — and every other bucket is flat to ±0.2 µs. The saving is attributable to the
+attention kernel and to nothing else. The cross-process census was an artefact, and it is
+worth recording that it was a *sign-flipping* one on a candidate whose end-to-end result
+had already replicated twice.
+
+### THE VERDICT, IN UNITS OF `weighted_score`
+
+| | |
+|---|---|
+| config 10, v38/v40 | **1.0366x** (1.0367 / 1.0365, replicated) |
+| config 10 speedup | 2.33 → 2.4153 |
+| configs 4, 12 | mechanism engages, effect not resolvable — scored as **0** |
+| configs 1,2,3,5,6,7,8,9,11,13 | byte-identical to the parent — **0** |
+| **Δ `weighted_score`** | **+0.0061** |
+
+Against a ceiling of +0.0056 pre-registered from the census before the kernel was wired
+in, and against finding 48's +0.0069-total estimate of which **+0.0021 was for config 9 and
+is withdrawn here as a measurement error**. The candidate delivers on the one row the
+census pointed at, and the two rows the census did not price contribute nothing.
+
+The +0.0061 slightly exceeds the +0.0056 ceiling because the ceiling divided by the census
+process's wall (251.90 µs) while the ABBA measures 231.42 µs. **The absolute saving agrees
+almost exactly** — 8.20 µs predicted, 8.19 µs measured end to end, 7.58 µs of it visible in
+the paired device census — which is the agreement that matters, the percentage having two
+different denominators.
+
+### What it costs
+
+The prime-time sweep is 5–48 legal looped tiles plus the single-tile grid plus sdpa, each
+compiled, correctness-checked and timed. First-forward time rises to **14–67 s per config**
+(config 1: 60.9 s, config 10: 41.9 s). That is construction, settled before any timing in
+both the ABBA and the graded harness — but it is real, it is not free, and finding 45 is
+the standing warning that `run_matrix`'s isolated arm will misreport a candidate that does
+this much work at build time. **Rank this candidate on the interleaved arm only.**
+
+
 
 ## TWO RESULTS NOBODY ASKED FOR
 
@@ -150,6 +337,28 @@ fastest instead of whichever of two.
   reproduces the inline expression on both branches for all four candidates, rather than
   assuming it.
 
+## DISPOSITION, AND TWO PROPOSALS THIS DELIBERATELY DID NOT TAKE
+
+* **`v40_looped_attn` is a candidate**, +0.0061 of `weighted_score` on config 10,
+  replicated, with an in-run control and a device census that attributes the saving to the
+  kernel it claims. Rank it on the interleaved arm (finding 45).
+* **Finding 48's config-9 row (+0.0021) is withdrawn** as a measurement error. Its arm
+  was excluded here by the one-wave predicate, and re-measured it is 0.826x.
+* **PROPOSAL: sdpa+repack beats our own single-tile kernel on config 10 hot** (9.987 µs
+  against 11.189). Not acted on here, because switching a config to the vendor is a
+  different change and bundling it would have made this A/B unattributable. It is also now
+  moot on config 10 specifically — the looped form beats both — but the same question
+  applies wherever `attn_single_tile` is at `MIN_RESIDENT_BLOCKS`, and finding 31
+  pre-registered it.
+* **PROPOSAL: re-tune the single-tile form with the hot timer.** Doing so returns
+  `(16, 2, 1)` on config 2 where v38 runs `(64, 4, 1)`, a 1.124x op-level difference.
+  Config 2 is a scoring row. This was deliberately backed out of v40 to protect the
+  control arm; it should be measured on its own.
+* **Configs 4 and 12 are open, not closed.** The looped form is selected there on op-level
+  margins of 1.153x and 1.313x and produces nothing measurable end to end. That is either
+  dilution or an instrument limit — config 4's own baseline moved 1.74x between two runs —
+  and it would need a census apiece to say which.
+
 ## PROPOSED LESSONS
 
 Not appended to `docs/findings/00-learnings.md` — `ben` is ahead and it would collide.
@@ -181,3 +390,21 @@ and useless for deciding whether a lever exists. **Where the two disagree, the s
 reporting a measurement of something — usually noise, here a 2.1x-unstable baseline — and
 the mechanism is the only thing in the room that can say which.** The cost of getting this
 backwards was a published +0.0021 that measures −17% when re-run.
+
+### L59 — A device census across two processes can flip the sign of the thing it is auditing
+
+Profiling v38 in one process and v40 in another said the candidate's attention kernel got
+1.8 µs/fwd **slower** while its wall got 14.3 µs faster — against an end-to-end A/B that
+had already replicated at 1.0366x twice. Profiled in ONE process, ABBA-interleaved, the
+same two kernels read 10.211 µs/call and 8.315 µs/call and every other bucket is flat to
+±0.2 µs.
+
+Finding 42 established that a cross-run *wall* comparison is unsafe on sub-millisecond
+configs. This is the same defect one level down, and it is easier to miss, because a
+per-kernel device time *looks* like a physical property of the kernel rather than a
+measurement of a run. **It is a measurement of a run.** Cross-process, its gap term absorbs
+everything the host was doing, and the device totals it is composed from drift with it.
+
+The rule is the one the A/B already follows and the census had not been made to: **both
+arms, one process, interleaved, cold round discarded — for the profile as much as for the
+timing.** A census that cannot be differenced is a description, not evidence.
