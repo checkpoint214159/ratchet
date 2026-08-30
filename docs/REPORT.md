@@ -1158,12 +1158,20 @@ string, and the declared tree is no longer the tree.
 **9. The declared frontier and the measured frontier disagree on config 6.** §4.5. This is the most
 serious open item and it is unresolved at the time of writing.
 
-**10. The strict correctness gate is nearly saturated by bf16 itself.**
-`tests/golden/test_reference_floor.py` records that the both-bounds floor sits at max_abs 1.95e-03
-against the locked 2e-03, and that near-zero output elements make the relative bound a seed lottery
-on ≥256k-element shapes. Expect honest kernels to trip it. **The tolerances are locked and have
-never been widened**, and any reinterpretation requires explicit human sign-off — but a reviewer
-should know the margin is thin on that surface specifically.
+**10. The oracle zone's strict correctness surface is nearly saturated by bf16 itself.**
+This is a *different* surface from the competition path measured in §4.4 — `ratchet/oracle`'s
+golden suite runs bf16 and GQA shapes under a both-bounds gate, where the benchmark's own gate is
+OR-combined fp32. `tests/golden/test_reference_floor.py` documents two properties of it in its own
+module docstring, on purpose, because candidate authors will hit them: near-zero output elements
+make the relative bound a **seed lottery** whose expected ticket count grows with tensor size (the
+two shapes above 256k elements lose it for every seed tried, on 1–12 elements whose absolute
+error is still at the fp64 floor), and above |x| ≈ 1.02 a bf16 half-ulp already exceeds the
+2e-3 absolute bound, so the bf16 claim has to be stated against the fp64 reference *viewed in the
+competition dtype*. `CLAUDE.md` records the resulting floor as max_abs 1.95e-03 against the locked
+2e-03; the test itself asserts `<= ABS_TOL` rather than pinning that value, so treat 1.95e-03 as a
+recorded observation rather than an enforced constant. **The tolerances are locked and have never
+been widened**, and any reinterpretation requires explicit human sign-off — but a reviewer should
+know the margin is thin on that surface specifically.
 
 **11. Two environment gaps unrelated to the kernels** (finding 07). A `tests` package in system
 `dist-packages` shadows this repo's `tests/` under pytest's default import mode (fixed in
