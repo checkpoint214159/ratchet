@@ -68,3 +68,44 @@ Six candidates were separated by less than the 7.1% single-arm floor this sessio
 search spent real GPU time trying to rank them. The tie-break that actually held up was
 never a number: it was which candidate carried more proven correctness fixes. **A
 statistical tie is an instruction to stop measuring and start comparing guarantees.**
+
+---
+
+## Addendum — the gap was noise, and v38 wins outright
+
+Finding 49 above concluded v36 and v38 were tied inside the floor and broke the tie on
+correctness. **Replicated measurement shows there was no gap at all**, and v38 is faster.
+
+`bench/abba.py`, 6 rounds, 200 warmup iterations, all arms resident, cold round discarded,
+configs 2 and 8 as in-run controls:
+
+    config     v36 median    v38 median      verdict
+      3          52.22 us      52.22 us      IDENTICAL
+      2          47.10 us      47.10 us      IDENTICAL   (control)
+      8        6593.54 us    6593.54 us      IDENTICAL   (control)
+     12          95.23 us      74.75 us      v38 1.274x FASTER
+
+Every per-config difference this decision was agonised over came from **one ledger row per
+candidate**. Config 3 in particular: v36 read 0.0666 ms and v38 0.0973 ms — a 46% gap, on
+**identical launch counts of 20**. Under replication both read 52.22 us to the hundredth of
+a microsecond.
+
+The 200-iteration warmup is what made this resolvable. The graded harness warms 20 against
+a settling time of ~130 calls after CUDA-graph capture (finding 42's addendum); at 512
+tokens that leaves the measurement dominated by whatever the host was doing.
+
+**v38 is the submission, and now for the simple reason as well as the good one.** It is
+faster where the two differ, identical everywhere else, and it carries four correctness
+fixes v36 lacks.
+
+## L56 — A per-config difference from one row per arm is not a difference
+
+Two candidates were separated by 0.037 of weighted_score, decomposed per config, argued
+about, and resolved on correctness grounds — and the entire gap was single-sample noise
+on two sub-millisecond rows. The decomposition was rigorous and the input was one
+measurement each.
+
+**Replicate before you decompose.** Cheap configs are cheap to replicate: this run cost
+under two minutes and overturned a conclusion built on a careful analysis of noise. The
+byte-identical control arms (2 and 8, reading identical to the hundredth of a microsecond)
+are what make the config-12 result believable, and they cost nothing to include.
