@@ -185,13 +185,29 @@ locked without root, so short timing loops under-clock the fp32 baseline and inf
 ratio. **The authoritative evaluator is the scored, trusted methodology; the do_bench
 harness is unreliable for fast candidates and is kept only as a cross-check.**
 
+### E8 — stacking `torch.compile` (evaluator `--compile-user`)
+
+Compiling the optimized module adds a second, orthogonal lever — fusing LayerNorm / GELU /
+bias / residual and cutting launches:
+
+| Config | TF32 only | TF32 + compile | compile only (fp32 SDPA) |
+| --- | --- | --- | --- |
+| seq128 | 1.16x | **1.27x** | 1.26x |
+| seq512 | **1.66x** | 1.62x | — |
+
+Two regimes: at **seq128** the small GEMMs are launch/pointwise-bound, so `compile`'s
+fusion is the dominant win (1.26x) and TF32 adds little; at **seq512** the layer is
+GEMM-compute-bound, so TF32 is the win (1.66x) and compile adds nothing on top. All PASS.
+
 **Conclusion (positive result).** A correct candidate beats the baseline on GB10 at the
-authoritative fp32 config — **1.16x–1.66x, growing with workload size**. The lever was not
-a cleverer attention kernel but **using the tensor cores the baseline forgoes**, at TF32
-precision that survives the gate. Dispatch (E6) now selects `cublastf32`. The hand-written
-kernels (E2–E5) remain correct and are the reusable building blocks; the deployable winner
-combines SDPA attention with TF32 GEMMs. Open follow-ups: a hand-tuned TF32/tf32x3 Triton
-GEMM that matches cuBLAS (for a fully hand-written win), and the bf16 target question.
+authoritative fp32 config — **1.16x–1.66x, growing with workload size** (best per config:
+~1.27x at seq128 with compile, ~1.66x at seq512 with TF32). The lever was not a cleverer
+attention kernel but **using the tensor cores the baseline forgoes** (TF32, within the
+gate) plus **fusion** (compile) where launches dominate. Dispatch (E6) selects
+`cublastf32`. The hand-written kernels (E2–E5) remain correct, reusable building blocks;
+the deployable winner combines SDPA attention with TF32 GEMMs (± compile). Open follow-ups:
+a hand-tuned TF32 Triton GEMM matching cuBLAS (for a fully hand-written win), and the bf16
+target question.
 
 ## Accepted candidate events
 
