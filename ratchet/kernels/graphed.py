@@ -77,6 +77,11 @@ def graphed_forward(self, x: torch.Tensor,
     if not hasattr(self, "_cache"):
         _prime(self)
 
+    # Dispatch may turn the graph off for compute-bound / memory-heavy shapes, where the
+    # capture is neutral or its static buffers are too large. The kernels are the same.
+    if not getattr(self, "_use_graph", True):
+        return _core(self, x, None)
+
     # Warm up on a side stream: this runs Triton autotune (which benchmarks, and so must
     # NOT happen during graph capture) and lets cuBLAS/allocator settle.
     if self._graph is None:
