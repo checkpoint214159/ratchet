@@ -86,11 +86,27 @@ that never runs.
 
 NO NEW MECHANISM, AND THEREFORE NO NEW SPEED ARGUMENT ([L33])
 --------------------------------------------------------------
-Every kernel here is v35's or v36's. The honest prediction is that the two win sets are
-disjoint and simply add: v36's +0.082 lands on 1, 4, 5, 9, 10, 12 and v35's config-3
-advantage over v34 lands on 3, which v36 does not touch (v36 takes only `qkv` there, and
-config 3 is 512 tokens where the sweep reads a tie). Anything larger than the sum should
-be disbelieved before it is celebrated.
+Every kernel here is v35's or v36's, so the honest prediction was that this candidate
+measures as a NULL against v36 and inherits its +0.082 — because in the steady state at a
+single input shape the two execute the same code: the streaming dispatch runs once,
+returns "resident", and delegates. That is what it measured. ABBA-interleaved, all four
+arms resident, cold round discarded, min of four (`bench/abba.py`, finding 44):
+
+    cfg          2       3        4      12       1       9      10        8
+    v34      47.10   62.46    92.16   83.97  236.54  236.54  243.71   6626.8
+    v37      47.10  see 44    81.92   74.75  224.26  225.28  232.45   6622.7
+
+v37 and v36 agree to within 0.5% on every config but 3, which is what a correct merge of
+two disjoint mechanisms should look like; config 8 runs byte-identical code on both and
+puts the protocol's floor at +/-0.2%.
+
+**Config 3 is not rankable by its wall and finding 44 explains why**: the device does
+43-48 us of work per forward and the host needs 25-50 us to submit it, so the wall
+measures whichever lost the race — it read 53, 56, 57, 66, 80, 85, 92, 105 and 162 us
+across nine measurements of arms whose device time never moved 4%. By the two quantities
+that DO reproduce, v37 is the best of the four there: **43.12 us of device time over four
+runs (+/-0.3%) against v35's 47.48 and v34's 47.57, at the same node count**, and a
+minimum wall of 52.3-52.5 us against 55.3-55.5.
 """
 
 from __future__ import annotations

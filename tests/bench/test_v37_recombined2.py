@@ -622,15 +622,37 @@ def test_the_fp32_residual_is_preserved():
     assert "tl.float32" in src.split("attention residual add", 1)[1][:600]
 
 
-@cuda
-def test_the_gelu_is_the_exact_erf_form_everywhere_it_is_computed():
-    """`approximate="none"`. The tanh approximation differs by up to ~1e-3, half the
-    entire 2e-3 budget spent on an approximation nobody asked for."""
+def _executable_source(path: Path) -> str:
+    """The module's source with every comment and string literal removed.
+
+    Stripping only `#` lines is not enough, and the difference is not academic: the first
+    version of this check failed on `proj_gemm.py`'s own module docstring, which argues
+    AGAINST tanh by name. Prose that cites the thing it is refusing is the point of a
+    docstring; what matters is what the CODE computes. (Borrowed from
+    `test_v36_gemm_gelu.py`, which learned the same lesson about config ids.)
+    """
+    import tokenize
+    out = []
+    with open(path, "rb") as fh:
+        for tok in tokenize.tokenize(fh.readline):
+            if tok.type in (tokenize.COMMENT, tokenize.STRING, tokenize.NL):
+                continue
+            out.append(tok.string)
+    return " ".join(out)
+
+
+def test_the_gelu_is_the_exact_erf_form_in_every_kernel_that_computes_it():
+    """`approximate="none"`. The tanh approximation differs by up to ~1e-3 -- half the
+    entire 2e-3 budget spent on an approximation nobody asked for -- and both of the
+    merged lines compute a GELU: v36's in the `ffn_in` epilogue, v34's inside the
+    megakernel. One is not enough."""
     for name in ("proj_gemm.py", "ffn_fused.py"):
-        code = (REPO / "bench" / "kernels" / name).read_text()
+        code = _executable_source(REPO / "bench" / "kernels" / name)
         assert "erf" in code, name
-        body = "\n".join(l for l in code.split("\n") if not l.lstrip().startswith("#"))
-        assert "tanh" not in body, name
+        assert "tanh" not in code, name
+    # [L38]: the stripper must be doing real work, or this check passes vacuously.
+    assert "tanh" in (REPO / "bench" / "kernels" / "proj_gemm.py").read_text(), (
+        "the docstring should still argue against the approximation it refuses")
 
 
 @cuda
