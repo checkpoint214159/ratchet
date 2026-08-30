@@ -55,3 +55,15 @@ If the shape list is graded as announced, "the reference cannot run this and we 
 consequence of the finding-04 fix. Flash attention streams the KV axis and never
 materializes the score matrix, so the 18.63 TB never exists. The same change that was
 worth 2.10x-9.59x on the isolated attention call is what makes this row reachable at all.
+
+---
+
+**SUPERSEDED 2026-08-30 by [finding 33](33-config-14-protocol.md).** What stands: the
+reference cannot run this shape, and we can. What is now stronger: the B=32 figure here
+was 32x a single measured sequence, and all 32 sequences have since actually been run
+(3,200,000 tokens, 3.54 GiB peak); correctness was checked at proxy shapes here, and is
+now checked at the real S=100000 against the unmodified reference on a causal prefix and
+against a blocked fp64 evaluation of the reference's own arithmetic. What is corrected:
+"it OOMs inside the benchmark's own input generator" was true when this was written and
+is no longer the failure — the generator now succeeds via WSL2 host-memory
+oversubscription and the shape dies one step later, on the output tensor.

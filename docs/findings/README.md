@@ -52,6 +52,8 @@ the note. Where something is inferred rather than measured, it says so.
 
 Numbers are identifiers, not an ordering guarantee. Findings 30 and 33 were each claimed concurrently by several agent branches; on merge the earliest-cited claimant kept the number and the rest were reassigned 35-39, so a few numbers run slightly out of chronological order.
 
+| [33](33-config-14-protocol.md) | **Config 14: the reference is infeasible on any hardware (18.63 TiB); we compute it, verified at the real S; and there is still no speedup.** Supersedes [09]. | 2026-08-30 |
+
 Related, and deliberately elsewhere:
 
 - `bench/matrix.py` — the matrix as executable data; findings cite it, never restate it.

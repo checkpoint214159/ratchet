@@ -185,11 +185,18 @@ class BenchLedger:
                memory: Optional[dict] = None, env: Optional[dict] = None,
                config: Optional[dict] = None, notes: str = "",
                ts: Optional[str] = None,
-               provenance_override: Optional[dict] = None) -> dict:
+               provenance_override: Optional[dict] = None,
+               extra: Optional[dict] = None) -> dict:
         """Build a row with git provenance filled in, then append it.
 
         `ts` is a parameter rather than a call to now() so that a caller replaying a
         batch of measurements can stamp them with the time they were TAKEN.
+
+        `extra` carries fields this schema did not anticipate -- the config-14 protocol
+        needs to say WHY the reference could not run, and a truncated traceback stuffed
+        into `notes` is how that information was lost 27 times. It may not overwrite an
+        existing field: the ledger is append-only in spirit as well as in file mode, and
+        a caller silently redefining `timing` would defeat every reader.
         """
         if ts is None:
             from datetime import datetime, timezone
@@ -207,6 +214,10 @@ class BenchLedger:
             "notes": notes,
             **(provenance_override or provenance(self.repo)),
         }
+        for k, v in (extra or {}).items():
+            if k in row:
+                raise ValueError(f"extra field {k!r} would overwrite a ledger field")
+            row[k] = v
         return self.append(row)
 
     # -- reading ------------------------------------------------------------------
