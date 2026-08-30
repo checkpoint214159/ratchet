@@ -40,9 +40,13 @@ def main() -> int:
     ap.add_argument("--trials", type=int, default=2,
                     help="isolated mode: independent processes per (config, arm)")
     ap.add_argument("--out-prefix", default=None)
+    ap.add_argument("--purpose", default="g41",
+                    help="what appears in the GPU lock file. This driver is generic -- "
+                         "it is reused by later generations rather than copied, so the "
+                         "lock names the run that is actually holding it.")
     a = ap.parse_args()
 
-    with gpu_lock(f"g41 A/B {a.mode}", timeout_s=21600):
+    with gpu_lock(f"{a.purpose} A/B {a.mode}", timeout_s=21600):
         if a.mode == "abba":
             cmd = [sys.executable, str(ABBA), "--ids", *map(str, a.ids),
                    "--arms", *a.arms, "--rounds", str(a.rounds),

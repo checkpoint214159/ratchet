@@ -238,7 +238,44 @@ def _v41(baseline_cls):
     return build(baseline_cls)
 
 
+def _v42(baseline_cls):
+    from .v42_hot_tuned_tile import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
+    "v42_hot_tuned_tile": CandidateSpec(
+        name="v42_hot_tuned_tile", generation=42, parent="v41_vendor_aware_attn",
+        build=_v42,
+        summary="THE TILE SWEEP GETS AN INSTRUMENT THAT CAN RESOLVE IT. From generation "
+                "23 to 41 `autotune_tile` ranked with the L2-flushed `do_bench`, which "
+                "times each call with a pair of CUDA events whose quantum is 1.024 us -- "
+                "against kernels that run in 1.9-11 us. On config 2 five of the eight "
+                "tiles reported the IDENTICAL 5.120 us and the whole grid spanned one "
+                "quantum, so the sweep was not noisy but blank; the tie fell through to "
+                "the derived-tile tiebreak, which kept a tile the hot timer ranks 1.28x "
+                "behind. The same quantization flipped config 3's pick between two runs "
+                "of the identical sweep, in the other direction. The diff is one value: "
+                "`attn_tile_timer = hot_time`, the timer `attn_choice` has ranked with "
+                "since g40, so the two tuners now share one instrument by construction. "
+                "No tile is hardcoded and no config id appears -- the sweep selects "
+                "(16,4,1) on config 2 by itself. Blast radius measured before it was "
+                "claimed: 9 of the 10 accepted shapes select the identical tile under "
+                "both timers, twice. Also closes the one tuner in the package that "
+                "admitted arms to a timing set without a correctness gate. "
+                "MEASURED (finding 53): config 2 is worth +0.006 to +0.013 of "
+                "weighted_score -- seven independent ABBA runs, floors 48.13 -> 45.06 us "
+                "(1.068x), the tile stable at (16,4,1) in 7 of 7, and the pre-registered "
+                "ceiling of +0.0083 landing between the two defensible estimators. "
+                "Configs 1, 7, 9, 10, 11 are inert with identical tiles on both arms. "
+                "THE COST, stated: config 3's plan destabilises -- v41 picks one tile in "
+                "6 of 6 runs, v42 picks three different tiles in 6 -- because its true "
+                "margin is ~2% and prime-time noise now clears the 10% bar spuriously, "
+                "where the flushed timer's tie table never cleared it at all. Config 3 "
+                "is capped so this costs no score, and the fix is pre-registered: make "
+                "the sweep replicate before it displaces.",
+    ),
+
     "v41_vendor_aware_attn": CandidateSpec(
         name="v41_vendor_aware_attn", generation=41, parent="v40_looped_attn",
         build=_v41,

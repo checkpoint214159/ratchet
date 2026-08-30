@@ -21,6 +21,15 @@ arm is checked for correctness before it is timed, every arm is timed by the sam
 with the same repeat count, and the winner must clear `DECISIVE` against the incumbent's
 DERIVED tile before it displaces anything.
 
+    AMENDED AT GENERATION 42. "The same timer" was true WITHIN this file and false across
+    the package: `attn_single_tile.autotune_tile`, the routine this one falls back to,
+    had ranked with the L2-flushed `do_bench` since generation 23. So the symmetry held
+    between the arms of one sweep and broke between the two sweeps -- and the flushed
+    timer's 1.024 us quantum cannot resolve a 1.9 us kernel at all, which cost config 2 a
+    1.28x tile on a table of ties (finding 53). The timer is now one function,
+    `attn_single_tile.hot_time`, called by both routines; `_time` below is an alias for
+    it. Correctness-before-timing likewise now holds in both, not only here.
+
 `DECISIVE` IS INHERITED, NOT RELAXED
 ------------------------------------
 `attn_single_tile.DECISIVE = 0.10` exists because these kernels run in 1-13 us against a
@@ -76,12 +85,9 @@ it (no config id appears; a card with more memory sweeps more shapes).
 from __future__ import annotations
 
 import torch
-import torch.nn.functional as F
 
 from . import attn_looped, attn_single_tile
-from .attn_single_tile import DECISIVE
-
-RTOL, ATOL = 0.02, 0.002          # the locked tolerance. Never widened.
+from .attn_single_tile import ATOL, DECISIVE, RTOL   # one definition, in the kernel module
 
 # The tuning probe may allocate at most this fraction of the device's measured total
 # memory. It runs with the model resident, so it must not be able to disturb -- let alone
@@ -92,15 +98,12 @@ PROBE_MEMORY_FRACTION = 1.0 / 64.0
 
 
 def _reference(qkv: torch.Tensor, heads: int, head_dim: int) -> torch.Tensor:
-    """What both forms must reproduce: SDPA plus the head-major repack."""
-    b, s, _ = qkv.shape
-    dm = heads * head_dim
-    q, k, v = qkv.split(dm, dim=2)
-    q = q.view(b, s, heads, head_dim).transpose(1, 2)
-    k = k.view(b, s, heads, head_dim).transpose(1, 2)
-    v = v.view(b, s, heads, head_dim).transpose(1, 2)
-    o = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-    return o.transpose(1, 2).reshape(b, s, dm)
+    """What both forms must reproduce: SDPA plus the head-major repack.
+
+    ONE definition, in `attn_single_tile`, next to the kernel whose contract it states.
+    Kept as a module-level name here because probes and tests import it from this module.
+    """
+    return attn_single_tile.sdpa_reference(qkv, heads, head_dim)
 
 
 def probe_batch(batch: int, heads: int, multi_processor_count: int) -> int:
@@ -122,14 +125,15 @@ def probe_batch(batch: int, heads: int, multi_processor_count: int) -> int:
 def _time(fn, reps: int) -> float:
     """Time an arm IN THE REGIME THE CALL SITE RUNS IN, which is L2-hot inside a graph.
 
-    [L53]: "use a timer whose regime matches the call site's -- or write in the code why
-    not." This kernel is replayed inside a captured CUDA graph, on operands that a 48 MB
-    L2 has already seen, at a shape whose whole QKV buffer is 6.29 MB. `do_bench` models
-    none of that: it flushes L2 between reps and pays a launch per call.
+    ONE TIMER FOR EVERY TUNER IN THIS PACKAGE. The body moved to
+    `attn_single_tile.hot_time` at generation 42, when v23's `autotune_tile` -- which had
+    been ranking with the L2-flushed `do_bench` since generation 23 -- was switched onto
+    it. Sharing the function rather than the reasoning is the point: the two routines now
+    rank on the same instrument by construction, which is the symmetry argument this
+    module's docstring already makes about the ARMS, applied to the ROUTINES.
 
-    The cost of getting this wrong is not hypothetical and it is why this function is not
-    the obvious one-liner. `bench/probes/g40_attn_loop/probe_regime.py` measured both
-    regimes on three shapes:
+    The evidence for the choice is in `hot_time`'s docstring (the g42 quantization grids)
+    and here (the g40 regime table):
 
         cfg 10   flushed 1.222x   hot 1.228x     same decision
         cfg  9   flushed 0.955x   hot 0.826x     same decision
@@ -141,17 +145,11 @@ def _time(fn, reps: int) -> float:
     numbers were also the less stable of the two: 1.176x and 1.375x across two runs of
     the identical sweep, against 1.098x/1.131x hot.
 
-    `do_bench_cudagraph` captures its own graph, so it is used only where capture works;
-    a device or context that refuses falls back to `do_bench` and the caller is none the
-    wiser, which is worse than the alternative of failing closed on a tuner (v23's rule).
+    Kept as a module-level name -- rather than importing `hot_time` directly at the call
+    sites -- because `tests/bench/test_v41_vendor_aware_attn.py` monkeypatches it to
+    drive `autotune_vendor` past a decision without a GPU sweep.
     """
-    import triton.testing as tt
-    try:
-        return min(tt.do_bench_cudagraph(fn, rep=25, return_mode="min")
-                   for _ in range(reps))
-    except Exception:
-        return min(tt.do_bench(fn, warmup=10, rep=25, return_mode="min")
-                   for _ in range(reps))
+    return attn_single_tile.hot_time(fn, reps)
 
 
 def autotune_looped(seq_len: int, head_dim: int, heads: int, batch: int, device="cuda",

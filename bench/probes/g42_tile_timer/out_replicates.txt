@@ -1,0 +1,7 @@
+########## replicate 1 ##########
+########## replicate 2 ##########
+########## replicate 3 ##########
+########## replicate 4 ##########
+########## replicate 5 ##########
+########## replicate 6 ##########
+ALL REPLICATES DONE

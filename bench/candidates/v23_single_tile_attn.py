@@ -90,6 +90,19 @@ def build(baseline_cls):
         attn_reason: str = "undecided"
         attn_tile: tuple[int, int, int] | None = None
 
+        # WHICH INSTRUMENT THE TILE SWEEP RANKS ON. `None` is `attn_single_tile`'s own
+        # default, `flushed_time` -- what this class has shipped since generation 23.
+        #
+        # AN EXTENSION POINT, NOT A CONVENIENCE, and here for the same reason
+        # `_attention` below is: generation 42's claim is that this sweep's timer picks
+        # the wrong tile, and the only protocol that can measure that claim is two arms
+        # resident in ONE process (finding 50 measured two candidates reading 46% apart
+        # on config 3 when the arms were separated by a process boundary). A descendant
+        # that flips this attribute therefore differs from its parent by exactly one
+        # value, in one place, with the parent's path untouched -- which is what makes
+        # the A/B attributable and supplies its byte-identical control configs.
+        attn_tile_timer = None
+
         def _decide_attn(self, x):
             """Decided ONCE, before compilation and graph capture, so the tile is a
             Python constant by the time anything traces it."""
@@ -102,7 +115,8 @@ def build(baseline_cls):
                 self.attn_reason = why
                 return
             try:
-                tile, how = autotune_tile(s, a.head_dim, a.num_heads, b, x.device)
+                tile, how = autotune_tile(s, a.head_dim, a.num_heads, b, x.device,
+                                          timer=self.attn_tile_timer)
             except Exception as exc:                   # never fail closed on a tuner
                 self.attn_used = False
                 self.attn_reason = f"declined: tile selection failed ({exc})"
