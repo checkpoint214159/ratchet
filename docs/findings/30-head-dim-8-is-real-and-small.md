@@ -132,6 +132,19 @@ benefits from the warm L2 — and attention is ~45% of config 7's device time, s
 | 13-config geomean | | **~ +3%** — inside the ±7% noise floor ([L29]) |
 | `matrix.weighted_score` (cap 3.0) | | **~ +1%** — config 11 already sits at 6.24x, above the cap, so its entire gain scores **zero** |
 
+**Stage-1 screen, after the fix** (configs 2, 7, 8, 10; one pass; advisory, never a ledger
+row). This is a harness measurement rather than a probe, and it agrees with the profile:
+
+| cfg | v18 | v22 | | |
+|---|---|---|---|---|
+| 2 | 0.0707 ms | 0.0707 ms | +0.1% | head_dim 32 — declines, untouched |
+| **7** | **0.1147 ms** | **0.0952 ms** | **-17.0% (1.204x)** | the only config the kernel fires on |
+| 8 | 6.5495 ms | 6.5475 ms | -0.0% | head_dim 256 — declines, untouched |
+| 10 | 0.2417 ms | 0.2570 ms | +6.4% | head_dim 64 — declines; inside the noise floor |
+
+Screen geomean **2.364x vs the parent's 2.292x, +3.2%** — verdict PROMOTE. Two screens were
+spent, and the first one earned its cost: it is what caught the graph break above.
+
 Configs 7 and 11 are also two of the *cheapest* rows in the matrix (~4–6 s of a 112 s
 sweep). **A perfect result here is not resolvable by one sweep**, and under the project's
 own objective it is nearly invisible. This is a report artefact of the same kind as v17

@@ -40,8 +40,20 @@ DIAGNOSTIC profile, not a sweep row):
                                 ^^^^^ 1.65x on attention          ^^^^^ 1.24x on the config
 
 Attention is 45% of config 7's device time, so 1.65x on it is 1.24x on the config -- and
-that is the whole of it. Configs 7 and 11 are two of the CHEAPEST rows in the matrix
-(~4-6 s of a 112 s sweep), so ([L33]) the diluted value is:
+that is the whole of it.
+
+CONFIRMED BY THE STAGE-1 SCREEN, which is a harness measurement rather than a probe
+(configs 2, 7, 8, 10; one pass; advisory, not a ledger row):
+
+    cfg  2   0.0707 -> 0.0707 ms    +0.1%    head_dim 32, declines, untouched
+    cfg  7   0.1147 -> 0.0952 ms   -17.0%    1.204x -- the only config the kernel fires on
+    cfg  8   6.5495 -> 6.5475 ms    -0.0%    head_dim 256, declines, untouched
+    cfg 10   0.2417 -> 0.2570 ms    +6.4%    head_dim 64, declines; inside the noise floor
+    screen geomean 2.364x vs the parent's 2.292x  (+3.2%)   VERDICT: PROMOTE
+
+The 1.204x measured on config 7 sits just under the 1.24x the profile projected, which is
+the direction to expect. Configs 7 and 11 are two of the CHEAPEST rows in the matrix
+(~4-6 s of a 112 s sweep), so ([L33]) the diluted value on the full matrix is:
 
     13-config geomean                     ~ +3%       inside the +/-7% noise floor ([L29])
     matrix.weighted_score (cap 3.0)       ~ +1%       config 11 already sits at 6.24x,
@@ -116,7 +128,6 @@ def build(baseline_cls):
     class CandidateV22(v18_cls):
         smallhead_attn_used: bool = False
         smallhead_attn_reason: str = "undecided"
-        attn_tile: tuple[int, int, int, int] = DEFAULT_TILE
         attn_plan = None
 
         def _prime(self, mask):
@@ -135,7 +146,6 @@ def build(baseline_cls):
             # and costs Inductor's fused LayerNorms -- measured at 2.18x on config 7
             # before this was hoisted. See attn_smallhead.Plan.
             self.attn_plan = plan_for(a.head_dim, cfg.seq_len, DEFAULT_TILE) if ok else None
-            self.attn_tile = DEFAULT_TILE
             self.smallhead_attn_reason = (
                 f"smallhead: head_dim {a.head_dim} below the mma contraction floor"
                 if ok else
