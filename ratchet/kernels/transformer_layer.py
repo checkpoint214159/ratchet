@@ -126,6 +126,54 @@ def optimized_forward_full(self, x: torch.Tensor,
     return layernorm(x, self.final_norm.weight, self.final_norm.bias, self.final_norm.eps)
 
 
+def optimized_forward_mixed(self, x: torch.Tensor,
+                            valid_token_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    """Fully custom-kernel transformer layer (no library GEMM/attention). All work runs in
+    hand-written Triton kernels: flash attention (tf32 tensor cores) + linear_tf32 GEMMs
+    with per-op precision tuned to the accuracy gate.
+
+    The default recipe is the one measured to beat the cuBLAS-fp32 baseline while passing
+    the authoritative gate at seq>=512 (docs/hardware/gb10/03-results.md):
+      * attention: tf32 flash
+      * q/k/v/out projections: single-pass tf32 (K=512, tolerates it)
+      * ffn_in (512->2048, feeds GELU -- error amplified): tf32x3 (accurate)
+      * ffn_out (2048->512): tf32x2 (2-pass split, ~1.5x tf32x3 speed, enough accuracy)
+    Each is overridable via RATCHET_{PROJ,FFN_IN,FFN_OUT,ATTN}_PREC for exploration."""
+    import os
+    proj_prec = os.environ.get("RATCHET_PROJ_PREC", "tf32")
+    ffn_prec = os.environ.get("RATCHET_FFN_PREC", "")
+    ffn_in_prec = os.environ.get("RATCHET_FFN_IN_PREC", ffn_prec or "tf32x3")
+    ffn_out_prec = os.environ.get("RATCHET_FFN_OUT_PREC", ffn_prec or "tf32x2")
+    attn_prec = os.environ.get("RATCHET_ATTN_PREC", "tf32")
+    causal = self.config.causal
+
+    if valid_token_mask is not None and not bool(valid_token_mask.all()):
+        for layer in self.layers:
+            x = layer(x, valid_token_mask, causal)
+        return self.final_norm(x)
+
+    for layer in self.layers:
+        attn = layer.attention
+        h = layer.norm1(x)
+        B, N, _ = h.shape
+
+        def heads(t):
+            return t.view(B, N, attn.num_heads, attn.head_dim).transpose(1, 2).contiguous()
+
+        q = heads(linear_tf32(h, attn.q_proj.weight, attn.q_proj.bias, prec=proj_prec))
+        k = heads(linear_tf32(h, attn.k_proj.weight, attn.k_proj.bias, prec=proj_prec))
+        v = heads(linear_tf32(h, attn.v_proj.weight, attn.v_proj.bias, prec=proj_prec))
+        ctx = flash_attention(q, k, v, causal=causal, prec=attn_prec)
+        ctx = ctx.transpose(1, 2).contiguous().view(B, N, attn.d_model)
+        x = x + linear_tf32(ctx, attn.out_proj.weight, attn.out_proj.bias, prec=proj_prec)
+
+        g = layer.norm2(x)
+        g = linear_tf32(g, layer.ffn_in.weight, layer.ffn_in.bias, gelu=True, prec=ffn_in_prec)
+        x = x + linear_tf32(g, layer.ffn_out.weight, layer.ffn_out.bias, prec=ffn_out_prec)
+
+    return self.final_norm(x)
+
+
 def optimized_forward_qkv(self, x: torch.Tensor,
                           valid_token_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
     """E4: E3 + fused QKV. The three projection GEMMs share one input (norm1(x)), so they

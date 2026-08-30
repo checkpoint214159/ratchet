@@ -36,7 +36,7 @@ def _linear_fwd(
     stride_am, stride_ak,
     stride_wn, stride_wk,
     stride_cm, stride_cn,
-    HAS_BIAS: tl.constexpr, GELU: tl.constexpr,
+    HAS_BIAS: tl.constexpr, GELU: tl.constexpr, PREC: tl.constexpr,
     BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr, BLOCK_K: tl.constexpr,
 ):
     pid_m = tl.program_id(0)
@@ -53,10 +53,20 @@ def _linear_fwd(
         k_mask = (k0 + offs_k) < K
         a = tl.load(a_ptr, mask=(offs_m[:, None] < M) & k_mask[None, :], other=0.0)
         w = tl.load(w_ptr, mask=(offs_n[:, None] < N) & k_mask[None, :], other=0.0)
-        # tf32x3: three TF32 passes recover near-fp32 accuracy (the single-pass TF32 ~5e-4
-        # error compounds over 6 layers to ~0.004, just over the 0.002 gate) while still
-        # running on the tensor cores -- far faster than the baseline's non-tensor-core fp32.
-        acc += tl.dot(a, tl.trans(w), input_precision="tf32x3")
+        if PREC == "tf32x2":
+            # 2-pass split: keep A's full precision (hi+lo, each tf32) against a tf32-rounded
+            # W. a_hi = A with the low 13 mantissa bits cleared (-> exactly TF32); a_lo = the
+            # residual. dot(a_hi,w)+dot(a_lo,w) = A@W with only W's tf32 rounding left, ~2x
+            # more accurate than single-pass tf32 for 2 dots instead of tf32x3's 3.
+            # -8192 == 0xFFFFE000 in two's complement: clears the low 13 mantissa bits,
+            # leaving TF32's 10-bit mantissa (0xFFFFE000 overflows signed int32 as a literal).
+            a_hi = (a.to(tl.int32, bitcast=True) & -8192).to(tl.float32, bitcast=True)
+            a_lo = a - a_hi
+            wt = tl.trans(w)
+            acc += tl.dot(a_hi, wt, input_precision="tf32")
+            acc += tl.dot(a_lo, wt, input_precision="tf32")
+        else:
+            acc += tl.dot(a, tl.trans(w), input_precision=PREC)
         a_ptr += BLOCK_K * stride_ak
         w_ptr += BLOCK_K * stride_wk
 
@@ -72,8 +82,12 @@ def _linear_fwd(
 
 
 def linear_tf32(x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None,
-                gelu: bool = False) -> torch.Tensor:
-    """x:[..., K] @ weight[N,K]^T + bias -> [..., N]. TF32 tensor-core GEMM."""
+                gelu: bool = False, prec: str = "tf32x3") -> torch.Tensor:
+    """x:[..., K] @ weight[N,K]^T + bias -> [..., N]. TF32 tensor-core GEMM.
+
+    prec: "tf32x3" (accurate, ~fp32-baseline speed) or "tf32" (single-pass, ~2.5x baseline
+    but ~9e-2 raw error) or "ieee".
+    """
     *lead, K = x.shape
     M = 1
     for d in lead:
@@ -92,6 +106,6 @@ def linear_tf32(x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None
         x2.stride(0), x2.stride(1),
         w.stride(0), w.stride(1),
         out.stride(0), out.stride(1),
-        HAS_BIAS=bias is not None, GELU=gelu,
+        HAS_BIAS=bias is not None, GELU=gelu, PREC=prec,
     )
     return out.reshape(*lead, N)

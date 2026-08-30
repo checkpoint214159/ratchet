@@ -33,7 +33,7 @@ def _flash_fwd(
     N, KV_N,
     H: tl.constexpr, H_KV: tl.constexpr,
     D: tl.constexpr, BLOCK_M: tl.constexpr, BLOCK_N: tl.constexpr,
-    CAUSAL: tl.constexpr,
+    CAUSAL: tl.constexpr, PREC: tl.constexpr,
 ):
     pid_m = tl.program_id(0)          # block of queries
     pid_bh = tl.program_id(1)         # flattened batch*head
@@ -80,7 +80,7 @@ def _flash_fwd(
         # Round the scores to the input dtype before scaling/softmax, mirroring the eager
         # baseline (bf16 matmul output). For fp32 this is a no-op; for bf16 it keeps the
         # softmax operating on the same rounded scores the baseline sees.
-        qk = tl.dot(q, tl.trans(k), input_precision="ieee").to(q.dtype).to(tl.float32) * scale
+        qk = tl.dot(q, tl.trans(k), input_precision=PREC).to(q.dtype).to(tl.float32) * scale
 
         qk = tl.where(n_mask[None, :], qk, -float("inf"))
         if CAUSAL:
@@ -96,7 +96,7 @@ def _flash_fwd(
                     mask=n_mask[:, None], other=0.0)
         # Round probabilities to the input dtype before P@V so the arithmetic matches the
         # eager baseline (which casts softmax back to the input dtype before matmul).
-        acc += tl.dot(p.to(v.dtype), v, input_precision="ieee").to(tl.float32)
+        acc += tl.dot(p.to(v.dtype), v, input_precision=PREC).to(tl.float32)
         m_i = m_new
 
     l_i = tl.where(l_i == 0.0, 1.0, l_i)           # rows fully masked -> avoid 0/0
@@ -107,8 +107,12 @@ def _flash_fwd(
 
 
 def flash_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
-                    causal: bool = False) -> torch.Tensor:
-    """Exact attention. q:[B,H,N,D], k,v:[B,H_kv,N,D] -> [B,H,N,D] in q.dtype."""
+                    causal: bool = False, prec: str = "ieee") -> torch.Tensor:
+    """Exact attention. q:[B,H,N,D], k,v:[B,H_kv,N,D] -> [B,H,N,D] in q.dtype.
+
+    prec: "ieee" (accurate, no tensor cores) or "tf32" (tensor cores, ~fp32-baseline gate
+    still holds after LayerNorm). The QK and PV dots use it.
+    """
     B, H, N, D = q.shape
     H_kv = k.shape[1]
     KV_N = k.shape[2]
@@ -139,7 +143,7 @@ def flash_attention(q: torch.Tensor, k: torch.Tensor, v: torch.Tensor,
         N, KV_N,
         H=H, H_KV=H_kv,
         D=D, BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N,
-        CAUSAL=causal,
+        CAUSAL=causal, PREC=prec,
         num_warps=num_warps, num_stages=num_stages,
     )
     return o

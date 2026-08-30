@@ -17,6 +17,7 @@ from ratchet.kernels.explore import (
 from ratchet.kernels.transformer_layer import (
                                     optimized_forward,
                                     optimized_forward_full,
+    optimized_forward_mixed,
                                     optimized_forward_qkv,
                                     optimized_forward_tf32,
 )
@@ -33,6 +34,7 @@ mod.UserOptimizedTransformer.forward = {
     "qkv": optimized_forward_qkv, "full": optimized_forward_full,
     "cublastf32": forward_cublas_tf32, "sdpa": forward_sdpa_fp32,
     "fusedffn": forward_fused_ffn,
+    "mixed": optimized_forward_mixed,
 }[seam]
 
 # default config; pass through any extra CLI args (e.g. --causal, --dtype)
