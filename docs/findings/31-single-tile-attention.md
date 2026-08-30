@@ -168,3 +168,54 @@ shape of kernel.
 where the kernel is *legal* and silent about where it is *fast*. Every future
 "materialize what flash streams" proposal should be asked for its residency budget, not
 its capacity budget.
+
+---
+
+## Addendum, controller — the full sweep, clean GPU
+
+    cfg  7   0.115 ->  0.086 ms   -25.0%      head_dim 8
+    cfg 12   0.147 ->  0.111 ms   -25.0%      seq_len 32
+    cfg 11   0.362 ->  0.297 ms   -18.1%      head_dim 8, 16 heads
+    cfg  6  64.944 -> 57.430 ms   -11.6%      84% of matrix wall time
+    cfg  2   0.071 ->  0.065 ms    -8.7%
+    cfg  3   0.082 ->  0.075 ms    -8.7%
+    cfg  8   6.550 ->  6.554 ms    +0.1%      DECLINED path
+    cfg  9   0.254 ->  0.253 ms    -0.3%      DECLINED path
+    cfg 10   0.242 ->  0.245 ms    +1.3%
+
+    geomean vs compiled   2.765x -> 3.015x    +9.0%
+    total wall time       76.9 ms -> 69.2 ms  -10.0%
+
+**+9.0% is OUTSIDE the +/-7% noise floor. This is the first frontier advance in this
+project that does not have to be reported with a caveat.** v17 was +1.7%, v19 +0.8%,
+v18 +0.2% -- all inside the floor and all reported as such. This one is not.
+
+The sweep is clean by its own internal check: configs 8 and 9 take the DECLINED path,
+i.e. byte-identical code to v18, and returned +0.1% and -0.3%. Contention shows up first
+on identical code paths -- that is how the v20 sweep was caught (config 1, identical
+fallback, read +7.2%). Nothing like that here.
+
+### The executor's discipline was vindicated by the sweep
+
+Its screen showed config 10 at **-7.1%** and it flagged that as the marginal case of the
+predicate. It then explicitly refused to tune the threshold to fix it, on the grounds that
+"fitting a predicate to one noisy row is how a loop teaches itself something false", and
+pre-registered the discriminator it *would* use if a full sweep confirmed the regression.
+
+The full sweep reads **+1.3%**. The -7.1% was noise. Had it tuned the predicate to chase
+that row, it would have narrowed the kernel's applicability to fix a problem that did not
+exist -- and the narrowing would have been permanent and invisible.
+
+### What actually produced the win
+
+Not only attention. The kernel reads Q/K/V straight from the fused `[B, S, 3*d_model]`
+buffer and writes head-major, deleting the `.split`, three transposes, and the
+`transpose(1,2).reshape` repack. Some of the gain is layout, not arithmetic -- which is
+also why config 12 (seq_len 32, where attention itself is trivial) gains 25%.
+
+Note this partially supersedes v20's premise: v20 attacked the same strided-read tax with
+a head-major QKV GEMM. v23 removes the tax by consuming the fused buffer directly, without
+a separate GEMM. **v20 should be re-evaluated against v23 rather than v18** -- its measured
+1.163x segment win may now be redundant.
+
+### v23 is the new frontier at 3.015x.
