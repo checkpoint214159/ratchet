@@ -165,7 +165,7 @@ def _attn_fwd_smallhead(
 
 
 # ======================================================================================
-# Tiling. Swept, not guessed -- see `tune_smallhead_attention` and the note below.
+# Tiling. Swept, not guessed -- the sweep table is below.
 # ======================================================================================
 
 # MEASURED, not reasoned. v20 lost at 0.88x with a guessed tile and won at 1.163x after a
