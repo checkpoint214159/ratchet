@@ -44,12 +44,25 @@ All correct vs the fp32 baseline.
 | 12 | S32 (short seq) | on | 2.32x | 2.29x |
 | 13 | S1024 (attention-heavy) | off | **9.93x** | 10.34x |
 
-**geomean vs `torch.compile` = 2.58x**, every config correct.
+**geomean vs `torch.compile` = 2.58–2.68x** across runs (calibrated dispatch / search-loop
+re-measure; the spread is torch.compile baseline variance + GB10's unlockable clock), every
+config correct.
 
-The win tracks attention cost: dense configs 1.7–2.3x, head_dim-8 with 16 heads 5.2x,
-seq=1024 **9.93x** (flash streams the causal KV axis where the baseline materializes the
+The win tracks attention cost: dense configs 1.7–2.4x, head_dim-8 with 16 heads 5.2x,
+seq=1024 **~9.8x** (flash streams the causal KV axis where the baseline materializes the
 score matrix). Dispatch's graph on/off is validated — the graph-off compute-bound configs
-(6/8/13) hold or improve their speed while avoiding large static capture buffers.
+(5/6/8/13) hold or improve their speed while avoiding large static capture buffers.
+
+### It is a kernel win, not a dtype trick (`tests/manual/decompose.py`)
+
+The attention kernel measured against the baseline's explicit attention at **matched fp32
+precision** (no dtype advantage, no graph, no compiler):
+
+    cfg13 seq=1024   7.17x   |  cfg11 16-head  4.86x  |  cfg5 B128  4.03x  |  cfg1  3.59x
+
+Most configs are a genuine 2.2–7.2x pure-kernel win from the streaming online-softmax +
+exact causal-skip; fp16 is an additional tensor-core factor on top. Two configs (cfg8
+head_dim 256, cfg10 head_dim 64) are flat at fp32 and win via fp16 — stated plainly.
 
 ## Why each piece is germane (maps to the judging)
 
