@@ -206,8 +206,15 @@ def test_mechanism_engages_and_the_kernel_count_actually_falls(cid):
     px, pm = pmake(1234)
     n_parent = _kernels_per_forward(parent, px, pm)
     n_child = _kernels_per_forward(model, x, m)
-    assert n_parent == pytest.approx(36.0, abs=0.5), n_parent
-    assert n_child <= 21.5, (n_child, n_parent)
+    # ASSERT THE DROP, NOT THE ABSOLUTE COUNT. Alone the counts are 36.0 / 20.0; inside
+    # the full suite both models undercount by a constant ~7 profiler events (35.3 /
+    # 19.3), because CUDA module and context state accumulates across the 36 candidates
+    # compiled in one process. The DIFFERENCE is 16.0 in both contexts, so that is the
+    # invariant the launch-floor argument actually rests on. Pinning the absolute number
+    # made this test pass alone and fail in the suite -- a test whose verdict depends on
+    # what ran before it is not testing the candidate (L36).
+    assert n_parent >= 30.0, f"parent count implausible: {n_parent}"
+    assert n_parent - n_child == pytest.approx(16.0, abs=1.5), (n_parent, n_child)
 
 
 @cuda
