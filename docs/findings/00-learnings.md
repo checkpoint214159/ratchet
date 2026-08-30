@@ -929,3 +929,26 @@ quantity the mechanism claims -- here, sixteen nodes removed -- not the absolute
 that happens to contain it**, and take both readings in the same process so the offset
 cancels. Same shape as [L44]'s free control: what reproduces tells you what the
 perturbation is. See docs/findings/41.
+
+
+## L52 — Measure with the protocol you will be scored by (2026-08-30)
+
+The graded benchmark interleaves ABBA/BAAB rounds ("to reduce thermal/clock-order bias"),
+pools the samples, and takes `baseline.median / optimized.median`. `bench/run_matrix.py`
+takes `min(median, median)` per arm, **not interleaved**, with the candidate compiled and
+autotuned BETWEEN the two arms — on a GPU whose clocks cannot be locked.
+
+It inverted two signs. v34 vs v26: our ledger said **+6.1% worse on cfg 1 and +5.6% worse
+on cfg 9**; the graded protocol says **-0.8% and -6.9% BETTER**. The research agent
+predicted it from the kernel census — v34 launches strictly fewer kernels there, so a
+regression was mechanically implausible.
+
+`bench/end_to_end.py` was built days ago for exactly this check and its docstring says
+"nobody has ever checked they agree". Nobody ran it. A session was spent ranking
+candidates on a quantity that is not the score.
+
+**When your harness differs from the one that scores you, the burden is on you to
+demonstrate agreement per config before trusting any ranking.** A difference written down
+in a comment is still a difference. Exposure is worst on sub-millisecond configs — which
+is exactly where all remaining score lives. See docs/findings/42.
+
