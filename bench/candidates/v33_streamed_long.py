@@ -174,18 +174,30 @@ def build_on(base_cls):
                     self._invalidate_shape_state(valid_token_mask)
                 self._decide_stream(x)
             if self.stream_path == "resident":
-                # v23's and v17's forwards re-run their own decisions when the reason is
-                # "undecided", so delegating is enough -- but only because
-                # `_invalidate_shape_state` re-opened them.
-                return super().forward(x, valid_token_mask)
+                return self._resident_forward(x, valid_token_mask)
+            return self._streamed_forward(x, valid_token_mask)
 
-            # STREAMED. Prime the per-layer caches and settle both kernel decisions on a
-            # SLICE-shaped input, so the tile choice matches what actually runs.
+        def _resident_forward(self, x, valid_token_mask):
+            """The whole stack below this layer, unchanged.
+
+            v23's and v17's forwards re-run their own decisions when the reason is
+            "undecided", so delegating is enough -- but only because
+            `_invalidate_shape_state` re-opened them.
+
+            A METHOD rather than an inline `super().forward(...)` so that a descendant
+            can wrap the attempt without restating the dispatch or the streaming loop
+            around it (generation 38 catches `OutOfMemoryError` here). Extraction only:
+            `forward` above behaves exactly as it did.
+            """
+            return super().forward(x, valid_token_mask)
+
+        def _streamed_forward(self, x, valid_token_mask):
+            """Prime the per-layer caches and settle every shape-latched kernel decision
+            on a SLICE-shaped input, so the tile choice matches what actually runs."""
             if not hasattr(self, "_cache"):
                 self._prime(valid_token_mask)
             head = x[: self.stream_slice]
             self._settle_slice_decisions(head)
-
 
             out = torch.empty_like(x)
             for start in range(0, x.shape[0], self.stream_slice):
