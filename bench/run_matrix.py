@@ -259,6 +259,19 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
     # from prose in a finding.
     out["profile"] = {"candidate": kernel_profile(candidate, xt, mt),
                       "triton": triton_kernel_stats()}
+
+    # WHICH PATH DID THE CANDIDATE ACTUALLY TAKE. Every dispatching candidate reports its
+    # own decision, but until now only the config-14 capability path recorded it -- so
+    # `stream_path` appeared on config-14 rows and on NO config-6 row in the entire
+    # ledger. That is exactly why v33's streaming regression (config 6, 1.6x, 83% of the
+    # matrix's wall time) sat undiagnosed across two sweeps and two commits: the row said
+    # how long it took and never said what it did.
+    out["dispatch"] = {k: v for k in (
+        "stream_path", "stream_reason", "stream_basis", "stream_slice", "stream_fallbacks",
+        "fused_ffn_used", "fused_ffn_reason", "launch_reason", "launch_fused_used",
+        "gemm_sites", "gemm_reason", "attn_choice", "attn_reason",
+        "headmajor_used", "capture_source", "graph_verified", "causal_path",
+    ) if (v := getattr(candidate, k, None)) is not None}
     return out
 
 
@@ -902,7 +915,7 @@ def main() -> int:
                                  provenance_override=run_prov,
                                  extra={k: r[k] for k in
                                         ("baseline", "signature_floor", "capability",
-                                         "profile", "timing_interleaved")
+                                         "profile", "timing_interleaved", "dispatch")
                                         if k in r} or None)
             if args.json_out:
                 # Carry correctness too. status=="ok" already IMPLIES it passed (an

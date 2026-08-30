@@ -1,4 +1,4 @@
-# 50 — The looped attention form was aimed at the wrong config twice, and the census is what found the right one
+# 51 — The looped attention form was aimed at the wrong config twice, and the census is what found the right one
 
 **Date:** 2026-08-31. **Generation:** 40. **Branch:** `cand/g40/attn-loop-census`.
 **Parent:** `v38_stream_fallback` (`7cee27c`). **Candidate:** `v40_looped_attn`.
