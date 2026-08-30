@@ -149,20 +149,46 @@ table.grid tr.sel { background: color-mix(in srgb, var(--violet) 12%, transparen
 .dim { color: var(--faint); }
 .tiny { font-size: 10.5px; }
 
-/* ---------------- tree ---------------- */
-.treewrap { overflow: auto; background: var(--surface); }
+/* ---------------- evolution tree (declared lineage) ----------------
+   Rounded boxes and curved edges on purpose: right-angle rails and lane columns are
+   the visual grammar of a commit graph, and this is not one. */
+.treewrap { overflow: auto; background: var(--surface); padding: 4px; }
+.treectl { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; flex-wrap: wrap; }
+.treectl .k { color: var(--faint); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+
 #tree text { font-family: var(--mono); }
-#tree .nlabel { font-size: 11px; fill: var(--ink); font-weight: 600; }
-#tree .nsub  { font-size: 9.5px; fill: var(--muted); }
-#tree .nnum  { font-size: 10.5px; }
-#tree .edge  { stroke: var(--line); stroke-width: 1.5; fill: none; }
-#tree .edge.merge { stroke: var(--amber); stroke-dasharray: 4 3; }
-#tree g.node rect.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.25; cursor: pointer; }
-#tree g.node:hover rect.box { stroke: var(--violet); }
-#tree g.node.sel rect.box { stroke: var(--violet); stroke-width: 2.5; }
-#tree g.node.measured rect.box { fill: color-mix(in srgb, var(--violet) 8%, var(--surface)); }
-#tree g.node.mergenode rect.box { stroke: var(--amber); }
-#tree .tip { font-size: 9.5px; fill: var(--teal); font-weight: 600; }
+#tree .gen { font-size: 9px; fill: var(--faint); letter-spacing: .04em; }
+#tree .lname { font-size: 10.5px; font-weight: 600; fill: var(--ink); }
+#tree .lsub  { font-size: 9px; fill: var(--muted); }
+#tree .lstar { font-size: 9px; font-weight: 700; fill: var(--violet); }
+#tree .lflag { font-size: 11px; fill: var(--amber); }
+
+#tree .ledge { stroke: var(--line); stroke-width: 1.4; fill: none; stroke-linecap: round; }
+#tree .ledge.measured { stroke: color-mix(in srgb, var(--muted) 55%, transparent); stroke-width: 1.8; }
+
+/* Recombination: a real second contributor, drawn distinctly rather than dropped. */
+#tree .recomb { stroke: var(--violet); stroke-width: 1.8; stroke-dasharray: 6 4; fill: none; opacity: .95; }
+#tree .recomb-head { fill: var(--violet); }
+
+#tree g.lnode rect.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.25; }
+#tree g.lnode.unmeasured rect.box { fill: none; stroke-dasharray: 4 3; stroke: var(--faint); }
+#tree g.lnode:hover rect.box { stroke: var(--violet); stroke-width: 2; }
+#tree g.lnode.sel rect.box { stroke: var(--violet); stroke-width: 2.5; }
+#tree g.lnode.frontier rect.halo { fill: none; stroke: var(--violet); stroke-width: 2; stroke-dasharray: 3 3; opacity: .85; }
+#tree g.lnode rect.spine { fill: var(--brick); }
+#tree circle.leafdot { fill: var(--muted); opacity: .7; }
+
+.legend .legrow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0; }
+.legend .legrow .k { color: var(--faint); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.legend .legkey { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.legend .legchip { width: 22px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.legend .c-frontier { border: 2px dashed var(--violet); }
+.legend .c-unmeasured { border: 1px dashed var(--faint); }
+.legend .c-leaf { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.legend .c-recomb { height: 0; border-top: 2px dashed var(--violet); }
+.legend .c-unsafe { width: 5px; background: var(--brick); }
+.legend .c-flag { background: var(--amber); }
+.rampbar { border-radius: 3px; overflow: hidden; }
 
 /* ---------------- heatmap ---------------- */
 table.heat { border-collapse: separate; border-spacing: 2px; font-size: 11px; }
