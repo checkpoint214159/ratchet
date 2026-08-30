@@ -211,7 +211,8 @@ def measure_one(config_id: int, candidate_name: str, samples: int = 300,
     # AFTER timing, never during: the profiler perturbs execution. This records WHY, so a
     # later reader can diff two candidates' kernel breakdowns instead of re-deriving them
     # from prose in a finding.
-    out["profile"] = {"candidate": kernel_profile(candidate, xt, mt)}
+    out["profile"] = {"candidate": kernel_profile(candidate, xt, mt),
+                      "triton": triton_kernel_stats()}
     return out
 
 
@@ -585,6 +586,61 @@ def run_child(config_id: int, candidate: str, padding: float = 0.0,
     status = "oom" if "OutOfMemoryError" in proc.stderr else "crash"
     return {"config_id": config_id, "candidate": candidate, "status": status,
             "correctness": None, "timing": None, "memory": None, "notes": tail.strip()}
+
+
+def triton_kernel_stats() -> list[dict]:
+    """Register pressure and spills for every Triton kernel compiled this process.
+
+    THE ncu SUBSTITUTE. Nsight Compute is unavailable here -- WSL2 denies GPU performance
+    counters (ERR_NVGPUCTRPERM), and it is a host-side driver setting we cannot change
+    from inside the container. Nsight Systems runs but its GPU kernel trace is also empty
+    under WSL2; only its host-side CUDA API trace works.
+
+    But Triton hands us the two numbers that matter most, at COMPILE time, with no
+    profiler at all: `n_spills` and `n_regs` off the CompiledKernel. Spilling is the
+    single most common reason a hand-written kernel loses to a vendor one on this project
+    -- the g28 megakernel's last measurement before it died was "config 7 (spill-free)
+    1.52x faster; config 10 (spills) 2.28x slower".
+
+    Recording it per row means a later reader can ask "did this candidate spill?" without
+    re-running anything, and an author can gate on it BEFORE spending a sweep.
+    """
+    out = []
+    try:
+        from bench import kernels as _k
+        import importlib, pkgutil
+        mods = []
+        for m in pkgutil.iter_modules(_k.__path__):
+            try:
+                mods.append((m.name, importlib.import_module(f"bench.kernels.{m.name}")))
+            except Exception:
+                pass
+    except Exception:
+        return out
+    for modname, mod in mods:
+        for attr in dir(mod):
+            fn = getattr(mod, attr, None)
+            caches = getattr(fn, "device_caches", None)
+            if not isinstance(caches, dict):
+                continue
+            for _dev, entry in caches.items():
+                for part in (entry if isinstance(entry, (list, tuple)) else [entry]):
+                    if not isinstance(part, dict):
+                        continue
+                    for ck in part.values():
+                        regs, spills = getattr(ck, "n_regs", None), getattr(ck, "n_spills", None)
+                        if regs is None:
+                            continue
+                        out.append({"kernel": f"{modname}.{attr}", "n_regs": regs,
+                                    "n_spills": spills,
+                                    "smem": getattr(getattr(ck, "metadata", None), "shared", None)})
+    # One entry per (kernel, shape-specialisation); dedupe identical rows.
+    seen, uniq = set(), []
+    for d in out:
+        k = tuple(sorted(d.items()))
+        if k not in seen:
+            seen.add(k); uniq.append(d)
+    return uniq
 
 
 def kernel_profile(model, x, mask, top: int = 12) -> dict:

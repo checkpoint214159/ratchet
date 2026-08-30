@@ -61,3 +61,33 @@ def test_profile_diff_reads_the_ledger_without_touching_the_gpu():
     src = (Path(__file__).resolve().parents[2] / "bench" / "profile_diff.py").read_text()
     assert "cuda" not in src.lower() or "never touches the GPU" in src
     assert "clean_rows" in src
+
+
+def test_triton_stats_are_captured_and_flag_spills():
+    """The ncu substitute.
+
+    Nsight Compute cannot run here (WSL2 denies GPU performance counters,
+    ERR_NVGPUCTRPERM, and it is a host-side driver setting). Nsight Systems runs but its
+    GPU kernel trace is empty under WSL2 -- only the host-side CUDA API trace works.
+
+    Triton gives us the two numbers that matter at COMPILE time with no profiler:
+    n_spills and n_regs. Spilling is the most common reason a hand-written kernel loses to
+    a vendor one here -- the g28 megakernel measured "config 7 (spill-free) 1.52x faster;
+    config 10 (spills) 2.28x slower" -- so recording it means an author can gate on it
+    before spending a sweep, and a reader can ask "did this spill?" without re-running.
+    """
+    from bench.run_matrix import triton_kernel_stats
+    stats = triton_kernel_stats()
+    assert isinstance(stats, list)
+    for d in stats:
+        assert {"kernel", "n_regs", "n_spills", "smem"} <= set(d)
+        assert isinstance(d["n_regs"], int) and d["n_regs"] > 0
+
+
+def test_the_ncu_limitation_is_written_down_not_assumed():
+    """A tool we cannot run must be documented as unavailable, or someone re-derives it.
+    Two agents independently burned time discovering ERR_NVGPUCTRPERM."""
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[2] / "bench" / "run_matrix.py").read_text()
+    assert "ERR_NVGPUCTRPERM" in src
+    assert "n_spills" in src
