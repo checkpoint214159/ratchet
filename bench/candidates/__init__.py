@@ -188,6 +188,11 @@ def _v28(baseline_cls):
     return build(baseline_cls)
 
 
+def _v31(baseline_cls):
+    from .v31_outproj_epilogue import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -464,5 +469,19 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "and makes the answer depend on achieved tensor-core utilisation, not on "
                 "traffic: break-even is 20% of peak. The register file binds, not smem, "
                 "and the tile is swept with the compiler's own n_spills as a filter.",
+    ),
+    "v31_outproj_epilogue": CandidateSpec(
+        name="v31_outproj_epilogue", generation=31, parent="v26_causal_correct",
+        build=_v31,
+        summary="The out-projection, the fp32 widen, the padding mask and the fp32 "
+                "residual add absorbed into the single-tile attention kernel's own "
+                "epilogue: one program per (batch, query block) loops over heads and "
+                "accumulates the projection in registers, so the context tile never "
+                "reaches HBM. Halves the epilogue's traffic (16D -> 8D bytes per token "
+                "per layer) and removes two launches of three, and deletes the fp16 "
+                "rounding of the projection output. Costs a factor of `heads` in grid "
+                "size and an fp32 [BM, d_model] accumulator in registers, so it declines "
+                "where the grid stops covering the SMs (configs 2, 3) or fewer than four "
+                "blocks stay resident (9, 10, 13), falling back to v23's split path.",
     ),
 }
