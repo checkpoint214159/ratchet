@@ -153,8 +153,23 @@ def _v34(baseline_cls):
     return build(baseline_cls)
 
 
+def _v33(baseline_cls):
+    from .v33_streamed_long import build
+    return build(baseline_cls)
+
+
+def _v35(baseline_cls):
+    from .v35_recombined import build
+    return build(baseline_cls)
+
+
 def _v36(baseline_cls):
     from .v36_gemm_gelu import build
+    return build(baseline_cls)
+
+
+def _v37(baseline_cls):
+    from .v37_recombined2 import build
     return build(baseline_cls)
 
 
@@ -311,6 +326,18 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "causal=False. Non-causal now delegates to the unmodified baseline: "
                 "exactly right on a shape we do not expect, fast on the fourteen we do.",
     ),
+    "v33_streamed_long": CandidateSpec(
+        name="v33_streamed_long", generation=33, parent="v26_causal_correct", build=_v33,
+        summary="Restores batch streaming to the frontier. v14 built the predicate -- "
+                "estimated working set against measured free memory -- and v17 branched "
+                "from v13 rather than v14, so the streaming path fell out of the lineage "
+                "at generation 17. It changes nothing on the 13 configs that fit "
+                "(choose() returns resident) and is the difference between computing "
+                "config 14 one slice at a time and planning a 73 GiB resident working "
+                "set that would fail on an 80 GiB card too. It does NOT make config 14 "
+                "runnable here: the forward signature's own 12.21 GiB in + 12.21 GiB out "
+                "is a floor no implementation removes.",
+    ),
     "v34_launch_bound": CandidateSpec(
         name="v34_launch_bound", generation=34, parent="v26_causal_correct", build=_v34,
         summary="The frontier launches 36 kernels per forward on EVERY config -- "
@@ -322,6 +349,20 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "from finding 25's bandwidth crossover and fires exactly where it "
                 "declines (configs 2, 3, 4, 12). Reuses v19's norm-fused megakernel and "
                 "elides a provably-dead mask memcpy. 36 -> 20 kernels.",
+    ),
+    "v35_recombined": CandidateSpec(
+        name="v35_recombined", generation=35, parent="v33_streamed_long", build=_v35,
+        summary="RECOMBINATION of the two live children of v26: v33's shape-latch fix "
+                "and restored batch streaming, with v34_launch_bound's one-wave fusion "
+                "stacked underneath it (contributor, as v17 declared v16). Composes by "
+                "layering, not by copying -- v33's dispatch was factored into "
+                "`build_on` so exactly one copy of each mechanism exists. The merge's "
+                "own content is the binding the two could not see: v34 latches five more "
+                "attributes to the input shape than v33's reset enumerates, so a model "
+                "re-decided at a new batch size would have run a megakernel tiled for "
+                "the old one. Also re-derives the MASK state on a shape change, which "
+                "v34's mask elision makes load-bearing, and settles the launch decision "
+                "on the streamed path against the slice that runs.",
     ),
     "v36_gemm_gelu": CandidateSpec(
         name="v36_gemm_gelu", generation=36, parent="v34_launch_bound", build=_v36,
@@ -338,6 +379,21 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "Each of the four sites is decided by TIMING the vendor against 18 swept "
                 "tiles at prime time and keeping the vendor unless Triton wins by more "
                 "than 10%, so config 8 declines on its own evidence.",
+    ),
+    "v37_recombined2": CandidateSpec(
+        name="v37_recombined2", generation=37, parent="v36_gemm_gelu", build=_v37,
+        summary="THE SECOND RECOMBINATION. v26's two lines rejoin: v36's projection "
+                "GEMMs and GELU epilogue (the declared parent) with v35_recombined's "
+                "shape-latch fix, batch streaming and reset discipline as the "
+                "contributor -- the relationship v17 declared to v16 and v35 declared "
+                "to v34. Neither is an ancestor of the other; their merge-base is v32. "
+                "The merge's own content is the reset: v36 latches NINE more attributes "
+                "to the input shape than v35's five (five gemm_* flags and four tile "
+                "tuples), so v37 derives the reset set FROM THE CLASSES -- every "
+                "class-body attribute introduced above v26 -- instead of naming them, "
+                "and asserts it covers v35's declared list. It also settles the GEMM "
+                "plan on the streamed path against the slice that runs, after the two "
+                "fusion decisions it reads.",
     ),
     "v14_dispatch": CandidateSpec(
         name="v14_dispatch", generation=14, parent="v13_safe_capture", build=_v14,
