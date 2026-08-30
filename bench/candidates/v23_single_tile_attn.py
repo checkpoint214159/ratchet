@@ -111,6 +111,35 @@ def build(baseline_cls):
             self.attn_used = True
             self.attn_reason = f"{why}; {how}"
 
+        def _attention(self, qkv, a, b, s):
+            """Compute attention over the fused `[B, S, 3*d_model]` buffer.
+
+            AN EXTENSION POINT, NOT A CONVENIENCE -- the discipline v33's
+            `_settle_slice_decisions` docstring states. This exact if/else was written
+            out inline in v23's, v34's and v36's `_core` (four copies, byte-identical),
+            so a descendant that wanted to compute attention differently had to override
+            three long `_core` bodies and keep them in sync with their originals
+            forever. That is the [L14] shape: a mechanical edit across duplicated code
+            that produces something valid and wrong.
+
+            The `else` branch is v8's path verbatim: fp16, no `attn_mask`, so flash
+            qualifies and the key mask is provably redundant under causality (finding
+            11). The `transpose(1, 2).reshape` is a real copy, and it is the second half
+            of what `single_tile_attention` deletes (finding 31).
+            """
+            if self.attn_used:
+                bm, warps, stages = self.attn_tile
+                # No split, no view, no transpose, no repack: the kernel indexes the
+                # fused buffer and writes the layout out_proj already wants.
+                return single_tile_attention(qkv, a.num_heads, a.head_dim, a.scale,
+                                             bm, warps, stages)
+            q, k, v = qkv.split(a.d_model, dim=-1)
+            q = q.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
+            k = k.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
+            v = v.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
+            return F.scaled_dot_product_attention(
+                q, k, v, is_causal=True).transpose(1, 2).reshape(b, s, a.d_model)
+
         def _core(self, x, mask):
             # `_fastpath` is v8's proof that the key mask is redundant for a right-padded
             # causal input. Without it the mask must be applied inside attention, which
@@ -121,7 +150,6 @@ def build(baseline_cls):
             lp = torch.float16
             zero = self._needs_zeroing
             use_ffn = self.fused_ffn_used and self._nomask       # v17's own condition
-            bm, warps, stages = self.attn_tile
 
             for layer, cached, ffn_t in zip(self.layers, self._cache, self._ffn_t):
                 a = layer.attention
@@ -129,10 +157,7 @@ def build(baseline_cls):
                 b, s, d = x.shape
 
                 qkv = F.linear(layer.norm1(x).to(lp), qkv_w, qkv_b)
-                # No split, no view, no transpose, no repack: the kernel indexes the
-                # fused buffer and writes the layout out_proj already wants.
-                ctx = single_tile_attention(qkv, a.num_heads, a.head_dim, a.scale,
-                                            bm, warps, stages)
+                ctx = self._attention(qkv, a, b, s)
                 o = F.linear(ctx, out_w, out_b).float()
                 if zero:
                     o = o.masked_fill(~mask[..., None], 0)

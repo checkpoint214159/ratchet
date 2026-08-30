@@ -1,0 +1,40 @@
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+/usr/local/lib/python3.10/dist-packages/torch/cuda/graphs.py:104: UserWarning: The CUDA Graph is empty. This usually means that the graph was attempted to be captured on wrong device or stream. (Triggered internally at /pytorch/aten/src/ATen/cuda/CUDAGraph.cpp:139.)
+  super().capture_end()
+W0831 00:49:41.046000 4087058 torch/_dynamo/convert_frame.py:1016] [0/12] torch._dynamo hit config.recompile_limit (8)
+W0831 00:49:41.046000 4087058 torch/_dynamo/convert_frame.py:1016] [0/12]    function: '_core' (/root/techjam/ratchet/.claude/worktrees/agent-a45a89bbd072a669a/bench/candidates/v36_gemm_gelu.py:215)
+W0831 00:49:41.046000 4087058 torch/_dynamo/convert_frame.py:1016] [0/12]    last reason: 0/2: Cache line invalidated because type(L['self']) got deallocated
+W0831 00:49:41.046000 4087058 torch/_dynamo/convert_frame.py:1016] [0/12] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W0831 00:49:41.046000 4087058 torch/_dynamo/convert_frame.py:1016] [0/12] To diagnose recompilation issues, see https://pytorch.org/docs/main/torch.compiler_troubleshooting.html.
+
+ cfg      B   H   hd     S  v38 form    v38 tile      v40 form    v40 tile          same?   1st fwd s  ok
+   1     64   4   32   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          60.9  ok
+   2      1   4   32   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          14.0  ok
+   3      4   4   32   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          14.1  ok
+   4     16   4   32   128  single_tile (64, 4, 1)    looped      (32, 16, 2, 3)    no           24.0  ok
+   5    128   4   32   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          50.8  ok
+   6  10000   4   32   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          48.3  ok
+   7     64   4    8   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          32.4  ok
+   8     64   4  256   128  sdpa        None          sdpa        None              YES          43.9  ok
+   9     64   1  128   128  sdpa        None          sdpa        None              YES          30.2  ok
+  10     64   2   64   128  single_tile (32, 4, 1)    looped      (64, 32, 4, 4)    no           41.9  ok
+  11     64  16    8   128  single_tile (64, 4, 1)    single_tile (64, 4, 1)        YES          53.2  ok
+  12     64   4   32    32  single_tile (32, 2, 1)    looped      (32, 16, 2, 4)    no           18.8  ok
+  13     64   4   32  1024  sdpa        None          sdpa        None              YES          66.9  ok
+
+BYTE-IDENTICAL configs (candidates for the in-run ABBA control): [1, 2, 3, 5, 6, 7, 8, 9, 11, 13]
+CONFIGS WHERE v40 DIFFERS: [4, 10, 12]
+
+  config 4 v40: looped; swept 8 single-tile + 27 looped tiles + sdpa at batch 16: looped(32, 16, 2, 3) cleared single_tile(64, 4, 1) decisively (1.153x), and is 1.111x sdpa
+  config 4 v38: single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed against 8 tiles at batch 16
+
+  config 10 v40: looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.226x), and is 1.099x sdpa
+  config 10 v38: single-tile attention: 32x4 warps, 4 blocks resident per SM; derived tile (32, 4, 1), confirmed against 5 tiles at batch 64
+
+  config 12 v40: looped; swept 5 single-tile + 9 looped tiles + sdpa at batch 64: looped(32, 16, 2, 4) cleared single_tile(32, 2, 1) decisively (1.313x), and is 4.785x sdpa
+  config 12 v38: single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed against 5 tiles at batch 64

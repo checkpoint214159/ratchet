@@ -1,0 +1,612 @@
+[
+ {
+  "config_id": 10,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.23244799673557281,
+   "v40_looped_attn": 0.2242559939622879
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.2314240038394928,
+   "v40_looped_attn": 0.22220799326896667
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.23244799673557281,
+     "min": 0.2314240038394928
+    },
+    {
+     "round": 1,
+     "median": 0.23244799673557281,
+     "min": 0.2314240038394928
+    },
+    {
+     "round": 2,
+     "median": 0.23244799673557281,
+     "min": 0.2314240038394928
+    },
+    {
+     "round": 3,
+     "median": 0.23244799673557281,
+     "min": 0.2314240038394928
+    },
+    {
+     "round": 4,
+     "median": 0.23244799673557281,
+     "min": 0.2314240038394928
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.2242559939622879,
+     "min": 0.22220799326896667
+    },
+    {
+     "round": 1,
+     "median": 0.2242559939622879,
+     "min": 0.22220799326896667
+    },
+    {
+     "round": 2,
+     "median": 0.2242559939622879,
+     "min": 0.22323200106620789
+    },
+    {
+     "round": 3,
+     "median": 0.2242559939622879,
+     "min": 0.22323200106620789
+    },
+    {
+     "round": 4,
+     "median": 0.2242559939622879,
+     "min": 0.22323200106620789
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0012906789779663086,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.90 us against the best of 18 tiles at 12.82 us (1.084x, inside the 10% margin) | out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.331x over 18 tiles); spills=0 regs=126 | ffn_in: triton (128, 64, 32, 4, 4) at 6.68 us beats the vendor's 10.07 us decisively (1.508x over 18 tiles); spills=0 regs=141 | ffn_out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.331x over 18 tiles); spills=0 regs=126",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012906789779663086,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.90 us against the best of 18 tiles at 12.80 us (1.087x, inside the 10% margin) | out: triton (128, 64, 32, 4, 4) at 5.49 us beats the vendor's 7.30 us decisively (1.330x over 18 tiles); spills=0 regs=126 | ffn_in: triton (128, 64, 32, 4, 4) at 6.69 us beats the vendor's 10.07 us decisively (1.506x over 18 tiles); spills=0 regs=141 | ffn_out: triton (128, 64, 32, 4, 4) at 5.49 us beats the vendor's 7.30 us decisively (1.330x over 18 tiles); spills=0 regs=126",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 4,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.1515520066022873,
+   "v40_looped_attn": 0.1525759994983673
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.15052799880504608,
+   "v40_looped_attn": 0.1515520066022873
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.1515520066022873,
+     "min": 0.15052799880504608
+    },
+    {
+     "round": 1,
+     "median": 0.1515520066022873,
+     "min": 0.15052799880504608
+    },
+    {
+     "round": 2,
+     "median": 0.1515520066022873,
+     "min": 0.15052799880504608
+    },
+    {
+     "round": 3,
+     "median": 0.1515520066022873,
+     "min": 0.15052799880504608
+    },
+    {
+     "round": 4,
+     "median": 0.1515520066022873,
+     "min": 0.15052799880504608
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.1525759994983673,
+     "min": 0.1515520066022873
+    },
+    {
+     "round": 1,
+     "median": 0.1525759994983673,
+     "min": 0.1515520066022873
+    },
+    {
+     "round": 2,
+     "median": 0.1525759994983673,
+     "min": 0.1515520066022873
+    },
+    {
+     "round": 3,
+     "median": 0.1525759994983673,
+     "min": 0.1515520066022873
+    },
+    {
+     "round": 4,
+     "median": 0.1525759994983673,
+     "min": 0.1515520066022873
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 64 blocks at 32 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv+out | qkv: triton (64, 64, 32, 4, 4) at 4.66 us beats the vendor's 6.20 us decisively (1.330x over 18 tiles); spills=0 regs=80 | out: triton (128, 32, 32, 4, 4) at 2.60 us beats the vendor's 3.61 us decisively (1.390x over 18 tiles); spills=0 regs=95",
+    "gemm_sites": [
+     "qkv",
+     "out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 64 blocks at 32 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv+out | qkv: triton (64, 64, 32, 4, 4) at 4.66 us beats the vendor's 6.20 us decisively (1.332x over 18 tiles); spills=0 regs=80 | out: triton (64, 64, 32, 4, 4) at 2.69 us beats the vendor's 3.62 us decisively (1.348x over 18 tiles); spills=0 regs=80",
+    "gemm_sites": [
+     "qkv",
+     "out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 12,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.07475200295448303,
+   "v40_looped_attn": 0.07475200295448303
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.07372800260782242,
+   "v40_looped_attn": 0.07475200295448303
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.07475200295448303,
+     "min": 0.07372800260782242
+    },
+    {
+     "round": 1,
+     "median": 0.07475200295448303,
+     "min": 0.07372800260782242
+    },
+    {
+     "round": 2,
+     "median": 0.07475200295448303,
+     "min": 0.07372800260782242
+    },
+    {
+     "round": 3,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    },
+    {
+     "round": 4,
+     "median": 0.07475200295448303,
+     "min": 0.07372800260782242
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    },
+    {
+     "round": 1,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    },
+    {
+     "round": 2,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    },
+    {
+     "round": 3,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    },
+    {
+     "round": 4,
+     "median": 0.07475200295448303,
+     "min": 0.07475200295448303
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 64 blocks at 32 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv+out | qkv: triton (64, 64, 32, 4, 4) at 4.67 us beats the vendor's 6.20 us decisively (1.328x over 18 tiles); spills=0 regs=80 | out: triton (128, 32, 32, 4, 4) at 2.58 us beats the vendor's 3.62 us decisively (1.400x over 18 tiles); spills=0 regs=95",
+    "gemm_sites": [
+     "qkv",
+     "out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 64 blocks at 32 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv+out | qkv: triton (64, 64, 32, 4, 4) at 4.66 us beats the vendor's 6.20 us decisively (1.332x over 18 tiles); spills=0 regs=80 | out: triton (64, 64, 32, 4, 4) at 2.67 us beats the vendor's 3.63 us decisively (1.362x over 18 tiles); spills=0 regs=80",
+    "gemm_sites": [
+     "qkv",
+     "out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 1,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.2252800017595291,
+   "v40_looped_attn": 0.2252800017595291
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.2242559939622879,
+   "v40_looped_attn": 0.22323200106620789
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.2242559939622879,
+     "min": 0.22323200106620789
+    },
+    {
+     "round": 1,
+     "median": 0.22630399465560913,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 2,
+     "median": 0.2252800017595291,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 3,
+     "median": 0.2252800017595291,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 4,
+     "median": 0.22630399465560913,
+     "min": 0.2242559939622879
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.2242559939622879,
+     "min": 0.22323200106620789
+    },
+    {
+     "round": 1,
+     "median": 0.2252800017595291,
+     "min": 0.22323200106620789
+    },
+    {
+     "round": 2,
+     "median": 0.2252800017595291,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 3,
+     "median": 0.22630399465560913,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 4,
+     "median": 0.2252800017595291,
+     "min": 0.2242559939622879
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0012906789779663086,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.91 us against the best of 18 tiles at 12.82 us (1.085x, inside the 10% margin) | out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.330x over 18 tiles); spills=0 regs=126 | ffn_in: triton (128, 64, 32, 4, 4) at 6.69 us beats the vendor's 10.07 us decisively (1.505x over 18 tiles); spills=0 regs=141 | ffn_out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.330x over 18 tiles); spills=0 regs=126",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012906789779663086,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.91 us against the best of 18 tiles at 12.79 us (1.087x, inside the 10% margin) | out: triton (64, 128, 32, 4, 4) at 5.47 us beats the vendor's 7.31 us decisively (1.336x over 18 tiles); spills=0 regs=129 | ffn_in: triton (128, 64, 32, 4, 4) at 6.70 us beats the vendor's 10.08 us decisively (1.505x over 18 tiles); spills=0 regs=141 | ffn_out: triton (64, 128, 32, 4, 4) at 5.47 us beats the vendor's 7.31 us decisively (1.336x over 18 tiles); spills=0 regs=129",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 3,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.05222399905323982,
+   "v40_looped_attn": 0.053247999399900436
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.05222399905323982,
+   "v40_looped_attn": 0.05222399905323982
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.09779200330376625,
+     "min": 0.053247999399900436
+    },
+    {
+     "round": 1,
+     "median": 0.05222399905323982,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 2,
+     "median": 0.05222399905323982,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 3,
+     "median": 0.05222399905323982,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 4,
+     "median": 0.05222399905323982,
+     "min": 0.05222399905323982
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.09728000313043594,
+     "min": 0.08499199897050858
+    },
+    {
+     "round": 1,
+     "median": 0.053247999399900436,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 2,
+     "median": 0.053247999399900436,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 3,
+     "median": 0.053247999399900436,
+     "min": 0.05222399905323982
+    },
+    {
+     "round": 4,
+     "median": 0.053247999399900436,
+     "min": 0.05222399905323982
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 32 blocks at 16 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv | qkv: triton (128, 32, 32, 4, 4) at 2.42 us beats the vendor's 3.19 us decisively (1.318x over 18 tiles); spills=0 regs=93 | out: vendor: 1.94 us against the best of 18 tiles at 2.08 us (0.933x, inside the 10% margin)",
+    "gemm_sites": [
+     "qkv"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0012493431568145752,
+    "launch_reason": "fused: 32 blocks at 16 rows fits one wave on 66 SMs; derived 8 warps, confirmed",
+    "gemm_reason": "triton on qkv | qkv: triton (64, 64, 32, 4, 4) at 2.52 us beats the vendor's 3.17 us decisively (1.257x over 18 tiles); spills=0 regs=80 | out: vendor: 1.94 us against the best of 18 tiles at 2.07 us (0.934x, inside the 10% margin)",
+    "gemm_sites": [
+     "qkv"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ },
+ {
+  "config_id": 9,
+  "rounds": 5,
+  "iters": 100,
+  "warmup": 200,
+  "arms": [
+   "v38_stream_fallback",
+   "v40_looped_attn"
+  ],
+  "median_of_min_rounds": {
+   "v38_stream_fallback": 0.22630399465560913,
+   "v40_looped_attn": 0.22630399465560913
+  },
+  "min_of_min_rounds": {
+   "v38_stream_fallback": 0.2252800017595291,
+   "v40_looped_attn": 0.2252800017595291
+  },
+  "per_round": {
+   "v38_stream_fallback": [
+    {
+     "round": 0,
+     "median": 0.22630399465560913,
+     "min": 0.2242559939622879
+    },
+    {
+     "round": 1,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 2,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 3,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 4,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    }
+   ],
+   "v40_looped_attn": [
+    {
+     "round": 0,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 1,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 2,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 3,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    },
+    {
+     "round": 4,
+     "median": 0.22630399465560913,
+     "min": 0.2252800017595291
+    }
+   ]
+  },
+  "correctness": {
+   "v38_stream_fallback": {
+    "passed": true,
+    "max_abs": 0.0013036131858825684,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.93 us against the best of 18 tiles at 12.82 us (1.086x, inside the 10% margin) | out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.330x over 18 tiles); spills=0 regs=126 | ffn_in: triton (128, 64, 32, 4, 4) at 6.69 us beats the vendor's 10.08 us decisively (1.507x over 18 tiles); spills=0 regs=141 | ffn_out: triton (128, 64, 32, 4, 4) at 5.48 us beats the vendor's 7.29 us decisively (1.330x over 18 tiles); spills=0 regs=126",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   },
+   "v40_looped_attn": {
+    "passed": true,
+    "max_abs": 0.0013036131858825684,
+    "launch_reason": "declined: 128 blocks at 64 rows is more than one wave on 66 SMs, so launch latency is already hidden",
+    "gemm_reason": "triton on out+ffn_in+ffn_out | qkv: vendor: 13.90 us against the best of 18 tiles at 12.84 us (1.083x, inside the 10% margin) | out: triton (128, 64, 32, 4, 4) at 5.49 us beats the vendor's 7.31 us decisively (1.331x over 18 tiles); spills=0 regs=126 | ffn_in: triton (128, 64, 32, 4, 4) at 6.69 us beats the vendor's 10.08 us decisively (1.506x over 18 tiles); spills=0 regs=141 | ffn_out: triton (128, 64, 32, 4, 4) at 5.49 us beats the vendor's 7.31 us decisively (1.331x over 18 tiles); spills=0 regs=126",
+    "gemm_sites": [
+     "out",
+     "ffn_in",
+     "ffn_out"
+    ],
+    "gemm_engaged": true,
+    "stream_path": "resident"
+   }
+  },
+  "all_correct": true
+ }
+]

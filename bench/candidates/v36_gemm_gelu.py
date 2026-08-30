@@ -99,7 +99,6 @@ import torch
 import torch.nn.functional as F
 
 from .v34_launch_bound import build as build_v34
-from ..kernels.attn_single_tile import single_tile_attention
 from ..kernels.ffn_fused import fused_ffn, fused_ffn_normed
 from ..kernels.proj_gemm import plan, proj_gemm
 
@@ -231,18 +230,7 @@ def build(baseline_cls):
                     qkv_t, out_t = pt
 
                     qkv = self._lin(self._tile_qkv, False, xn, qkv_w, qkv_t, qkv_b)
-                    if self.attn_used:
-                        abm, awarps, astages = self.attn_tile
-                        ctx = single_tile_attention(qkv, a.num_heads, a.head_dim, a.scale,
-                                                    abm, awarps, astages)
-                    else:
-                        q, k, v = qkv.split(a.d_model, dim=-1)
-                        q = q.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                        k = k.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                        v = v.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                        ctx = F.scaled_dot_product_attention(
-                            q, k, v, is_causal=True).transpose(1, 2).reshape(
-                                b, s, a.d_model)
+                    ctx = self._attention(qkv, a, b, s)
                     # Deliberately NOT `.float()`: the megakernel widens it, as in v34.
                     attn = self._lin(self._tile_out, False, ctx, out_w, out_t, out_b)
 
@@ -281,19 +269,7 @@ def build(baseline_cls):
 
                 qkv = self._lin(self._tile_qkv, False, layer.norm1(x).to(lp),
                                 qkv_w, qkv_t, qkv_b)
-                if self.attn_used:
-                    bm, warps, stages = self.attn_tile
-                    ctx = single_tile_attention(qkv, a.num_heads, a.head_dim, a.scale,
-                                                bm, warps, stages)
-                else:
-                    # v8's path verbatim: fp16, no attn_mask, so flash qualifies and the
-                    # key mask is provably redundant under causality (finding 11).
-                    q, k, v = qkv.split(a.d_model, dim=-1)
-                    q = q.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    k = k.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    v = v.view(b, s, a.num_heads, a.head_dim).transpose(1, 2)
-                    ctx = F.scaled_dot_product_attention(
-                        q, k, v, is_causal=True).transpose(1, 2).reshape(b, s, a.d_model)
+                ctx = self._attention(qkv, a, b, s)
                 o = self._lin(self._tile_out, False, ctx, out_w, out_t, out_b).float()
                 if zero:
                     o = o.masked_fill(~mask[..., None], 0)
