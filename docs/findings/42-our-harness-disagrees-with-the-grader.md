@@ -70,3 +70,52 @@ correct response was not to argue about noise floors — it was to run the grade
 **When a harness of your own differs from the one that scores you, the burden is on you
 to demonstrate agreement, per config, before trusting a single ranking.** A difference
 you have written down in a comment is still a difference.
+
+---
+
+## Addendum — the graded harness cannot rank either, and the noise has a shape
+
+Running `bench/end_to_end.py` on three candidates across nine configs shows the problem is
+not "our harness is wrong, use theirs". **The BASELINE arm — byte-identical unmodified
+reference code in all three runs — moves like this:**
+
+    cfg  8   16.2580  16.2652  16.2662     spread  0.1%
+    cfg  5    3.2461   3.2737   3.2737             0.9%
+    cfg  1    1.8848   1.7958   1.8396             5.0%
+    cfg  9    1.7316   1.6794   1.5928             8.7%
+    cfg  4    1.8381   2.0054   2.2486            22.3%
+    cfg  2    2.1646   2.4544   1.8427            33.2%
+    cfg  3    1.8024   2.5104   2.0343            39.3%
+
+**The noise scales inversely with config size, and the worst rows are exactly the ones
+carrying all the remaining score.** Meanwhile the OPTIMIZED arm is stable to the last
+digit: v34 and v35 both read 0.0481 on config 2 and 0.0922 on config 12, differing only
+where their predicates differ.
+
+So the reported `speedup` inherits a noisy denominator and is unusable for ranking, while
+the candidate's own time is sound. **Rank candidates by their optimized time against a
+FIXED reference, never by a per-run speedup ratio.** The score is unaffected — the graders
+compute one ratio per submission, they do not compare two of ours.
+
+The g36 executor independently diagnosed the mechanism: **round 1 of 100 timed calls reads
+932.9 us on config 1 where rounds 2-3 read 250.9 us stable to 0.1 us** — roughly 130 calls
+of settling after CUDA-graph capture, against the harness's 20 warmup iterations. Both arms
+pay it, so a single submission's score is fair; a five-sample median of it cannot separate
+two candidates 5% apart on a 0.25 ms row.
+
+**The protocol that did work** (used for v36, +0.082 of weighted_score with no regression):
+parent and child ABBA-interleaved, both models resident, cold round discarded, min of four
+— with configs 8 and 13 running byte-identical code as an in-run control, establishing the
+floor at +/-0.4%. Configs 1, 9 and 10 have identical GEMM shapes and agreed to 0.15pp,
+which is the check that the protocol is not measuring itself.
+
+## L53 — A tuner that times two arms in sequence is a benchmark, and inherits every benchmark's bugs
+
+From the g36 executor, which found it the hard way twice: its predicate used `do_bench`
+(which flushes L2 and pays a launch) to choose tiles for kernels that run **L2-hot inside a
+replayed graph**, and its first `plan()` call in a process measured `F.linear` at 306 us
+where a clean process reads 21.5 us — cuBLASLt one-time setup captured inside the timing
+window, reporting a fake 17.6x.
+
+**Interleave, discard the cold round, and use a timer whose regime matches the call site's
+— or write in the code why not.**

@@ -952,3 +952,26 @@ demonstrate agreement per config before trusting any ranking.** A difference wri
 in a comment is still a difference. Exposure is worst on sub-millisecond configs — which
 is exactly where all remaining score lives. See docs/findings/42.
 
+
+## L53 — A tuner that times two arms in sequence is a benchmark (2026-08-30)
+
+The graded harness cannot rank candidates either, and the noise has a shape: its BASELINE
+arm — byte-identical reference code — spreads **0.1% on config 8, 33% on config 2, 39% on
+config 3**, i.e. inversely with config size, worst exactly where all remaining score lives.
+The OPTIMIZED arm is stable to the last digit. So the reported `speedup` inherits a noisy
+denominator; **rank by the candidate's own time against a FIXED reference, never by a
+per-run ratio.** Mechanism: round 1 of 100 timed calls reads 932.9 us where rounds 2-3 read
+250.9 us stable to 0.1 us — ~130 calls of settling after graph capture against 20 warmup
+iterations.
+
+The same error one level down: a *tuner* that times two arms in sequence is a benchmark and
+inherits every benchmark's bugs. g36's predicate used `do_bench` (flushes L2, pays a launch)
+to pick tiles for kernels that run L2-hot inside a replayed graph; and its first `plan()`
+call read `F.linear` at 306 us against a clean process's 21.5 us — cuBLASLt setup inside the
+timing window, a fake 17.6x.
+
+**Interleave, discard the cold round, and use a timer whose regime matches the call site's,
+or write in the code why not.** The protocol that worked: ABBA-interleaved, both resident,
+cold round discarded, min of four, with byte-identical configs as an in-run control. See
+docs/findings/42.
+
