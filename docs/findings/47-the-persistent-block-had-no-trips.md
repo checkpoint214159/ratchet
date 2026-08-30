@@ -201,6 +201,25 @@ A kernel rewrite plus a second launcher path, carried on the frontier forever, f
 +0.0063 that nothing in the harness can see, is the complication L17 warns the loop only
 ever adds and never removes. **Declined.**
 
+### And the instrument itself moves further than the effect
+
+The two probes were run half an hour apart, in separate processes, both holding the GPU
+lock, both min-of-3 `do_bench`. At 8192 tokens they measure a **byte-identical arm** —
+BM=64, 8 warps, `num_stages=1`, grid=264, 128 programs:
+
+```
+                                probe_one_trip   probe_symmetric_sweep   apart
+persistent, one trip, BM=64        35.041 us            32.545 us         7.1%
+frontier as shipped                36.840               35.936            2.5%
+```
+
+**The candidate arm moved 7.1% between two runs of the same code on the same card.** That
+is L29's ±7% floor, reproduced at op level, on the instrument F-03 used to report an 8.2%
+win. Every ratio in this finding — mine included — should be read against it. It is the
+reason the disposition below hands the one live residue to a tuner that re-measures at
+prime time under a `DECISIVE` margin, rather than to a constant chosen from any of these
+tables.
+
 ## 5. DISPOSITION
 
 * **F-03 is declined.** Not "measured flat": it was priced from arms in which its own
@@ -225,6 +244,7 @@ ever adds and never removes. **Declined.**
 Not appended to `docs/findings/00-learnings.md` — `ben` is ahead and it would collide.
 
 ### L55 — Best-of-N against best-of-1 is not a comparison, it is a handicap
+
 
 A sweep that searches N arms on the candidate and one arm on the baseline reports the
 minimum of N noisy draws against a single draw, and under unlockable clocks that gap is
