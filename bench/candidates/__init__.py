@@ -168,6 +168,11 @@ def _v21(baseline_cls):
     return build(baseline_cls)
 
 
+def _v22(baseline_cls):
+    from .v22_headdim8_attn import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
     "v1_fused_graph": CandidateSpec(
         name="v1_fused_graph", generation=1, parent=None, build=_v1,
@@ -390,5 +395,18 @@ REGISTRY: dict[str, CandidateSpec] = {
                 "be safe by accident (L24); the liveness check is what makes it correct "
                 "for callers the harness does not model. Ceiling ~3% on config 6, ~2.5% "
                 "on 13, ~0 elsewhere -- INSIDE the noise floor by construction.",
+    ),
+    "v22_headdim8_attn": CandidateSpec(
+        name="v22_headdim8_attn", generation=22, parent="v18_capture_insurance",
+        build=_v22,
+        summary="A hand-written Triton causal attention kernel for head_dim BELOW the "
+                "tl.dot contraction floor the Triton backend reports for this device "
+                "(16 on sm_89, mma.sync.m16n8k16). PyTorch's FlashAttention-2 has no "
+                "head_dim=8 kernel and HEADDIM_SWITCH rounds it to 32, so the vendor is "
+                "mis-tiled, NOT refused -- finding 23 killed the refusal premise. "
+                "Op-level 1.40x on configs 7 and 11, indicative. End to end ~1.10x and "
+                "~1.13x on those two configs, ~+1.7% on the 13-config geomean, which is "
+                "INSIDE the noise floor, and ~zero under weighted_score because config 11 "
+                "is already capped. Per-config claim only.",
     ),
 }
