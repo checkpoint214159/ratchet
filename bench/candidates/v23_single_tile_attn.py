@@ -103,6 +103,14 @@ def build(baseline_cls):
         # the A/B attributable and supplies its byte-identical control configs.
         attn_tile_timer = None
 
+        # HOW MANY TIMES THE SWEEP MUST AGREE WITH ITSELF BEFORE IT DISPLACES ANYTHING.
+        # `1` is `autotune_tile`'s own default and is what this class has shipped since
+        # generation 23. The second extension point, for the same reason as the first:
+        # generation 43's claim is that a SHARPER timer needs its answer replicated
+        # before it is acted on, and measuring that claim needs a parent arm that is
+        # byte-identical to the parent. One value, in one place, both paths untouched.
+        attn_tile_replicates = 1
+
         def _decide_attn(self, x):
             """Decided ONCE, before compilation and graph capture, so the tile is a
             Python constant by the time anything traces it."""
@@ -116,7 +124,8 @@ def build(baseline_cls):
                 return
             try:
                 tile, how = autotune_tile(s, a.head_dim, a.num_heads, b, x.device,
-                                          timer=self.attn_tile_timer)
+                                          timer=self.attn_tile_timer,
+                                          replicates=self.attn_tile_replicates)
             except Exception as exc:                   # never fail closed on a tuner
                 self.attn_used = False
                 self.attn_reason = f"declined: tile selection failed ({exc})"
