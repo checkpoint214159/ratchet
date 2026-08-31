@@ -109,3 +109,47 @@ measurement each.
 under two minutes and overturned a conclusion built on a careful analysis of noise. The
 byte-identical control arms (2 and 8, reading identical to the hundredth of a microsecond)
 are what make the config-12 result believable, and they cost nothing to include.
+
+---
+
+## Second addendum — v43_replicated_tile is the submission
+
+Replicated ABBA, 5 rounds, 200 warmup, v26 as the common reference:
+
+    cfg    v40      v43     v40 pts   v43 pts    delta   note
+      1   2.64     2.63     0.1889    0.1881   -0.0009
+      2   2.59     2.76     0.1847    0.1973   +0.0126
+      3   4.46     4.45     0.2143    0.2143   +0.0000   CAPPED
+      4   2.67     2.67     0.1910    0.1910   +0.0000
+      7   4.03     4.27     0.2143    0.2143   +0.0000   CAPPED
+      9   2.03     2.02     0.1449    0.1445   -0.0003
+     10   2.43     2.42     0.1734    0.1728   -0.0007
+     11   8.57     8.39     0.2143    0.2143   +0.0000   CAPPED
+     12   2.76     2.76     0.1972    0.1973   +0.0002
+    sum                     1.7230    1.7339   +0.0109
+
+**+0.0109, and every point of it is config 2.** The losses on 1, 9 and 10 total -0.0019,
+inside the measured control floor of 0.9811x-1.0046x on byte-identical rows.
+
+### Config 7 is the clearest illustration of the cap in the whole project
+
+v43 improves config 7 from **4.03x to 4.27x** — a real, replicated 1.345x tile win that the
+g43 executor found, measured twice, and deliberately declined to act on. It contributes
+**exactly 0.0000**, because config 7 was already 34% past the 3.0 clip.
+
+That agent was right to leave it, and right for the stated reason: the win is real and
+worthless. The same tile fix on config 2 — one clip below the ceiling — is the entire
+delta of this generation.
+
+**Where a speedup lands matters more than how large it is**, and no amount of kernel skill
+substitutes for checking which configs can still pay.
+
+## L58 — A capped win is not a small win, it is a zero
+
+Five of fourteen configs (3, 6, 7, 11, 13) are past the clip, and config 6 alone is 83% of
+matrix wall time. Work landing there scores nothing at all — not a little, nothing. This
+project spent its first two days optimising config 6.
+
+The corollary that took longer to learn: **a regression on a capped config is also free**,
+which is why v37's 1.6x streaming defect on config 6 survived two sweeps and two commits
+unnoticed. The objective that hides the win hides the loss with it.
