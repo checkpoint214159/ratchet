@@ -586,9 +586,9 @@ def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
         # The timer is NAMED in every reason string. [L36]: a candidate whose mechanism
         # never engages is its parent with extra build time, and the only externally
         # visible trace of which instrument ranked this sweep is what it says it was.
-        # From g43 the same holds for the replicate count and for the DISAGREEMENT that
-        # made a sweep hold -- otherwise a tuner that reverted because its answer did not
-        # replicate is indistinguishable from one that confirmed the derived tile.
+        # From g43 the same holds for how many DISTINCT answers the individual sweeps
+        # gave -- otherwise a decision the floor rescued from a sweep whose winner moved
+        # every pass is indistinguishable from one every pass already agreed on.
         tn = getattr(timer, "__name__", str(timer))
         note = f" ({len(dropped)} dropped on tolerance)" if dropped else ""
         scored = [t for t in sweeps if t]
