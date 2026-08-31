@@ -1,19 +1,29 @@
 /* ratchet dashboard — operations view. Scanned, not read.
-   Palette is the project's validated colour-blind-separable set. */
+   Palette: the validated data-analysis set (warm-neutral surfaces, one blue accent,
+   an aqua reserved for recombination, and a fixed status trio). Every colour job is
+   single-purpose: blue = interactive accent + the "faster" ramp arm, red = failure +
+   the "slower" arm, aqua = recombination edges only, amber = warnings only. */
 :root {
-  --ink:       #151C24;
-  --paper:     #F3F5F7;
-  --surface:   #FFFFFF;
-  --violet:    #6B5CA5;
-  --teal:      #048C74;
-  --amber:     #C8841C;
-  --brick:     #B3402C;
+  --ink:       #0B0B0B;
+  --paper:     #F9F9F7;
+  --surface:   #FCFCFB;
+  --line:      #E1E0D9;
+  --line-soft: #ECEBE4;
+  --muted:     #52514E;
+  --faint:     #898781;
+  --shade:     #F0EFEC;
 
-  --line:      #D8DEE5;
-  --line-soft: #E7EBEF;
-  --muted:     #5C6875;
-  --faint:     #8A96A3;
-  --shade:     #EDF0F3;
+  --accent:    #2A78D6;   /* interactive: tabs, buttons, selection, links */
+  --good:      #006300;   /* success text on the light surface */
+  --warn:      #C8841C;   /* warning text step (dark enough to read on light) */
+  --crit:      #D03B3B;   /* failures — reserved, never a series colour */
+  --recomb:    #199E70;   /* recombination edges only */
+
+  /* aliases so any straggling reference still resolves to the new palette */
+  --violet: var(--accent);
+  --teal:   var(--accent);
+  --amber:  var(--warn);
+  --brick:  var(--crit);
 
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Archivo", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -22,24 +32,25 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ink:       #E6EBF0;
-    --paper:     #131A21;
-    --surface:   #1B242E;
-    --violet:    #8172BE;
-    --teal:      #069680;
-    --amber:     #D89A3E;
-    --brick:     #CF5B45;
-    --line:      #2E3A46;
-    --line-soft: #253039;
-    --muted:     #97A4B1;
-    --faint:     #6E7C8A;
-    --shade:     #202B35;
+    --ink:       #FFFFFF;
+    --paper:     #0D0D0D;
+    --surface:   #1A1A19;
+    --line:      #2C2C2A;
+    --line-soft: #242422;
+    --muted:     #C3C2B7;
+    --faint:     #898781;
+    --shade:     #232321;
+    --accent:    #3987E5;
+    --good:      #0CA30C;
+    --warn:      #FAB219;
+    --crit:      #E66767;
+    --recomb:    #199E70;
   }
 }
 :root[data-theme="dark"] {
-  --ink: #E6EBF0; --paper: #131A21; --surface: #1B242E;
-  --violet: #8172BE; --teal: #069680; --amber: #D89A3E; --brick: #CF5B45;
-  --line: #2E3A46; --line-soft: #253039; --muted: #97A4B1; --faint: #6E7C8A; --shade: #202B35;
+  --ink: #FFFFFF; --paper: #0D0D0D; --surface: #1A1A19;
+  --line: #2C2C2A; --line-soft: #242422; --muted: #C3C2B7; --faint: #898781; --shade: #232321;
+  --accent: #3987E5; --good: #0CA30C; --warn: #FAB219; --crit: #E66767; --recomb: #199E70;
 }
 
 * { box-sizing: border-box; }
@@ -55,7 +66,7 @@ body {
 .num, code, pre, td.n, th.n, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 table { font-variant-numeric: tabular-nums; }
 button { font-family: inherit; }
-a { color: var(--violet); }
+a { color: var(--accent); }
 
 /* ---------------- status bar ---------------- */
 .statusbar {
@@ -79,18 +90,18 @@ a { color: var(--violet); }
 .sb-item.wide .v { white-space: normal; }
 .sb-spacer { flex: 1 1 auto; border-right: 0; }
 .sb-run { border-left: 3px solid transparent; }
-.sb-run.on  { border-left-color: var(--teal);  }
+.sb-run.on  { border-left-color: var(--good);  }
 .sb-run.off { border-left-color: var(--faint); }
 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
-.dot.live { background: var(--teal); animation: pulse 1.6s ease-in-out infinite; }
+.dot.live { background: var(--good); animation: pulse 1.6s ease-in-out infinite; }
 .dot.idle { background: var(--faint); }
-.dot.warn { background: var(--amber); }
-.dot.bad  { background: var(--brick); }
+.dot.warn { background: var(--warn); }
+.dot.bad  { background: var(--crit); }
 @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .28 } }
 @media (prefers-reduced-motion: reduce) { .dot.live { animation: none } }
-.v.ok    { color: var(--teal); }
-.v.warn  { color: var(--amber); }
-.v.bad   { color: var(--brick); }
+.v.ok    { color: var(--good); }
+.v.warn  { color: var(--warn); }
+.v.bad   { color: var(--crit); }
 
 /* ---------------- tabs ---------------- */
 .tabs {
@@ -106,11 +117,11 @@ a { color: var(--violet); }
   font-size: 12px; font-weight: 600; letter-spacing: .02em;
 }
 .tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--violet); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .tab .badge {
   font-family: var(--mono); font-size: 10px; color: var(--faint); margin-left: 6px; font-weight: 500;
 }
-.tab .badge.bad { color: var(--brick); }
+.tab .badge.bad { color: var(--crit); }
 
 /* ---------------- layout ---------------- */
 main { padding: 14px; max-width: 1600px; }
@@ -135,59 +146,121 @@ table.grid thead th {
 }
 table.grid td.n, table.grid th.n { text-align: right; font-family: var(--mono); }
 table.grid tbody tr:hover { background: var(--shade); }
-table.grid tr.sel { background: color-mix(in srgb, var(--violet) 12%, transparent); }
+table.grid tr.sel { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .pill {
   display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
   padding: 1px 6px; border-radius: 9px; border: 1px solid currentColor; line-height: 1.5;
 }
-.pill.ok    { color: var(--teal); }
-.pill.bad   { color: var(--brick); }
-.pill.warn  { color: var(--amber); }
+.pill.ok    { color: var(--good); }
+.pill.bad   { color: var(--crit); }
+.pill.warn  { color: var(--warn); }
 .pill.mute  { color: var(--faint); }
-.pill.violet{ color: var(--violet); }
-.best { font-weight: 600; }
+.pill.violet{ color: var(--accent); }
+.best { font-weight: 700; }
 .dim { color: var(--faint); }
 .tiny { font-size: 10.5px; }
+/* the honest metric (vs the compiled baseline): emphasis by weight, in ink —
+   text wears text tokens, never a series colour */
+.hon { font-weight: 600; color: var(--ink); }
 
 /* ---------------- evolution tree (declared lineage) ----------------
    Rounded boxes and curved edges on purpose: right-angle rails and lane columns are
-   the visual grammar of a commit graph, and this is not one. */
-.treewrap { overflow: auto; background: var(--surface); padding: 4px; }
+   the visual grammar of a commit graph, and this is not one. The tree lives in a
+   pan/zoom viewport; the minimap is the global view the window is a window onto. */
+.statechips { display: flex; gap: 10px; flex-wrap: wrap; margin: 2px 0 10px; }
+.schip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted); font-weight: 600;
+  border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px 2px 7px;
+  background: var(--surface);
+}
+.schip .sdot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.schip.s-ok .sdot         { background: var(--accent); }
+.schip.s-partial .sdot    { background: var(--warn); }
+.schip.s-failed .sdot     { background: repeating-linear-gradient(45deg, transparent, transparent 2px, var(--crit) 2px, var(--crit) 4px); border: 1px solid var(--crit); }
+.schip.s-unmeasured .sdot { background: none; border: 1px dashed var(--faint); }
+.schip.s-unsafe .sdot     { background: var(--crit); width: 4px; border-radius: 1px; }
+.schip.s-leaf .sdot       { background: var(--muted); border-radius: 50%; width: 7px; height: 7px; }
+
 .treectl { display: flex; align-items: center; gap: 8px; margin: 6px 0 8px; flex-wrap: wrap; }
 .treectl .k { color: var(--faint); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.zctl { margin-bottom: 6px; }
+
+.treeview {
+  position: relative;
+  height: clamp(420px, 62vh, 780px);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  margin-bottom: 14px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.treeview:active { cursor: grabbing; }
+.treesvg { width: 100%; height: 100%; display: block; }
 
 #tree text { font-family: var(--mono); }
 #tree .gen { font-size: 9px; fill: var(--faint); letter-spacing: .04em; }
-#tree .lname { font-size: 10.5px; font-weight: 600; fill: var(--ink); }
+#tree .lname { font-size: 11px; font-weight: 700; fill: var(--ink); }
 #tree .lsub  { font-size: 9px; fill: var(--muted); }
-#tree .lstar { font-size: 9px; font-weight: 700; fill: var(--violet); }
-#tree .lflag { font-size: 11px; fill: var(--amber); }
 
 #tree .ledge { stroke: var(--line); stroke-width: 1.4; fill: none; stroke-linecap: round; }
 #tree .ledge.measured { stroke: color-mix(in srgb, var(--muted) 55%, transparent); stroke-width: 1.8; }
 
-/* Recombination: a real second contributor, drawn distinctly rather than dropped. */
-#tree .recomb { stroke: var(--violet); stroke-width: 1.8; stroke-dasharray: 6 4; fill: none; opacity: .95; }
-#tree .recomb-head { fill: var(--violet); }
+/* Recombination: a real second contributor, drawn distinctly rather than dropped.
+   Aqua is reserved for this one job; the dash + arrowhead carry it without colour. */
+#tree .recomb { stroke: var(--recomb); stroke-width: 1.8; stroke-dasharray: 6 4; fill: none; opacity: .95; }
+#tree .recomb-head { fill: var(--recomb); }
 
 #tree g.lnode rect.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.25; }
 #tree g.lnode.unmeasured rect.box { fill: none; stroke-dasharray: 4 3; stroke: var(--faint); }
-#tree g.lnode:hover rect.box { stroke: var(--violet); stroke-width: 2; }
-#tree g.lnode.sel rect.box { stroke: var(--violet); stroke-width: 2.5; }
-#tree g.lnode.frontier rect.halo { fill: none; stroke: var(--violet); stroke-width: 2; stroke-dasharray: 3 3; opacity: .85; }
-#tree g.lnode rect.spine { fill: var(--brick); }
+#tree g.lnode.failed rect.box { fill: url(#hatch-fail); stroke: var(--crit); stroke-dasharray: none; }
+#tree g.lnode.failed .lname, #tree g.lnode.failed .lsub { fill: var(--crit); }
+#tree .hatchline { stroke: var(--crit); stroke-width: 2; opacity: .28; }
+#tree g.lnode:hover rect.box { stroke: var(--accent); stroke-width: 2; }
+#tree g.lnode.sel rect.box { stroke: var(--accent); stroke-width: 2.5; }
+#tree g.lnode.frontier rect.halo { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 3 3; opacity: .85; }
+#tree g.lnode rect.spine { fill: var(--crit); }
+#tree g.lnode.unsafe rect.box { stroke: var(--crit); }
+#tree g.lnode.ghost { opacity: .55; }
+#tree g.lnode.offtrace { opacity: .18; }
 #tree circle.leafdot { fill: var(--muted); opacity: .7; }
+#tree .failbadge { fill: var(--crit); stroke: var(--surface); stroke-width: 1.5; }
+#tree .failbadge-t { font-size: 8px; font-weight: 700; fill: #FFFFFF; }
+
+.minimap {
+  position: absolute; right: 10px; bottom: 10px; width: 190px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  border: 1px solid var(--line); border-radius: var(--r);
+  padding: 4px; cursor: crosshair; z-index: 5;
+  backdrop-filter: blur(2px);
+}
+.minimap svg { width: 100%; height: auto; display: block; }
+.mm-n { fill: var(--line); }
+.mm-n.mm-ok { fill: var(--accent); opacity: .75; }
+.mm-n.mm-partial { fill: var(--warn); opacity: .8; }
+.mm-n.mm-failed { fill: var(--crit); opacity: .8; }
+.mm-n.mm-unmeasured { fill: var(--faint); opacity: .35; }
+.mm-n.mm-frontier { fill: var(--ink); opacity: 1; }
+.mmview { fill: none; stroke: var(--accent); stroke-width: 12; opacity: .9; }
 
 .legend .legrow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 4px 0; }
 .legend .legrow .k { color: var(--faint); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
 .legend .legkey { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
 .legend .legchip { width: 22px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
-.legend .c-frontier { border: 2px dashed var(--violet); }
+.legend .c-frontier { border: 2px dashed var(--accent); }
 .legend .c-unmeasured { border: 1px dashed var(--faint); }
+.legend .c-failed { border: 1px solid var(--crit);
+  background: repeating-linear-gradient(45deg, transparent, transparent 3px,
+    color-mix(in srgb, var(--crit) 34%, transparent) 3px, color-mix(in srgb, var(--crit) 34%, transparent) 6px); }
+.legend .c-partial { background: var(--crit); border-radius: 50%; width: 10px; height: 10px; }
 .legend .c-leaf { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-.legend .c-recomb { height: 0; border-top: 2px dashed var(--violet); }
-.legend .c-unsafe { width: 5px; background: var(--brick); }
-.legend .c-flag { background: var(--amber); }
+.legend .c-recomb { height: 0; border-top: 2px dashed var(--recomb); }
+.legend .c-unsafe { width: 5px; background: var(--crit); }
+.legend .c-flag { background: var(--warn); }
+.legend .c-offtrace { background: var(--faint); opacity: .25; }
 .rampbar { border-radius: 3px; overflow: hidden; }
 
 /* ---------------- heatmap ---------------- */
@@ -205,8 +278,8 @@ table.heat td.cell.empty {
 }
 table.heat td.cell.fail {
   background: repeating-linear-gradient(45deg, transparent, transparent 3px,
-    color-mix(in srgb, var(--brick) 34%, transparent) 3px, color-mix(in srgb, var(--brick) 34%, transparent) 6px);
-  border: 1px solid var(--brick); color: var(--brick); font-weight: 600;
+    color-mix(in srgb, var(--crit) 34%, transparent) 3px, color-mix(in srgb, var(--crit) 34%, transparent) 6px);
+  border: 1px solid var(--crit); color: var(--crit); font-weight: 600;
 }
 .scale { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 10.5px; color: var(--muted); }
 .scale .bar { display: flex; }
@@ -216,8 +289,8 @@ table.heat td.cell.fail {
 .legend .sw { width: 18px; height: 12px; display: inline-block; vertical-align: -2px; margin-right: 5px; border-radius: 2px; }
 .sw.empty { border: 1px dashed var(--line); }
 .sw.fail { background: repeating-linear-gradient(45deg, transparent, transparent 3px,
-  color-mix(in srgb, var(--brick) 34%, transparent) 3px, color-mix(in srgb, var(--brick) 34%, transparent) 6px);
-  border: 1px solid var(--brick); }
+  color-mix(in srgb, var(--crit) 34%, transparent) 3px, color-mix(in srgb, var(--crit) 34%, transparent) 6px);
+  border: 1px solid var(--crit); }
 
 /* ---------------- toggles ---------------- */
 .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
@@ -226,8 +299,8 @@ table.heat td.cell.fail {
   border: 1px solid var(--line); border-radius: var(--r);
   padding: 3px 9px; font-size: 11px; cursor: pointer; font-weight: 600;
 }
-.btn:hover { border-color: var(--violet); }
-.btn[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+.btn:hover { border-color: var(--accent); }
+.btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
 .seg .btn { border: 0; border-right: 1px solid var(--line); border-radius: 0; }
 .seg .btn:last-child { border-right: 0; }
@@ -246,6 +319,22 @@ table.heat td.cell.fail {
 }
 .drawer-head #drawer-title { font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
 .drawer-body { overflow: auto; padding: 12px 14px 40px; }
+.drawer-body > h2 { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.summary {
+  font-size: 12.5px; line-height: 1.55; color: var(--ink);
+  border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; margin: 2px 0 12px;
+}
+
+/* the Beta(1+W, 1+F) posteriors the sampler draws from */
+.beta { display: block; margin: 8px 0 2px; max-width: 100%; }
+.beta-axis { stroke: var(--line); stroke-width: 1; }
+.beta-tick { stroke: var(--line); stroke-width: 1; }
+.beta-lab { font-family: var(--mono); font-size: 8.5px; fill: var(--faint); }
+.beta-curve { fill: none; stroke-width: 1.8; }
+.beta-curve.b-pooled { stroke: var(--accent); }
+.beta-curve.b-own { stroke: var(--faint); stroke-dasharray: 4 3; }
+.beta-lab.b-pooled { fill: var(--accent); }
+.beta-lab.b-own { fill: var(--faint); }
 
 /* ---------------- markdown ---------------- */
 .md { font-size: 13px; line-height: 1.6; max-width: 84ch; }
@@ -262,7 +351,7 @@ table.heat td.cell.fail {
 .md th, .md td { border: 1px solid var(--line); padding: 3px 8px; text-align: left; }
 .md th { background: var(--shade); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .md hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
-.md blockquote { border-left: 3px solid var(--violet); margin: 8px 0; padding: 2px 0 2px 12px; color: var(--muted); }
+.md blockquote { border-left: 3px solid var(--accent); margin: 8px 0; padding: 2px 0 2px 12px; color: var(--muted); }
 .md strong { font-weight: 700; }
 
 .doclist { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
@@ -275,7 +364,7 @@ table.heat td.cell { height: 36px; padding: 2px 3px; line-height: 1.15; }
 table.heat td.cell .a { display: block; font-size: 11.5px; font-weight: 600; }
 table.heat td.cell .b { display: block; font-size: 9.5px; opacity: .72; font-weight: 500; }
 table.heat td.cell.clickable { cursor: pointer; }
-table.heat td.cell.clickable:hover { outline: 2px solid var(--violet); outline-offset: -2px; }
+table.heat td.cell.clickable:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
 th.cfgh { text-align: center; }
 th.cfgh .r { display: block; font-size: 8.5px; color: var(--faint); font-weight: 600; letter-spacing: .04em; }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 12px; }

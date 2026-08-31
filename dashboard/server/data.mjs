@@ -98,14 +98,17 @@ const PY_MATRIX = `import sys;sys.path.insert(0,${JSON.stringify(REPO)});import 
 // tree (finding 28). Its derivation needs more than one line (recombination edges,
 // known-unsafe and topology-violation sets), so it lives in a file rather than -c.
 const PY_LINEAGE = path.join(REPO, "dashboard", "server", "lineage.py");
+// CMP: the clade stats Thompson sampling actually draws Beta(1+W, 1+F) over. Computed
+// by bench/ledger.py's own functions (via cmp.py), never re-derived in JS.
+const PY_CMP = path.join(REPO, "dashboard", "server", "cmp.py");
 
 async function pyJson(code) {
   const { stdout } = await pexec("python3", ["-c", code], { cwd: REPO, maxBuffer: 8 * 1024 * 1024 });
   return JSON.parse(stdout);
 }
 
-async function pyScript(file) {
-  const { stdout } = await pexec("python3", [file], { cwd: REPO, maxBuffer: 8 * 1024 * 1024 });
+async function pyScript(file, args = []) {
+  const { stdout } = await pexec("python3", [file, ...args], { cwd: REPO, maxBuffer: 8 * 1024 * 1024 });
   return JSON.parse(stdout);
 }
 
@@ -113,10 +116,11 @@ let STATIC = null;
 let CAND_AT = 0;
 const CAND_TTL_MS = 30000;
 const EMPTY_LINEAGE = { nodes: [], recombination_edges: [], known_unsafe: [], topology_violations: [] };
+const EMPTY_CMP = { clade_noise: null, criterion: null, by_candidate: {}, error: null };
 
 export async function loadStatic() {
   if (!STATIC) {
-    STATIC = { matrix: [], candidates: [], lineage: EMPTY_LINEAGE, errors: [] };
+    STATIC = { matrix: [], candidates: [], lineage: EMPTY_LINEAGE, cmp: EMPTY_CMP, errors: [] };
     // The matrix is the 14 announced competition configs: genuinely static, read once.
     try { STATIC.matrix = await pyJson(PY_MATRIX); }
     catch (e) { STATIC.errors.push("matrix: " + (e.stderr || e.message)); }
@@ -135,6 +139,14 @@ export async function loadStatic() {
       STATIC.errors = STATIC.errors.filter((e) => !e.startsWith("candidates:"));
     } catch (e) {
       if (!STATIC.candidates.length) STATIC.errors.push("candidates: " + (e.stderr || e.message));
+    }
+    // CMP re-reads the whole ledger in python, so it shares the registry's slow timer
+    // rather than the 2 s poll. A failure keeps the previous stats and says so.
+    try {
+      const cmp = await pyScript(PY_CMP, [RESULTS]);
+      STATIC.cmp = { ...cmp, error: null };
+    } catch (e) {
+      STATIC.cmp = { ...STATIC.cmp, error: String(e.stderr || e.message || e).slice(0, 400) };
     }
   }
   return STATIC;
@@ -364,6 +376,35 @@ export async function snapshot() {
   for (const [cid, r] of eagerRows) eagerMs[cid] = r.timing.candidate_ms;
   for (const [cid, r] of compiledRows) compiledMs[cid] = r.timing.candidate_ms;
 
+  // ---- environments: the trace of what hardware/conditions produced each row ----
+  // Rows carry `env` (device, cc, cuda, torch, triton, platform, clocks_locked).
+  // Distinct signatures become a small table the UI can filter the tree by; rows and
+  // groups reference them by id rather than repeating the object thousands of times.
+  const envIds = new Map();     // signature -> id
+  const environments = [];
+  const envIdOf = (env) => {
+    if (!env) return null;
+    const sig = JSON.stringify(Object.fromEntries(Object.entries(env).sort()));
+    let id = envIds.get(sig);
+    if (id === undefined) {
+      id = environments.length;
+      envIds.set(sig, id);
+      environments.push({ id, env, rows: 0, candidates: new Set(), first_ts: null, last_ts: null });
+    }
+    const e = environments[id];
+    e.rows++;
+    return id;
+  };
+  for (const r of rows) {
+    const id = envIdOf(r.env);
+    r._env_id = id;               // local annotation; rows are never serialized wholesale
+    if (id == null) continue;
+    const e = environments[id];
+    if (r.candidate) e.candidates.add(r.candidate);
+    if (!e.first_ts || String(r.ts) < String(e.first_ts)) e.first_ts = r.ts;
+    if (!e.last_ts || String(r.ts) > String(e.last_ts)) e.last_ts = r.ts;
+  }
+
   const vsCompiled = (r) => {
     const base = compiledMs[r.config_id];
     const ms = r.timing?.candidate_ms;
@@ -381,7 +422,7 @@ export async function snapshot() {
       groups.set(key, {
         key, commit_sha: r.commit_sha, short_sha: (r.commit_sha || "").slice(0, 8),
         candidate: r.candidate || "", padding_ratio: pad, branch: r.branch,
-        rows: 0, seen: new Set(), seen_passed: new Set(),
+        rows: 0, seen: new Set(), seen_passed: new Set(), envs: new Set(),
         speedups: {}, speedups_compiled: {}, per_config: {}, failures: [],
         latest_ts: r.ts,
       });
@@ -392,11 +433,17 @@ export async function snapshot() {
     // last-write-wins per config, with the raw row count kept alongside it.
     g.rows++;
     g.seen.add(r.config_id);
+    if (r._env_id != null) g.envs.add(r._env_id);
     if (String(r.ts) > String(g.latest_ts)) g.latest_ts = r.ts;
     const ok = isOk(r);
     const spc = vsCompiled(r);
     g.per_config[r.config_id] = {
       config_id: r.config_id, status: r.status, passed: ok,
+      // Tri-state, not boolean: config 14's reference_infeasible protocol makes NO
+      // pass/fail claim (the reference cannot produce an output to compare against),
+      // and flattening that to "fail" would paint a failure badge on every candidate
+      // that ran the probe. "none" = no verdict available, deliberately.
+      verdict: ok ? "pass" : r.status === "reference_infeasible" ? "none" : "fail",
       speedup: r.timing?.speedup ?? null, speedup_compiled: spc,
       candidate_ms: r.timing?.candidate_ms ?? null,
       baseline_ms: r.timing?.baseline_ms ?? null,
@@ -406,6 +453,10 @@ export async function snapshot() {
       max_abs: r.correctness?.max_abs ?? null, max_rel: r.correctness?.max_rel ?? null,
       failed_elements: r.correctness?.failed_elements ?? null,
       peak_MB: r.memory?.peak_MB ?? null, ts: r.ts,
+      env_id: r._env_id ?? null,
+      // Measurement conditions ride in notes as key=value tokens (gpu_exclusive,
+      // dtype, input_scale...). Passed through as written, not re-interpreted.
+      conditions: ((r.notes || "").match(/\b\w+=[^\s]+/g) || []).slice(0, 8).join(" ") || null,
     };
     if (ok) {
       g.seen_passed.add(r.config_id);
@@ -416,8 +467,9 @@ export async function snapshot() {
       g.failures.push({ config_id: r.config_id, status: r.status });
     }
   }
-  const scoreboard = [...groups.values()].map(({ seen, seen_passed, ...g }) => ({
+  const scoreboard = [...groups.values()].map(({ seen, seen_passed, envs, ...g }) => ({
     ...g,
+    env_ids: [...envs].sort((a, b) => a - b),
     configs_measured: seen.size,
     configs_passed: seen_passed.size,
     sweep: g.rows > seen.size,
@@ -511,6 +563,15 @@ export async function snapshot() {
     candidates: stat.candidates,
     // THE tree: the declared-parent graph from the registry (finding 28).
     lineage: stat.lineage,
+    // CMP over the declared lineage -- the stats Thompson sampling draws
+    // Beta(1+W, 1+F) over. Computed by bench/ledger.py via cmp.py, never in JS.
+    cmp: stat.cmp,
+    // Distinct measurement environments (hardware + software trace), referenced by
+    // env_id from scoreboard groups and per-config rows.
+    environments: environments.map((e) => ({
+      id: e.id, env: e.env, rows: e.rows,
+      candidates: e.candidates.size, first_ts: e.first_ts, last_ts: e.last_ts,
+    })),
     // Git topology, retained as documentation. It is a chain, not the lineage.
     tree: buildTree(gitS, rows),
     baselines: {
