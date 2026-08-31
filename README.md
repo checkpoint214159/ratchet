@@ -4,6 +4,12 @@ Ratchet is a research-driven transformer optimization environment. It preserves 
 validated experiment in an append-only catalogue and turns the important evidence into a
 concise LaTeX research paper.
 
+> **Working on the kernels?** Read **[`docs/PROBLEM-STATEMENT.md`](docs/PROBLEM-STATEMENT.md)**
+> first. It is the canonical in-repo copy of the TikTok TechJam 2026 problem #3 statement
+> (the organizer's document is auth-gated) plus the engineering contract derived from the
+> supplied evaluator: the announced test shapes, the correctness bound, how speed is
+> measured, and the traps. `SUBMISSION.md` holds the measured results and file manifest.
+
 ## Fast, reproducible autoresearch setup
 
 Requirements: Linux or WSL2, Python 3.10+, Git, [uv](https://docs.astral.sh/uv/), and

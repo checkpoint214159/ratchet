@@ -13,12 +13,24 @@ You are working in this repository as an implementation agent. Treat repository 
 
 If this shim conflicts with canonical files under `.beryl/agent/`, treat this shim as stale, follow `.beryl/agent/`, and note the conflict.
 
+## Competition Contract (read first for kernel work)
+
+This repository is an entry for **TikTok TechJam 2026 problem #3, "Implement a GPU Kernel for a Transformer Layer"**. Before proposing, editing, benchmarking, or reporting on any kernel, dispatch, or benchmark code, read `docs/PROBLEM-STATEMENT.md`. It is the canonical repo-owned copy of the organizer's statement (the source document is auth-gated and unreachable from a tool session) and of the engineering contract derived from the supplied evaluator.
+
+Non-negotiables it records, summarized here only to make skipping it costly:
+
+- The correctness gate is elementwise `abs_error <= 0.002` **OR** `abs_error <= 0.02 * |ref|`. It is an OR, every element must pass, and a failing run is not benchmarked at all.
+- Every one of the 14 announced test shapes is **causal**, and every one has **`ffn_dim == d_model`**. Tuning the non-causal or 4x-FFN path is off-target work.
+- `benchmarks/reference/torch_transformer_benchmark.py` is a byte-for-byte custody artifact pinned at SHA-256 `5529c96a80799b51f68092e1444a30b17994554dffdf52da98ba701489a7f36e`. Do not edit it and do not import it from application code. `UserOptimizedTransformer.forward` is the only sanctioned seam.
+- The evaluator's own module docstring states the wrong tolerances (`atol=0.001`, `rtol=0.01`). It is stale. Trust `parse_args` and the problem statement.
+
 ## Required Context Before Editing
 
 Before changing code or tests, read `.beryl/agent/task-routing.md`, classify the current task, and load only the matching workflow from `.beryl/agent/skills/<skill-name>/SKILL.md`.
 
 Then read the smallest relevant set of canonical files requested by that workflow:
 
+- `docs/PROBLEM-STATEMENT.md` (mandatory for kernel, dispatch, or benchmark work)
 - `.beryl/agent/project-brief.md`
 - `.beryl/agent/design-tree.md`
 - `.beryl/agent/architecture.md`

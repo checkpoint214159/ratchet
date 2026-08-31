@@ -14,6 +14,12 @@ but runtime functionality is not described as validated until their hardware gat
 
 ## Authoritative Contract
 
+- `docs/PROBLEM-STATEMENT.md` is the canonical repo-owned copy of the TikTok TechJam 2026
+  problem #3 statement (last updated by the organizers 27 August 2026) and of the
+  engineering contract derived from the evaluator. The organizer's source document is
+  auth-gated, so this file is the only in-repo authority for the announced test shapes,
+  the correctness bound, the judging weights, and the deliverables. Read it before any
+  kernel, dispatch, or benchmark work.
 - `torch_transformer_benchmark.py` is the authoritative evaluator supplied by the user.
 - Its baseline, CLI meaning, input generation, and absolute-OR-relative correctness rule
   are protected. Its original SHA-256 is
