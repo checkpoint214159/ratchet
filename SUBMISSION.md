@@ -2,7 +2,8 @@
 
 This is the isolated, submittable artifact: only the parts germane to the problem
 statement. It is measured on an NVIDIA GB10 (Grace Blackwell, `sm_121`), all shapes from
-the announced matrix, correctness under the stated bound, speedup over `torch.compile`.
+the announced matrix, correctness under the stated bound, speedup over the evaluator's
+eager baseline (the scored metric) and over `torch.compile` (a harder target).
 
 Runtime note: kernels need the system CUDA-13 ptxas —
 `export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas`.
@@ -19,7 +20,8 @@ Runtime note: kernels need the system CUDA-13 ptxas —
 | `tests/manual/search_loop.py` | The search loop: propose→gate→measure→record→select; writes the ledger |
 | `tests/manual/matrix_bench.py` | Announced-matrix harness (correctness + speedup vs torch.compile) |
 | `tests/manual/decompose.py` | Per-config kernel-vs-dtype isolation |
-| `ledger/bench_results.jsonl` | Append-only measured ledger (git provenance per row) |
+| `tests/manual/gpu_guard.py` | **Measurement hygiene**: refuses to benchmark a GPU shared with another process |
+| `ledger/bench_results.jsonl` | Append-only measured ledger (git provenance + GPU exclusivity per row) |
 
 **Explicitly NOT part of the submission** (kept as honest research history, but off-target):
 the tf32/tf32x2/fused-FFN exploration (`transformer_layer.py`, `explore.py`, `fused_ffn.py`,
@@ -46,74 +48,100 @@ the ledger) — hence fp16.
 
 ## Results
 
-Announced matrix, GB10, vs `torch.compile`, **all 13 configs correct** (fp16 compute, fp32
-accumulate). `graph` is the **measured** CUDA-graph winner for that shape — the best correct
-point the search loop recorded in `ledger/bench_results.jsonl`, not the analytic prediction of
-`dispatch.select` (the two are reconciled below). `flash fp32` is the attention kernel measured
-against the baseline's explicit attention at **matched fp32 precision** — the pure-kernel win,
-no dtype advantage.
+One clean run of the announced matrix on GB10, **all 13 configs correct** (fp16 compute,
+fp32 accumulate). Every measurement below was taken with the GPU verified exclusive to the
+measuring process (`tests/manual/gpu_guard.py`); see *Measurement hygiene*.
 
-| cfg | shape [B,S,d] | heads/head_dim | graph | vs compile | flash fp32 (pure kernel) |
-| --- | --- | --- | --- | --- | --- |
-| 1 | [64,128,128] | 4/32 | on | 2.35x | 3.59x |
-| 2 | [1,128,128] | 4/32 | on | 2.30x | 2.24x |
-| 3 | [4,128,128] | 4/32 | on | 2.16x | 3.05x |
-| 4 | [16,128,128] | 4/32 | on | 2.37x | 2.62x |
-| 5 | [128,128,128] | 4/32 | off | 2.07x | 4.03x |
-| 6 | [10000,128,128] | 4/32 | off | 1.90x | 3.96x |
-| 7 | [64,128,32] | 4/8 | on | 1.64x | 3.58x |
-| 8 | [64,128,1024] | 4/256 | off | 3.78x | 0.63x* |
-| 9 | [64,128,128] | 1/128 | on | 2.05x | 1.32x |
-| 10 | [64,128,128] | 2/64 | on | 2.25x | 0.92x* |
-| 11 | [64,128,128] | 16/8 | on | 5.25x | 4.86x |
-| 12 | [64,32,128] | 4/32 | on | 2.28x | 1.35x |
-| 13 | [64,1024,128] | 4/32 | off | **9.81x** | **7.17x** |
+Two baselines are reported because they answer different questions. **`vs eager` is the
+scored metric** — the evaluator's default baseline is eager (`--compile-baseline` is off,
+see `docs/PROBLEM-STATEMENT.md`). `vs compile` is the harder self-imposed target.
+`flash fp32` is the attention kernel against the baseline's explicit attention at **matched
+fp32 precision** — no dtype advantage — reported as the median of 3 trials with the
+observed half-range.
 
-**geomean vs `torch.compile` = 2.68x** · all correct · (config 14 [32,100000,1024] excluded —
-fp32 reference OOMs).
-
-\* cfg8/cfg10 (large head_dim): the flash *algorithm* alone is neutral at fp32; their win is
-the fp16 tensor cores. Everywhere else the kernel wins at matched precision (2.2–7.2x),
-with fp16 as an additional factor.
-
-**bf16 fails the correctness gate on every config** (recorded in the ledger) — the loop's
-own evidence for why the submission is fp16.
-
-### Official baseline is eager (the scored metric)
-
-The evaluator's default baseline is **eager**, not `torch.compile` (`--compile-baseline` is
-off; see `docs/PROBLEM-STATEMENT.md`). The table above beats the *harder* compiled baseline;
-against the official eager baseline the same clean run is stronger:
+| cfg | shape [B,S,d] | heads/head_dim | graph | vs eager | vs compile | flash fp32 (pure kernel) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | [64,128,128] | 4/32 | on | 2.97x | 2.14x | 3.61x ±0.1% |
+| 2 | [1,128,128] | 4/32 | on | 2.77x | 2.13x | 2.36x ±0.2% |
+| 3 | [4,128,128] | 4/32 | on | 2.88x | 2.25x | 3.02x ±0.2% |
+| 4 | [16,128,128] | 4/32 | on | 2.84x | 2.09x | 2.66x ±0.4% |
+| 5 | [128,128,128] | 4/32 | on | 3.02x | 2.12x | 4.04x ±0.6% |
+| 6 | [10000,128,128] | 4/32 | off | 2.66x | 1.77x | 4.10x ±0.5% |
+| 7 | [64,128,32] | 4/8 | on | 3.35x | 1.65x | 3.54x ±0.1% |
+| 8 | [64,128,1024] | 4/256 | off | 3.79x | 3.80x | 0.58x* ±0.3% |
+| 9 | [64,128,128] | 1/128 | on | 2.06x | 2.06x | 1.15x ±0.0% |
+| 10 | [64,128,128] | 2/64 | on | 2.30x | 2.30x | 0.82x* ±0.2% |
+| 11 | [64,128,128] | 16/8 | on | 5.19x | 5.18x | 4.45x ±0.3% |
+| 12 | [64,32,128] | 4/32 | on | 2.23x | 2.23x | 1.32x ±0.6% |
+| 13 | [64,1024,128] | 4/32 | off | **9.80x** | 9.80x | **6.25x ±0.2%** |
 
 | geomean over 13 configs | speedup |
 | --- | --- |
-| **vs eager (official / scored)** | **3.24x** |
+| **vs eager (official / scored)** | **3.20x** |
 | vs `torch.compile` (harder, self-imposed) | 2.62x |
 
-Per-config vs eager, all correct: cfg1 3.31 · cfg2 2.78 · cfg3 3.09 · cfg4 2.80 · cfg5 2.98 ·
-cfg6 2.68 · cfg7 3.27 · cfg8 3.78 · cfg9 2.06 · cfg10 2.31 · cfg11 5.24 · cfg12 2.25 ·
-cfg13 9.84 (`tests/manual/matrix_bench.py`, one run reporting both baselines).
+Config 14 `[32,100000,1024]` is excluded: at `seq_len=100000` the fp32 reference would
+materialize an `N×N` score matrix of roughly 1.3 TB per layer and OOMs, so no same-machine
+reference exists to score against.
 
-### Predicted vs measured dispatch (12/13 agree)
+\* cfg8/cfg10 (head_dim 256 and 64): the flash *algorithm* alone is neutral-to-negative at
+fp32, and their win comes from the fp16 tensor cores. Everywhere else the kernel wins at
+matched precision (1.2–6.3x), with fp16 as an additional factor on top.
+
+**bf16 fails the correctness gate on every config** (26 ledger rows) — the loop's own
+evidence for why the submission is fp16.
+
+### Where the win comes from
+
+`torch.compile` and eager are **identical** on cfg8–cfg13 (e.g. cfg13: 259.84 ms vs
+259.81 ms). Once attention dominates, the compiler extracts nothing from the baseline's
+explicit `matmul → masked_fill → softmax → matmul`; it only helps at the small-`d`,
+batch-heavy end (cfg7 2.0x, cfg6 1.5x, cfg1 1.4x). That is the whole gap between the two
+geomeans, and it is also why the flash kernel's structural advantage — never materializing
+the score matrix, and skipping the causal upper triangle instead of masking it — survives
+against a compiled baseline.
+
+### Measurement hygiene
+
+Two measurement faults were found and fixed; both had already corrupted reported numbers,
+so they are recorded here rather than quietly repaired.
+
+**Contention.** The search loop is single-process and argued that this gives the same
+guarantee a GPU lock would. It does — within a process. With several agent sessions open on
+one box, a second session benchmarking concurrently is invisible to it. Comparing a
+contended run against a clean one, the geomean barely moved (2.678x → 2.642x) while
+individual configs were wrong by up to 25% (cfg3 +25.1%, cfg4 −18.0%, cfg1 −15.7%): **the
+aggregate masked the contamination that the per-config table did not.** `gpu_guard.py` now
+refuses to measure a shared device, and every ledger row records `exclusive`.
+
+**Sample count.** `triton.testing.do_bench(warmup, rep)` takes *milliseconds*, not
+iterations, and divides them by the estimated per-call time. At the defaults, cfg13's fp32
+baseline — ~59 ms per call — received exactly **one unwarmed sample**. That is how a
+non-reproducible 7.17x reading for cfg13 reached an earlier draft of this table; the
+correct figure is 6.25x. Sample counts are now derived from a measured estimate and floored
+at 10 warmup / 30 timed iterations, the statistic is a median rather than a mean, and each
+figure carries the spread across repeated trials. Reported spreads are now ±0.0–0.8%.
+
+### Predicted vs measured dispatch
 
 `dispatch.select` predicts the CUDA-graph decision analytically from device properties:
-`launch_frac = fixed launch time / (fixed + estimated compute)`, graph on above `0.10`.
-The search loop then *measures* both settings and keeps whichever actually won. On 12 of 13
-configs the prediction and the measurement agree. They disagree on **config 5**:
+`launch_frac = fixed launch time / (fixed + estimated compute)`, graph on above `0.10`. The
+search loop measures both settings and keeps whichever won. Prediction and measurement
+agree on 12 of 13 configs — but **which** config disagrees is not stable between runs, and
+that is the honest finding:
 
-| cfg 5 [128,128,128] | launch_frac | predicted | measured graph on | measured graph off |
-| --- | --- | --- | --- | --- |
-| | 0.18 | graph **on** | 5.99 ms · 1.88x | **5.44 ms · 2.07x** |
+| config | launch_frac | predicted | measured graph on | measured graph off | gap |
+| --- | --- | --- | --- | --- | --- |
+| cfg 5 | 0.18 | on | 5.52 ms · 2.05x | 5.66 ms · 2.00x | 2.5% (agrees) |
+| cfg 1 | 0.31 | on | 3.21 ms · 1.82x | 2.95 ms · 1.98x | 8.8% (disagrees) |
 
-The gap is 10.2% — well past the loop's 3% `NOISE_FLOOR`, so it is a real effect, not run
-noise. Config 5 sits just above the `0.10` threshold, in the band where the analytic model is
-weakest: it counts saved launches but not the extra traffic the graph's static capture buffers
-add, and at `B=128` that traffic outweighs the ~29 launches the replay removes.
-
-This is the search loop doing its job rather than failing at it. The analytic `select` is a
-cheap prior for shapes that have never been measured; the ledger is ground truth for shapes
-that have. Where they conflict, the measurement wins and the disagreement is kept on the
-record — the same discipline that recorded the bf16 failures instead of quietly dropping them.
+On the earlier contended run the disagreement sat on cfg5 and cfg1 agreed; on the clean run
+they swap. Neither config has a stable winner, because near the threshold the graph's saved
+launches and the extra traffic from its static capture buffers are close to balanced. The
+defensible conclusion is not "the model is wrong at cfg5" but "at `launch_frac ≈ 0.2–0.3`
+the two recipes are a tie, and the ledger should be trusted over the prior only when the
+margin exceeds the 3% `NOISE_FLOOR`" — which is exactly the promotion rule the loop already
+applies.
 
 ## Reproduce
 
@@ -121,10 +149,10 @@ record — the same discipline that recorded the bf16 failures instead of quietl
 export TRITON_PTXAS_PATH=/usr/local/cuda/bin/ptxas
 # measured dispatch table + append-only ledger over the whole matrix:
 python tests/manual/search_loop.py
-# clean speedup-vs-torch.compile table over the whole matrix:
+# announced matrix vs BOTH baselines (eager = scored, and torch.compile):
 python tests/manual/matrix_bench.py
-# prove the win is a kernel (fp32-matched) not a dtype trick:
-python tests/manual/decompose.py
+# prove the win is a kernel (fp32-matched) not a dtype trick; median of N trials:
+python tests/manual/decompose.py --repeats 3
 ```
 
 ## AI-in-the-loop (bonus)

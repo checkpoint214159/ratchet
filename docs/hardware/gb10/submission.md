@@ -44,8 +44,8 @@ All correct vs the fp32 baseline.
 | 12 | S32 (short seq) | on | 2.32x | 2.29x |
 | 13 | S1024 (attention-heavy) | off | **9.93x** | 10.34x |
 
-**geomean vs EAGER (the official evaluator baseline; `--compile-baseline` is off) = 3.24x**,
-and **vs `torch.compile` (a harder, self-imposed baseline) = 2.58–2.68x** across runs (the
+**geomean vs EAGER (the official evaluator baseline; `--compile-baseline` is off) = 3.20x**,
+and **vs `torch.compile` (a harder, self-imposed baseline) = 2.62x** on the clean run (the
 spread is torch.compile baseline variance + GB10's unlockable clock). Every config correct.
 
 The win tracks attention cost: dense configs 1.7–2.4x, head_dim-8 with 16 heads 5.2x,
@@ -58,7 +58,8 @@ score matrix). Dispatch's graph on/off is validated — the graph-off compute-bo
 The attention kernel measured against the baseline's explicit attention at **matched fp32
 precision** (no dtype advantage, no graph, no compiler):
 
-    cfg13 seq=1024   7.17x   |  cfg11 16-head  4.86x  |  cfg5 B128  4.03x  |  cfg1  3.59x
+    cfg13 seq=1024   6.25x   |  cfg11 16-head  4.45x  |  cfg5 B128  4.04x  |  cfg1  3.61x
+    (median of 3 trials, spread +-0.0-0.8%, GPU verified exclusive)
 
 Most configs are a genuine 2.2–7.2x pure-kernel win from the streaming online-softmax +
 exact causal-skip; fp16 is an additional tensor-core factor on top. Two configs (cfg8
