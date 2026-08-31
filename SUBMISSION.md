@@ -47,9 +47,11 @@ the ledger) — hence fp16.
 ## Results
 
 Announced matrix, GB10, vs `torch.compile`, **all 13 configs correct** (fp16 compute, fp32
-accumulate). `graph` is the dispatch's per-shape CUDA-graph decision; `flash fp32` is the
-attention kernel measured against the baseline's explicit attention at **matched fp32
-precision** — the pure-kernel win, no dtype advantage.
+accumulate). `graph` is the **measured** CUDA-graph winner for that shape — the best correct
+point the search loop recorded in `ledger/bench_results.jsonl`, not the analytic prediction of
+`dispatch.select` (the two are reconciled below). `flash fp32` is the attention kernel measured
+against the baseline's explicit attention at **matched fp32 precision** — the pure-kernel win,
+no dtype advantage.
 
 | cfg | shape [B,S,d] | heads/head_dim | graph | vs compile | flash fp32 (pure kernel) |
 | --- | --- | --- | --- | --- | --- |
@@ -76,6 +78,27 @@ with fp16 as an additional factor.
 
 **bf16 fails the correctness gate on every config** (recorded in the ledger) — the loop's
 own evidence for why the submission is fp16.
+
+### Predicted vs measured dispatch (12/13 agree)
+
+`dispatch.select` predicts the CUDA-graph decision analytically from device properties:
+`launch_frac = fixed launch time / (fixed + estimated compute)`, graph on above `0.10`.
+The search loop then *measures* both settings and keeps whichever actually won. On 12 of 13
+configs the prediction and the measurement agree. They disagree on **config 5**:
+
+| cfg 5 [128,128,128] | launch_frac | predicted | measured graph on | measured graph off |
+| --- | --- | --- | --- | --- |
+| | 0.18 | graph **on** | 5.99 ms · 1.88x | **5.44 ms · 2.07x** |
+
+The gap is 10.2% — well past the loop's 3% `NOISE_FLOOR`, so it is a real effect, not run
+noise. Config 5 sits just above the `0.10` threshold, in the band where the analytic model is
+weakest: it counts saved launches but not the extra traffic the graph's static capture buffers
+add, and at `B=128` that traffic outweighs the ~29 launches the replay removes.
+
+This is the search loop doing its job rather than failing at it. The analytic `select` is a
+cheap prior for shapes that have never been measured; the ledger is ground truth for shapes
+that have. Where they conflict, the measurement wins and the disagreement is kept on the
+record — the same discipline that recorded the bf16 failures instead of quietly dropping them.
 
 ## Reproduce
 
