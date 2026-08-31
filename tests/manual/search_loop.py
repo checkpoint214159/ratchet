@@ -30,6 +30,7 @@ import triton
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from gpu_guard import exclusivity_record, require_exclusive
+
 from ratchet.kernels.dispatch import MATRIX
 from ratchet.kernels.graphed import graphed_forward
 
