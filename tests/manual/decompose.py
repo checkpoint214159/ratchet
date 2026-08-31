@@ -7,10 +7,14 @@ then again at fp16 to show the additional tensor-core factor. Grounds the end-to
 numbers to the problem statement's "implement a GPU kernel for the layer".
 """
 import sys
+from pathlib import Path
 
 import torch
 import triton
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from gpu_guard import require_exclusive
 from ratchet.kernels.dispatch import MATRIX
 from ratchet.kernels.flash_attention import flash_attention
 
@@ -31,6 +35,7 @@ def bench(fn):
         return None
 
 
+require_exclusive()
 ONLY = set(int(a) for a in sys.argv[1:] if a.isdigit())
 print("cfg | shape[B,H,N,D] | flash-vs-baseline fp32 (pure kernel) | fp16 | flash_fp16-vs-baseline_fp32")
 for cfg in MATRIX:

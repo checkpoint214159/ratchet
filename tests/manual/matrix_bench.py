@@ -13,6 +13,9 @@ from pathlib import Path
 import torch
 import triton
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from gpu_guard import require_exclusive
 from ratchet.kernels.dispatch import MATRIX, select
 from ratchet.kernels.graphed import graphed_forward
 from ratchet.oracle import calibrate
@@ -23,6 +26,7 @@ mod = importlib.util.module_from_spec(spec)
 sys.modules["tt_bench"] = mod
 spec.loader.exec_module(mod)
 
+require_exclusive()
 PROF = calibrate(cache_path="ledger/device.gb10.json")
 ONLY = set(int(a) for a in sys.argv[1:] if a.isdigit())
 
@@ -61,23 +65,25 @@ def run(cfg):
     t_ours = bench(lambda: cand(x, None))
     print(f"cfg{cfg.id:<2} B{cfg.batch_size} d{cfg.d_model} H{cfg.heads} S{cfg.seq_len} "
           f"hd{cfg.head_dim}: correct={ok} graph={recipe.use_graph} | "
-          f"compile={t_comp:.3f} ours={t_ours:.3f} ms | vs_compile={t_comp/t_ours:.2f}x "
-          f"vs_eager={t_eager/t_ours:.2f}x")
-    return t_comp / t_ours, ok
+          f"eager={t_eager:.3f} compile={t_comp:.3f} ours={t_ours:.3f} ms | "
+          f"vs_eager={t_eager/t_ours:.2f}x vs_compile={t_comp/t_ours:.2f}x")
+    return t_eager / t_ours, t_comp / t_ours, ok
 
 
-ratios, all_ok = [], True
+eager_r, comp_r, all_ok = [], [], True
 for cfg in MATRIX:
     if cfg.id == 14 or (ONLY and cfg.id not in ONLY):
         continue
     try:
-        r, ok = run(cfg)
-        ratios.append(r)
+        e, c, ok = run(cfg)
+        eager_r.append(e)
+        comp_r.append(c)
         all_ok = all_ok and ok
     except Exception as e:
         print(f"cfg{cfg.id}: FAILED {type(e).__name__}: {str(e)[:150]}")
         all_ok = False
-if ratios:
-    geo = torch.tensor(ratios).log().mean().exp().item()
-    print(f"\ngeomean vs torch.compile = {geo:.3f}x over {len(ratios)} configs | "
-          f"all_correct={all_ok}")
+if eager_r:
+    geo_e = torch.tensor(eager_r).log().mean().exp().item()
+    geo_c = torch.tensor(comp_r).log().mean().exp().item()
+    print(f"\ngeomean vs EAGER (official baseline) = {geo_e:.3f}x | "
+          f"vs torch.compile = {geo_c:.3f}x | {len(eager_r)} configs | all_correct={all_ok}")

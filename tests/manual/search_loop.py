@@ -27,6 +27,9 @@ from pathlib import Path
 import torch
 import triton
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from gpu_guard import exclusivity_record, require_exclusive
 from ratchet.kernels.dispatch import MATRIX
 from ratchet.kernels.graphed import graphed_forward
 
@@ -57,7 +60,8 @@ def _git(*a):
 
 def _provenance():
     return {"sha": _git("rev-parse", "HEAD"), "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
-            "dirty": bool(_git("status", "--porcelain"))}
+            "dirty": bool(_git("status", "--porcelain")),
+            "gpu": exclusivity_record()}
 
 
 def _append(row):
@@ -149,4 +153,8 @@ def run(config_ids):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--ids", type=int, nargs="*", default=[])
-    run(set(ap.parse_args().ids))
+    ap.add_argument("--allow-contention", action="store_true",
+                    help="measure even if another process holds the GPU (rows stay marked)")
+    args = ap.parse_args()
+    require_exclusive(args.allow_contention)
+    run(set(args.ids))
