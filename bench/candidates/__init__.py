@@ -243,7 +243,39 @@ def _v42(baseline_cls):
     return build(baseline_cls)
 
 
+def _v43(baseline_cls):
+    from .v43_replicated_tile import build
+    return build(baseline_cls)
+
+
 REGISTRY: dict[str, CandidateSpec] = {
+    "v43_replicated_tile": CandidateSpec(
+        name="v43_replicated_tile", generation=43, parent="v42_hot_tuned_tile",
+        build=_v43,
+        summary="THE TILE SWEEP IS REPLICATED AND REDUCED BY ITS FLOOR BEFORE IT ACTS. "
+                "v42 replaced a timer that could not resolve its arms with one that "
+                "can, and finding 53 measured what that cost: at B=1, true margin 28%, "
+                "the new sweep picked one tile in 7 of 7; at B=4, true margin ~2%, it "
+                "picked THREE DIFFERENT TILES in 6. The old timer was accidentally "
+                "stable only because its tie table could never clear the 10% bar at "
+                "all. `attn_tile_replicates = 2`: sweep the grid twice over the same "
+                "probe tensor, take each arm's MINIMUM, run v23's rule once on that. "
+                "One value, one place; no kernel, timer, predicate or config id moves. "
+                "A FLOOR, NOT THE PRE-REGISTERED VOTE, and the correction is the "
+                "finding: dumping every arm of every sweep shows the spurious 1.47x and "
+                "1.65x margins are the INCUMBENT reading slow (3.75, 4.25 against a "
+                "2.52 floor), not a challenger reading fast -- contamination here is "
+                "one-sided, so a per-sweep vote is decided by which arm it happened to "
+                "hit. Built as pre-registered first, the vote rule lost B=1 in 5 of 10 "
+                "fresh processes, always the 5 where it primed second. MEASURED, one "
+                "process per replicate with both arms resident (abba.py's regime): "
+                "cfg 3 v42 3 distinct plans in 22 asks -> v43 1 in 22; cfg 2 v43 keeps "
+                "v42's tile 22 of 22. This candidate's value is in the VARIANCE, not "
+                "the mean -- cfg 2's win survives unchanged and cfg 3 is capped, so the "
+                "predicted score delta is ~0 and the deliverable is a plan that stops "
+                "moving between primings, for this candidate and every descendant.",
+    ),
+
     "v42_hot_tuned_tile": CandidateSpec(
         name="v42_hot_tuned_tile", generation=42, parent="v41_vendor_aware_attn",
         build=_v42,

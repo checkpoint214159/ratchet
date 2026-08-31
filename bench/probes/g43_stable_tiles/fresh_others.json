@@ -1,0 +1,685 @@
+[
+ {
+  "config_id": 1,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 3) at 8.692 us did not clear single_tile(64, 4, 1) at 9.281 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.406 us did not clear single_tile(64, 4, 1) at 9.288 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 1,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.658 us did not clear single_tile(64, 4, 1) at 9.321 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.410 us did not clear single_tile(64, 4, 1) at 9.314 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 1,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 3) at 8.733 us did not clear single_tile(64, 4, 1) at 9.319 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.402 us did not clear single_tile(64, 4, 1) at 9.308 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 1,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.682 us did not clear single_tile(64, 4, 1) at 9.330 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 8.397 us did not clear single_tile(64, 4, 1) at 9.315 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 4,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 3) at 3.871 us did not clear single_tile(64, 4, 1) at 3.814 us by 10%; swept 8 single-tile + 27 looped tiles + sdpa at batch 16"
+   ],
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     3
+    ],
+    "looped; swept 8 single-tile + 27 looped tiles + sdpa at batch 16: looped(64, 32, 4, 3) cleared single_tile(64, 4, 1) decisively (1.352x), and is 1.083x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 4,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 3) at 3.857 us did not clear single_tile(64, 4, 1) at 3.816 us by 10%; swept 8 single-tile + 27 looped tiles + sdpa at batch 16"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 3) at 3.862 us did not clear single_tile(64, 4, 1) at 3.813 us by 10%; swept 8 single-tile + 27 looped tiles + sdpa at batch 16"
+   ]
+  }
+ },
+ {
+  "config_id": 4,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 3) at 3.857 us did not clear single_tile(64, 4, 1) at 3.807 us by 10%; swept 8 single-tile + 27 looped tiles + sdpa at batch 16"
+   ],
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     3
+    ],
+    "looped; swept 8 single-tile + 27 looped tiles + sdpa at batch 16: looped(64, 32, 4, 3) cleared single_tile(64, 4, 1) decisively (1.274x), and is 1.085x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 4,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 3) at 3.862 us did not clear single_tile(64, 4, 1) at 3.812 us by 10%; swept 8 single-tile + 27 looped tiles + sdpa at batch 16"
+   ],
+   "v42_hot_tuned_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     3
+    ],
+    "looped; swept 8 single-tile + 27 looped tiles + sdpa at batch 16: looped(64, 32, 4, 3) cleared single_tile(64, 4, 1) decisively (1.190x), and is 1.083x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 7,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.062 us did not clear single_tile(64, 4, 1) at 6.549 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.056 us did not clear single_tile(64, 4, 1) at 6.555 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 7,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.059 us did not clear single_tile(64, 4, 1) at 6.554 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.056 us did not clear single_tile(64, 4, 1) at 6.552 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 7,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.055 us did not clear single_tile(64, 4, 1) at 6.561 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.059 us did not clear single_tile(64, 4, 1) at 6.555 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 7,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.055 us did not clear single_tile(64, 4, 1) at 6.551 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 64 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.058 us did not clear single_tile(64, 4, 1) at 6.557 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 10,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.234x), and is 1.101x sdpa"
+   ],
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.226x), and is 1.098x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 10,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.239x), and is 1.102x sdpa"
+   ],
+   "v42_hot_tuned_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.231x), and is 1.098x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 10,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.234x), and is 1.103x sdpa"
+   ],
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.228x), and is 1.096x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 10,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.235x), and is 1.104x sdpa"
+   ],
+   "v42_hot_tuned_tile": [
+    "looped",
+    [
+     64,
+     32,
+     4,
+     4
+    ],
+    "looped; swept 5 single-tile + 48 looped tiles + sdpa at batch 64: looped(64, 32, 4, 4) cleared single_tile(32, 4, 1) decisively (1.228x), and is 1.101x sdpa"
+   ]
+  }
+ },
+ {
+  "config_id": 11,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.332 us did not clear single_tile(64, 4, 1) at 6.883 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.263 us did not clear single_tile(64, 4, 1) at 6.895 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ]
+  }
+ },
+ {
+  "config_id": 11,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.319 us did not clear single_tile(64, 4, 1) at 6.894 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.283 us did not clear single_tile(64, 4, 1) at 6.869 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ]
+  }
+ },
+ {
+  "config_id": 11,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.297 us did not clear single_tile(64, 4, 1) at 6.893 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.281 us did not clear single_tile(64, 4, 1) at 6.868 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ]
+  }
+ },
+ {
+  "config_id": 11,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.306 us did not clear single_tile(64, 4, 1) at 6.882 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     64,
+     4,
+     1
+    ],
+    "single-tile attention: 64x4 warps, 6 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 16 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped(64, 32, 4, 2) at 6.270 us did not clear single_tile(64, 4, 1) at 6.915 us by 10%; swept 8 single-tile + 54 looped tiles + sdpa at batch 16"
+   ]
+  }
+ },
+ {
+  "config_id": 12,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.168 us did not clear single_tile(32, 2, 1) at 2.105 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.167 us did not clear single_tile(32, 2, 1) at 2.102 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 12,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.166 us did not clear single_tile(32, 2, 1) at 2.100 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.168 us did not clear single_tile(32, 2, 1) at 2.099 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 12,
+  "mode": "fresh",
+  "order": [
+   "v42_hot_tuned_tile",
+   "v43_replicated_tile"
+  ],
+  "plans": {
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.168 us did not clear single_tile(32, 2, 1) at 2.102 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ],
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.169 us did not clear single_tile(32, 2, 1) at 2.097 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ]
+  }
+ },
+ {
+  "config_id": 12,
+  "mode": "fresh",
+  "order": [
+   "v43_replicated_tile",
+   "v42_hot_tuned_tile"
+  ],
+  "plans": {
+   "v43_replicated_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, 1 distinct per-sweep winners over 2 sweeps, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.167 us did not clear single_tile(32, 2, 1) at 2.102 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ],
+   "v42_hot_tuned_tile": [
+    "single_tile",
+    [
+     32,
+     2,
+     1
+    ],
+    "single-tile attention: 32x2 warps, 24 blocks resident per SM; derived tile (32, 2, 1), confirmed by hot_time against 5 tiles at batch 64 (best challenger (32, 2, 1) at 1.000x, inside 10%); looped declined: looped(32, 16, 2, 2) at 2.166 us did not clear single_tile(32, 2, 1) at 2.105 us by 10%; swept 5 single-tile + 9 looped tiles + sdpa at batch 64"
+   ]
+  }
+ }
+]

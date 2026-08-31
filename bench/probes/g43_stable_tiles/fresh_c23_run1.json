@@ -1,0 +1,450 @@
+[
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.285x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.198x-1.439x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.285x-1.437x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.285x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.285x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.286x-1.703x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.287x-1.578x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.281x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.286x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.282x-1.442x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.287x-1.703x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.285x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.283x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.279x-1.784x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.281x-1.487x over 2 sweeps); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 2,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    16,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; autotuned over 8 tiles at batch 1 by hot_time: (16, 4, 1) beat the derived tile (64, 4, 1) decisively (1.284x); looped declined: looped declined: no tile both fits and reaches 1.5 waves (4 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v43_replicated_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), held by hot_time against 8 tiles at batch 4: 2 sweeps did not agree on a winner ((64, 4, 1), (16, 4, 1)), so no margin replicated; looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ },
+ {
+  "config_id": 3,
+  "mode": "fresh",
+  "arm": "v42_hot_tuned_tile",
+  "plan": [
+   "single_tile",
+   [
+    64,
+    4,
+    1
+   ],
+   "single-tile attention: 64x4 warps, 4 blocks resident per SM; derived tile (64, 4, 1), confirmed by hot_time against 8 tiles at batch 4 (best challenger (64, 4, 1) at 1.000x, inside 10%); looped declined: looped declined: no tile both fits and reaches 1.5 waves (16 CTAs on 66 SMs)"
+  ]
+ }
+]

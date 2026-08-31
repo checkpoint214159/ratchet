@@ -421,7 +421,8 @@ def hot_time(fn, reps: int = 2) -> float:
 
 
 def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
-                  device="cuda", timer=None) -> tuple[tuple[int, int, int], str]:
+                  device="cuda", timer=None,
+                  replicates: int = 1) -> tuple[tuple[int, int, int], str]:
     """Pick the tile by TIMING it on this device, not by arguing about it.
 
     A mechanism argument cannot pick a tile size -- a sibling candidate lost at 0.88x on
@@ -470,8 +471,81 @@ def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
     checked all eight tiles on all ten accepted shapes, twice, and every arm matched. It
     is closed anyway, because [L38] a check nobody has seen fail is indistinguishable
     from a check that cannot.
+
+    `replicates` IS GENERATION 43, AND IT IS THE OTHER HALF OF GENERATION 42
+    ------------------------------------------------------------------------
+    The hot timer bought resolution and paid for it in variance. Finding 53 measured
+    both and pre-registered this fix rather than netting them out.
+
+    A selection rule has an ACCURACY and it has a STABILITY, and they are different
+    properties. `flushed_time` could not separate these kernels at all, so its sweep was
+    a table of ties that fell through to the derived-tile tiebreak -- every time, on
+    every shape, in every process state. That is a systematic error, and its stability
+    was doing unnoticed work: a plan that never varies adds no variance to the
+    measurements taken of it (L29). `hot_time` can separate the arms, and on the shapes
+    whose TRUE margin is small it converted that bias into a variance. Measured over six
+    independent runs at B=4, whose two leading tiles are ~2% apart: the flushed sweep
+    selected one tile in 6 of 6 and the hot sweep selected THREE DIFFERENT TILES in 6,
+    because prime time with a resident model occasionally supplies a spurious margin past
+    the 10% `DECISIVE` bar. At B=1, where the true margin is 28%, the hot sweep selected
+    the same tile in 7 of 7.
+
+    `DECISIVE = 0.10` was calibrated against the OLD instrument's noise. Re-fitting it
+    against the new one would be a constant fitted to this matrix -- rule 2 forbids it,
+    and it would be wrong on the next card anyway. So the SWEEP is replicated instead:
+    `replicates` passes over the whole grid, reduced PER ARM BY THEIR MINIMUM, and then
+    v23's decision rule run once on the reduced table with nothing else changed.
+
+    A FLOOR, NOT A VOTE -- AND THE DIFFERENCE WAS MEASURED, NOT REASONED
+    ---------------------------------------------------------------------
+    Finding 53 pre-registered this as "displace only if both sweeps clear `DECISIVE` and
+    agree on the winner". Built and measured, that rule is WRONG, and how it fails says
+    what the defect actually is. `bench/probes/g43_stable_tiles/sweep_grids.py` dumps
+    every arm of every sweep in the model's own regime (a second model resident and
+    primed, inside `inference_mode`). Six back-to-back sweeps at B=4:
+
+        tile        sw1     sw2     sw3     sw4     sw5     sw6     floor
+        (16,4,1)  2.743   4.002   2.547   4.029   2.741   2.574    2.547
+        (64,4,1)  2.711   2.517   3.752   2.708   2.529   4.245    2.517   <- derived
+        winner    (64)    (64)    (16)    (64)    (64)    (16)
+
+    The two spurious displacements -- sweeps 3 and 6, reported at 1.473x and 1.649x --
+    are **not** a challenger reading fast. They are the INCUMBENT reading slow: 3.752 and
+    4.245 against its own 2.517 floor, while the challenger barely moved. Contamination
+    on this harness is one-sided (a descheduled host thread, an unsettled graph and a
+    co-resident allocation can only make a reading slower), so the noise lands on
+    whichever arm it lands on, and a per-sweep `min()` then hands the sweep to the arm
+    that happened to be missed. **A vote between two contaminated rankings is decided by
+    where the contamination fell.** At B=1 that cost the vote rule the shape v42 won:
+    measured over ten fresh processes, the same shape whose true margin is 28% held the
+    derived tile in 5 of 10 -- always the 5 where the tuner primed second.
+
+    The floor is the estimator the mechanism demands and the one CLAUDE.md already
+    prescribes for a card whose clocks will not lock: the mean is a statistic about how
+    often the machine misbehaved, the minimum is a statistic about the code. Reduced by
+    the floor over adjacent PAIRS of the sweeps above, every window gives the same
+    answer -- B=4 holds the derived tile (0.988x, inside `DECISIVE`), B=1 displaces it
+    (1.277x, 1.284x, 1.284x), which is the value four independent measurements across
+    three generations agree on.
+
+    Every arm is timed in every sweep and reduced over the same number of readings, so
+    no arm gets a budget its rivals did not; an arm that failed to time in any sweep is
+    dropped rather than reduced over fewer (finding 47's best-of-N handicap, inverted).
+    The count of distinct per-sweep winners is reported in the reason string, because
+    [L62]'s cheap check -- look at how many distinct answers the grid contains -- should
+    be visible in the ledger even when the reduction absorbs the instability.
+
+    The cost is one extra pass of the grid at prime time, ~1 s against the frontier's
+    existing 14-67 s of tuning, and no extra compilation: the second sweep hits Triton's
+    JIT cache, and the probe tensor and its reference are allocated once for all sweeps
+    so that the replicates differ only in WHEN they ran.
+
+    `replicates=1` is EXACTLY the parent's routine, including its reason strings, for the
+    same byte-identical-control reason `timer=None` is still `flushed_time`. The default
+    moves when a measurement says it should, not before.
     """
     timer = flushed_time if timer is None else timer
+    n_sweeps = max(1, int(replicates))
     props = torch.cuda.get_device_properties(device)
     tiles = viable_tiles(seq_len, head_dim, props.regs_per_multiprocessor,
                          props.max_threads_per_multi_processor, props.warp_size)
@@ -485,42 +559,77 @@ def autotune_tile(seq_len: int, head_dim: int, heads: int, batch: int,
         qkv = torch.randn(probe_b, seq_len, 3 * dm, device=device, dtype=torch.float16)
         scale = head_dim ** -0.5
         ref = sdpa_reference(qkv, heads, head_dim)
-        timed, dropped = {}, []
-        for bm, w, st in tiles:
-            try:
-                fn = (lambda bm=bm, w=w, st=st:
-                      single_tile_attention(qkv, heads, head_dim, scale, bm, w, st))
-                out = fn()
-                torch.cuda.synchronize()
-                if not torch.allclose(out.float(), ref.float(), atol=ATOL, rtol=RTOL):
-                    dropped.append((bm, w, st))
+        # ONE probe tensor and ONE reference for EVERY sweep. The replicates must differ
+        # only in when they ran -- a fresh tensor per sweep would resample the allocator
+        # as well as the timer, and a disagreement would then not be attributable to the
+        # thing being tested.
+        sweeps: list[dict] = []
+        dropped: list[tuple] = []
+        for _ in range(n_sweeps):
+            timed = {}
+            for bm, w, st in tiles:
+                try:
+                    fn = (lambda bm=bm, w=w, st=st:
+                          single_tile_attention(qkv, heads, head_dim, scale, bm, w, st))
+                    out = fn()
+                    torch.cuda.synchronize()
+                    if not torch.allclose(out.float(), ref.float(),
+                                          atol=ATOL, rtol=RTOL):
+                        if (bm, w, st) not in dropped:
+                            dropped.append((bm, w, st))
+                        continue
+                    timed[(bm, w, st)] = timer(fn, 2)
+                except Exception:
                     continue
-                timed[(bm, w, st)] = timer(fn, 2)
-            except Exception:
-                continue
+            sweeps.append(timed)
         del qkv, ref
         # The timer is NAMED in every reason string. [L36]: a candidate whose mechanism
         # never engages is its parent with extra build time, and the only externally
         # visible trace of which instrument ranked this sweep is what it says it was.
+        # From g43 the same holds for how many DISTINCT answers the individual sweeps
+        # gave -- otherwise a decision the floor rescued from a sweep whose winner moved
+        # every pass is indistinguishable from one every pass already agreed on.
         tn = getattr(timer, "__name__", str(timer))
         note = f" ({len(dropped)} dropped on tolerance)" if dropped else ""
-        if timed:
-            best, best_ms = min(timed.items(), key=lambda kv: kv[1])
-            base_ms = timed.get(fallback)
-            # THE DERIVED TILE HOLDS THE GROUND unless something beats it DECISIVELY.
-            # A candidate whose own tile varies run to run adds that noise to every
-            # measurement taken of it (L29), so the bar stays where v23 put it. What
-            # `hot_time` changes is that the numbers being compared can be told apart at
-            # all: under `flushed_time` this branch was routinely deciding a tie.
-            margin = (base_ms / best_ms) if base_ms else float("nan")
-            if base_ms is None or best_ms < base_ms * (1.0 - DECISIVE):
-                return best, (f"autotuned over {len(tiles)} tiles at batch {probe_b} "
-                              f"by {tn}{note}: {best} beat the derived tile {fallback} "
-                              f"decisively ({margin:.3f}x)")
-            return fallback, (f"derived tile {fallback}, confirmed by {tn} against "
-                              f"{len(tiles)} tiles at batch {probe_b}{note} "
-                              f"(best challenger {best} at {margin:.3f}x, "
-                              f"inside {DECISIVE:.0%})")
+        scored = [t for t in sweeps if t]
+        if scored:
+            # THE REPLICATES ARE REDUCED PER ARM BY THEIR MINIMUM, and then v23's rule
+            # runs on the reduced table, UNCHANGED. See the docstring for why this is a
+            # floor and not a vote; the short form is that the contamination this is
+            # correcting lands on the INCUMBENT's reading, so a per-sweep vote is
+            # decided by which arm happened to be hit.
+            #
+            # An arm is eligible only if it was timed in EVERY sweep, so every arm's
+            # floor is a minimum over the same number of readings. An arm reduced over
+            # fewer trials than its rivals is finding 47's best-of-N handicap inverted.
+            floor: dict[tuple, float] = {}
+            for k in scored[0]:
+                if all(k in t for t in scored):
+                    floor[k] = min(t[k] for t in scored)
+            if floor:
+                best, best_ms = min(floor.items(), key=lambda kv: kv[1])
+                base_ms = floor.get(fallback)
+                margin = (base_ms / best_ms) if base_ms else float("nan")
+                # [L62]'s cheap check, reported rather than merely run: how many distinct
+                # answers did the individual sweeps give? A grid whose winner moves every
+                # sweep has not ranked anything, and the ledger should be able to see
+                # that even when the reduction absorbs it.
+                winners = [min(t, key=t.get) for t in scored]
+                spread = ("" if n_sweeps == 1 else
+                          f", {len(set(winners))} distinct per-sweep winners over "
+                          f"{len(scored)} sweeps")
+                head = (f"autotuned over {len(tiles)} tiles at batch {probe_b} "
+                        f"by {tn}{note}")
+                # THE DERIVED TILE HOLDS THE GROUND unless something beats it DECISIVELY.
+                # A candidate whose own tile varies run to run adds that noise to every
+                # measurement taken of it (L29), so the bar stays where v23 put it.
+                if base_ms is None or best_ms < base_ms * (1.0 - DECISIVE):
+                    return best, (f"{head}: {best} beat the derived tile {fallback} "
+                                  f"decisively ({margin:.3f}x{spread})")
+                return fallback, (f"derived tile {fallback}, confirmed by {tn} against "
+                                  f"{len(tiles)} tiles at batch {probe_b}{note} "
+                                  f"(best challenger {best} at {margin:.3f}x{spread}, "
+                                  f"inside {DECISIVE:.0%})")
     except Exception:
         pass
     return fallback, "derived (autotune unavailable)"
