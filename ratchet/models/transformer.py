@@ -177,6 +177,21 @@ class OptimizedTransformerBlock(nn.Module):
         return x
 
 
+def solve_chunk(
+    batch_size: int,
+    seq_len: int,
+    d_model: int,
+    l2_bytes: int = 48 * 1024 * 1024,
+    dtype_bytes: int = 4,
+    live_tensors: int = 3,
+    target_occupancy: float = 0.5,
+) -> int:
+    """Compute optimal batch chunk size to keep activation working set in L2 cache."""
+    per_sample = max(1, seq_len * d_model * dtype_bytes * live_tensors)
+    chunk = int((l2_bytes * target_occupancy) // per_sample)
+    return max(1, min(batch_size, chunk))
+
+
 class OptimizedTransformer(nn.Module):
     """Optimized full transformer model strictly weight-compatible with baseline."""
 
@@ -187,6 +202,7 @@ class OptimizedTransformer(nn.Module):
         ffn_dim: int,
         num_layers: int,
         causal: bool = False,
+        use_cuda_graph: bool = False,
     ) -> None:
         super().__init__()
         self.d_model = d_model
@@ -194,6 +210,7 @@ class OptimizedTransformer(nn.Module):
         self.ffn_dim = ffn_dim
         self.num_layers = num_layers
         self.causal = causal
+        self.use_cuda_graph = use_cuda_graph
 
         self.layers = nn.ModuleList(
             [
@@ -203,7 +220,13 @@ class OptimizedTransformer(nn.Module):
         )
         self.final_norm = nn.LayerNorm(d_model)
 
-    def forward(
+        self._graph: Optional[torch.cuda.CUDAGraph] = None
+        self._static_x: Optional[torch.Tensor] = None
+        self._static_m: Optional[torch.Tensor] = None
+        self._static_y: Optional[torch.Tensor] = None
+        self._chunk_size: Optional[int] = None
+
+    def _forward_core(
         self,
         x: torch.Tensor,
         valid_token_mask: Optional[torch.Tensor] = None,
@@ -214,3 +237,54 @@ class OptimizedTransformer(nn.Module):
         if valid_token_mask is not None:
             x = x.masked_fill(~valid_token_mask[..., None], 0)
         return x
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        valid_token_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        b, s, d = x.shape
+
+        # Adaptive L2 cache chunking for large batch sizes (e.g. B=10000)
+        if self._chunk_size is None:
+            if x.is_cuda:
+                props = torch.cuda.get_device_properties(x.device)
+                l2_size = getattr(props, "L2_cache_size", 48 * 1024 * 1024)
+            else:
+                l2_size = 32 * 1024 * 1024  # Typical CPU L3 cache per socket
+            self._chunk_size = solve_chunk(b, s, d, l2_size, x.element_size())
+
+        # If batch size exceeds cache budget, chunk over batch dimension
+        if self._chunk_size < b and b > 256:
+            out = torch.empty_like(x)
+            for start in range(0, b, self._chunk_size):
+                stop = min(start + self._chunk_size, b)
+                xs = x[start:stop]
+                ms = None if valid_token_mask is None else valid_token_mask[start:stop]
+                out[start:stop] = self._forward_core(xs, ms)
+            return out
+
+        # CUDA Graph replay path for fixed small shapes
+        if self.use_cuda_graph and x.is_cuda:
+            if self._graph is None:
+                side = torch.cuda.Stream()
+                side.wait_stream(torch.cuda.current_stream())
+                with torch.cuda.stream(side):
+                    for _ in range(3):
+                        self._forward_core(x, valid_token_mask)
+                torch.cuda.current_stream().wait_stream(side)
+
+                self._static_x = x.clone()
+                self._static_m = None if valid_token_mask is None else valid_token_mask.clone()
+                graph = torch.cuda.CUDAGraph()
+                with torch.cuda.graph(graph):
+                    self._static_y = self._forward_core(self._static_x, self._static_m)
+                self._graph = graph
+
+            self._static_x.copy_(x)
+            if self._static_m is not None and valid_token_mask is not None:
+                self._static_m.copy_(valid_token_mask)
+            self._graph.replay()
+            return self._static_y.clone()
+
+        return self._forward_core(x, valid_token_mask)

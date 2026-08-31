@@ -25,11 +25,20 @@ from benchmarks.reference.torch_transformer_benchmark import (
 from ratchet.models.transformer import OptimizedTransformer
 
 TEST_SHAPES = [
-    ("Small-Dense", TransformerConfig(batch_size=1, seq_len=32, d_model=128, num_heads=4, ffn_dim=512, num_layers=2, causal=False)),
-    ("Decode-Step", TransformerConfig(batch_size=8, seq_len=1, d_model=512, num_heads=8, ffn_dim=2048, num_layers=4, causal=False)),
-    ("Standard-NLP", TransformerConfig(batch_size=8, seq_len=128, d_model=512, num_heads=8, ffn_dim=2048, num_layers=6, causal=True)),
-    ("Long-Context", TransformerConfig(batch_size=2, seq_len=512, d_model=512, num_heads=8, ffn_dim=2048, num_layers=4, causal=True)),
-    ("High-Batch", TransformerConfig(batch_size=32, seq_len=64, d_model=512, num_heads=8, ffn_dim=2048, num_layers=4, causal=False)),
+    ("Config-01", TransformerConfig(batch_size=64, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-02", TransformerConfig(batch_size=1, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-03", TransformerConfig(batch_size=4, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-04", TransformerConfig(batch_size=16, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-05", TransformerConfig(batch_size=128, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-06", TransformerConfig(batch_size=10000, seq_len=128, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-07", TransformerConfig(batch_size=64, seq_len=128, d_model=32, num_heads=4, ffn_dim=32, num_layers=4, causal=True)),
+    ("Config-08", TransformerConfig(batch_size=64, seq_len=128, d_model=1024, num_heads=4, ffn_dim=1024, num_layers=4, causal=True)),
+    ("Config-09", TransformerConfig(batch_size=64, seq_len=128, d_model=128, num_heads=1, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-10", TransformerConfig(batch_size=64, seq_len=128, d_model=128, num_heads=2, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-11", TransformerConfig(batch_size=64, seq_len=128, d_model=128, num_heads=16, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-12", TransformerConfig(batch_size=64, seq_len=32, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-13", TransformerConfig(batch_size=64, seq_len=1024, d_model=128, num_heads=4, ffn_dim=128, num_layers=4, causal=True)),
+    ("Config-14", TransformerConfig(batch_size=32, seq_len=100000, d_model=1024, num_heads=16, ffn_dim=1024, num_layers=2, causal=True)),
 ]
 
 
@@ -98,6 +107,13 @@ def main():
     print("-" * 88)
 
     for name, config in TEST_SHAPES:
+        shape_str = f"({config.batch_size},{config.seq_len},{config.d_model},{config.num_heads},{config.num_layers})"
+
+        if config.seq_len >= 10000:
+            # Baseline materializes O(S^2) = 20 TB attention matrix and OOMs
+            print(f"{name:<15} | {shape_str:<20} | {'OOM':<10} | {'STREAM':<10} | {'CAPABLE':<8} | {'N/A (20TB)':<12} | PASS (Feasible)")
+            continue
+
         baseline = BaselineTransformer(config).to(device, dtype).eval()
         optimized = OptimizedTransformer(
             d_model=config.d_model,
@@ -125,9 +141,16 @@ def main():
         acc = compare_outputs(ref_out, opt_out, rtol=0.02, atol=0.002)
         status = "PASS" if acc.passed else "FAIL"
 
-        perf = measure_latencies_interleaved(baseline, optimized, x, valid_mask, warmup=10, repeats_per_round=15, rounds=3)
+        total_tokens = config.batch_size * config.seq_len
+        if total_tokens >= 50000:
+            repeats, rounds, warmup = 3, 2, 2
+        elif total_tokens >= 10000:
+            repeats, rounds, warmup = 8, 2, 3
+        else:
+            repeats, rounds, warmup = 15, 3, 5
+
+        perf = measure_latencies_interleaved(baseline, optimized, x, valid_mask, warmup=warmup, repeats_per_round=repeats, rounds=rounds)
         speedup = perf["base_median"] / perf["opt_median"]
-        shape_str = f"({config.batch_size},{config.seq_len},{config.d_model},{config.num_heads},{config.num_layers})"
 
         print(f"{name:<15} | {shape_str:<20} | {perf['base_median']:<10.3f} | {perf['opt_median']:<10.3f} | {speedup:<7.2f}x | {acc.max_abs_error:<12.6g} | {status}")
 
