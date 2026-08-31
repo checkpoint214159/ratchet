@@ -123,8 +123,15 @@ def gpu_lock(purpose: str = "measurement", timeout_s: float = 0.0):
         yield
     finally:
         try:
-            if LOCK_PATH.exists() and LOCK_PATH.read_text().startswith(str(os.getpid())):
-                LOCK_PATH.unlink()
+            # Compare the pid FIELD, not a string prefix. `startswith` meant pid 9949
+            # would release a lock held by 994932 -- a lock that silently lets the wrong
+            # process through is worse than no lock, and this one guards every timing
+            # measurement in the project. Found by the g43 executor while doing something
+            # else entirely.
+            if LOCK_PATH.exists():
+                held = LOCK_PATH.read_text().split()
+                if held and held[0] == str(os.getpid()):
+                    LOCK_PATH.unlink()
         except OSError:
             pass
 

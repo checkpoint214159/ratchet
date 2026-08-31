@@ -94,3 +94,17 @@ def test_every_measured_row_records_whether_the_run_held_the_lock():
     src = (Path(__file__).resolve().parents[2] / "bench" / "run_matrix.py").read_text()
     assert "gpu_exclusive" in src
     assert "gpu_exclusive={gpu_exclusive}" in src, "it must reach the ledger notes"
+
+
+def test_release_compares_the_pid_field_not_a_string_prefix():
+    """A lock held by pid 994932 must not be released by pid 9949.
+
+    `read_text().startswith(str(os.getpid()))` prefix-matches, so any pid that is a string
+    prefix of the holder's would release someone else's lock. A lock that silently lets the
+    wrong process through is worse than no lock -- and this one guards every timing
+    measurement in the project (finding 05: a co-resident process inflated a baseline 4.1x).
+    """
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[2] / "bench" / "gpu_lock.py").read_text()
+    assert "startswith(str(os.getpid()))" not in src, "release is prefix-matching pids again"
+    assert 'held[0] == str(os.getpid())' in src, "release must compare the pid field"
