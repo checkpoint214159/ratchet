@@ -1057,3 +1057,130 @@ The tell, both times, was a byte-identical or known-stable arm reading different
 runs. That is why every comparison in this project now carries a control it does not need.
 
 See docs/findings/50.
+
+## L58 — A capped win is not a small win, it is a zero (2026-08-31)
+Five of fourteen configs (3, 6, 7, 11, 13) are past the clip, and config 6 alone is 83% of
+matrix wall time. Work landing there scores nothing at all — not a little, nothing. This
+project spent its first two days optimising config 6.
+
+The corollary that took longer to learn: **a regression on a capped config is also free**,
+which is why v37's 1.6x streaming defect on config 6 survived two sweeps and two commits
+unnoticed. The objective that hides the win hides the loss with it.
+
+Proposed as L58 in 49; renumbered on merge.
+
+## L59 — Before you argue about a timer's regime, check that it can resolve the thing (2026-08-31)
+[L53] says to use a timer whose regime matches the call site's, and three findings (48, 50,
+the g41 audit) have been about cache regime — L2-hot against L2-flushed, a 2.24x gap that
+made one headline wrong by that factor. That is a real axis and the reasoning about it was
+correct. It is also not the only way an instrument can fail, and here it was not the one
+that cost the score.
+
+`do_bench` times each call with a pair of CUDA events. Their quantum is 1.024 µs. Ranking
+eight variants of a 1.9 µs kernel with it produced a table in which five entries were the
+same number — not noise around a true ordering, but **no ordering at all**. Every downstream
+rule then behaved correctly on a degenerate input: `min()` returned an arbitrary tie, the
+`DECISIVE` margin could not be cleared, and the tiebreak kept the incumbent. Eighteen
+generations of correct decisions on a blank input.
+
+The cheap check is one line and nobody had run it: **print the sweep, and look at how many
+distinct values it contains.** A grid of N arms that yields two distinct readings has not
+ranked anything. If the spread of the whole grid is comparable to the instrument's quantum,
+the instrument is the wrong one, and no amount of replication, minimum-taking or
+winner's-curse correction will fix it — those all assume a noisy signal, and this is an
+absent one.
+
+The general form: an instrument has a *resolution* as well as a *regime*, and resolution
+failures are invisible in exactly the way regime failures are not. A mis-regimed timer gives
+you confident wrong numbers you can catch by cross-checking against another regime. An
+under-resolved timer gives you *ties*, which look like "the arms are equivalent" — an
+answer, and a plausible one, and the reason this sat unexamined from generation 23 to 42.
+
+Proposed as L62 in 53; renumbered on merge.
+
+## L60 — A blunt instrument is stable; sharpening it buys accuracy with variance, and you must check where you spent it (2026-08-31)
+`do_bench` could not separate config 2's eight tiles, so the sweep fell through to its
+tiebreak — every time, on every shape, in every process state. That is a *systematic* error
+and it has a property nobody had noticed was doing work: **it is perfectly reproducible.**
+Eighteen generations of stable, wrong tile selection, and the stability was load-bearing,
+because a plan that does not vary adds no variance to the measurements taken of it.
+
+Replacing it with a timer that *can* resolve the arms fixed the shape whose true margin is
+28% and destabilised the shape whose true margin is 2% — from one tile in six runs to three.
+The new instrument is better and it converted a bias into a variance, and the variance
+landed on exactly the shapes where the decision was closest and therefore mattered least
+per-decision and most in aggregate.
+
+The lesson is not "keep the blunt instrument". It is that **replacing a selection rule's
+instrument is not complete until you have measured the rule's OUTPUT for stability, not just
+its accuracy** — run the sweep several times and count distinct answers, on the shapes where
+the margin is small as well as the one that motivated the change. The decision rule's
+threshold was calibrated (`DECISIVE = 0.10`) against the old instrument's noise; a sharper
+instrument with a different noise distribution needs the threshold re-earned, or needs the
+answer required to replicate before it is acted on. Neither is expensive. Not noticing is.
+
+Proposed as L63 in 53; renumbered on merge.
+
+## L61 — When the noise is one-sided, replicate to REDUCE it, never to VOTE on the answer (2026-08-31)
+Finding 53 established that contamination on this harness only ever makes a reading
+slower, and then proposed a fix that requires two rankings to agree. Those two statements
+are incompatible and it took building the fix to see it. If the noise is one-sided, it
+lands on an arbitrary arm, and a `min()` over the grid returns *the arm the noise missed* —
+so two sweeps disagreeing is the expected outcome even when the underlying margin is 28%,
+and requiring agreement makes the rule revert more often the noisier the machine is. The
+measured cost was the parent's only scoring row, lost in 5 of 10 processes.
+
+The correct use of a replicate under one-sided noise is to take the **floor per arm** and
+then decide once. That estimator is already this project's house rule for timing a card
+whose clocks will not lock; the thing that was new was applying it *inside* a selection
+rule rather than to the selection rule's output.
+
+The general form: **before choosing how to combine repeated measurements, ask what shape
+the noise has.** Voting, averaging and flooring are right under different noise models and
+wrong under the others, and "replicate it" is not a decision until you have said which.
+A vote is right for symmetric noise around a true value. A floor is right for one-sided
+contamination of a true minimum. Picking the wrong one does not merely waste the
+replicate — it can be worse than not replicating at all.
+
+Proposed as L64 in 54; renumbered on merge.
+
+## L62 — An isolation that removes the phenomenon is not a control, it is a different experiment (2026-08-31)
+The first stability probe of this generation gave every arm its own process: no
+co-residency, no allocator sharing, no interference. It reported both candidates perfectly
+stable on both shapes and would have closed the generation as "nothing to fix". The
+instability being investigated **exists only when a second model is resident**, which is
+the condition `bench/abba.py` creates and therefore the condition under which every number
+this project ranks candidates on is produced.
+
+Isolation is the reflex here for good reasons — finding 05's co-residency spill, finding
+45's construction-time planners, the one-config-per-subprocess rule — and every one of
+those is about isolating a *measurement*. This was a measurement of a *decision*, and the
+decision is made in the contaminated environment on purpose. **The probe must reproduce the
+call site's environment, including the parts of it that look like contamination**, or it
+measures a system that does not ship.
+
+Corollary, and the cheap check: when a probe reports the phenomenon absent, that is a
+result about the probe until it is a result about the code. Ask what the probe removed.
+
+Proposed as L65 in 54; renumbered on merge.
+
+## L63 — A silent fallback inside an instrument is a silent change of instrument (2026-08-31)
+`hot_time` wraps `do_bench_cudagraph` in `except Exception: return do_bench(...)`, and says
+so in its docstring, with a reason: failing closed on a tuner is worse than degrading. That
+reasoning is defensible. What is not defensible is that the degradation is **invisible in
+the number**: the caller gets a float, the reason string still says `hot_time`, and the
+whole grid quietly reverts to the 1.024 µs instrument the previous generation was built to
+remove.
+
+It fires for a real, non-exotic reason — calling it outside `torch.inference_mode()` after
+any model has run inside one — which is a condition every probe and test in this repo can
+meet by accident, and three of them did in one afternoon.
+
+The general form: an instrument that can silently become a *different instrument* must say
+which one it was. A timer that falls back should return, or record, the path it took, and
+anything that names an instrument in a reason string should name the one that actually ran.
+The arithmetic tell here was free — a `do_bench` reading is an exact multiple of the event
+quantum and a graph reading is not — and had it been checked in an assertion rather than by
+eye, none of the three wrong probes would have gone anywhere.
+
+Proposed as L66 in 54; renumbered on merge.
