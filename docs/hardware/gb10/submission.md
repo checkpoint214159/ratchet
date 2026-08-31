@@ -44,9 +44,9 @@ All correct vs the fp32 baseline.
 | 12 | S32 (short seq) | on | 2.32x | 2.29x |
 | 13 | S1024 (attention-heavy) | off | **9.93x** | 10.34x |
 
-**geomean vs `torch.compile` = 2.58–2.68x** across runs (calibrated dispatch / search-loop
-re-measure; the spread is torch.compile baseline variance + GB10's unlockable clock), every
-config correct.
+**geomean vs EAGER (the official evaluator baseline; `--compile-baseline` is off) = 3.24x**,
+and **vs `torch.compile` (a harder, self-imposed baseline) = 2.58–2.68x** across runs (the
+spread is torch.compile baseline variance + GB10's unlockable clock). Every config correct.
 
 The win tracks attention cost: dense configs 1.7–2.4x, head_dim-8 with 16 heads 5.2x,
 seq=1024 **~9.8x** (flash streams the causal KV axis where the baseline materializes the

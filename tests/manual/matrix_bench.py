@@ -16,6 +16,7 @@ import triton
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from gpu_guard import require_exclusive
+
 from ratchet.kernels.dispatch import MATRIX, select
 from ratchet.kernels.graphed import graphed_forward
 from ratchet.oracle import calibrate

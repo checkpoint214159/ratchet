@@ -79,6 +79,21 @@ with fp16 as an additional factor.
 **bf16 fails the correctness gate on every config** (recorded in the ledger) — the loop's
 own evidence for why the submission is fp16.
 
+### Official baseline is eager (the scored metric)
+
+The evaluator's default baseline is **eager**, not `torch.compile` (`--compile-baseline` is
+off; see `docs/PROBLEM-STATEMENT.md`). The table above beats the *harder* compiled baseline;
+against the official eager baseline the same clean run is stronger:
+
+| geomean over 13 configs | speedup |
+| --- | --- |
+| **vs eager (official / scored)** | **3.24x** |
+| vs `torch.compile` (harder, self-imposed) | 2.62x |
+
+Per-config vs eager, all correct: cfg1 3.31 · cfg2 2.78 · cfg3 3.09 · cfg4 2.80 · cfg5 2.98 ·
+cfg6 2.68 · cfg7 3.27 · cfg8 3.78 · cfg9 2.06 · cfg10 2.31 · cfg11 5.24 · cfg12 2.25 ·
+cfg13 9.84 (`tests/manual/matrix_bench.py`, one run reporting both baselines).
+
 ### Predicted vs measured dispatch (12/13 agree)
 
 `dispatch.select` predicts the CUDA-graph decision analytically from device properties:
